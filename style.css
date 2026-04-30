@@ -477,3 +477,15 @@ body {
 
 /* ─── Alerts ────────────────────────────────────────────────────────────────── */
 .alert { border-radius: 8px; font-size: 13.5px; }
+
+/* ─── Inline Expand Containers (ARS) ────────────────────────────────────────── */
+.inline-slide {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 220ms ease, opacity 180ms ease;
+}
+.inline-slide.open {
+  max-height: 520px; /* enough for mini forms */
+  opacity: 1;
+}

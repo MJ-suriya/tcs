@@ -32,9 +32,16 @@ function statusBadge(status) {
     approved: 'badge-approved',
     rejected: 'badge-rejected',
     converted: 'badge-converted',
-    penalty: 'badge-penalty'
+    penalty: 'badge-penalty',
+    active: 'badge-approved',
+    settlement_pending: 'badge-pending',
+    closed: 'badge-approved',
+    auto_penalty_applied: 'badge-penalty',
+    partially_settled: 'badge-pending',
+    partially_cleared: 'badge-pending',
+    fully_cleared: 'badge-approved'
   };
-  return `<span class="cds-badge ${map[status] || ''}">${status.toUpperCase()}</span>`;
+  return `<span class="cds-badge ${map[status] || ''}">${String(status || '').replace(/_/g, ' ').toUpperCase()}</span>`;
 }
 
 function typeBadge(type) {
@@ -235,6 +242,10 @@ async function loadDashboard() {
     if (totalCredEl) totalCredEl.textContent = fmt(bal.totalCredits || 0);
     document.getElementById('totalExp').textContent = fmt(bal.totalExpenses || 0);
     document.getElementById('totalPen').textContent = fmt(bal.totalPenalties || 0);
+    const suspenseArsEl = document.getElementById('suspenseArsTotal');
+    if (suspenseArsEl) suspenseArsEl.textContent = fmt(bal.suspenseArsTotal || 0);
+    const pendingSettlementEl = document.getElementById('pendingSettlementCount');
+    if (pendingSettlementEl) pendingSettlementEl.textContent = bal.totalPendingSettlements || 0;
   } catch (e) {
     console.error(e);
     if (pageRoot) {
@@ -368,6 +379,9 @@ async function loadExpenses() {
 }
 
 // Suspense
+let openArsSettlementId = null;
+const arsSettlementDrafts = new Map(); // suspenseId -> { returned, expense, penalty, penaltyTouched }
+
 async function addSuspense() {
   const workerName = document.getElementById('susWorker').value.trim();
   const amount = parseFloat(document.getElementById('susAmount').value);
@@ -388,7 +402,6 @@ async function addSuspense() {
 }
 
 async function convertSuspense(id) {
-  if (!confirm('Convert this suspense to an expense (will require manager approval)?')) return;
   try {
     await api(`/api/suspense/${id}/convert`, 'POST');
     showAlert('suspenseAlert', 'Suspense converted to expense and sent for approval.', 'success');
@@ -399,11 +412,124 @@ async function convertSuspense(id) {
 }
 
 async function markPenalty(id) {
-  if (!confirm('Mark this suspense as a penalty? This will deduct from balance.')) return;
   try {
     await api(`/api/suspense/${id}/penalty`, 'POST');
-    showAlert('suspenseAlert', 'Marked as penalty.', 'warning');
+    showAlert('suspenseAlert', 'Penalty request submitted for manager approval.', 'warning');
     loadSuspenseList();
+  } catch (err) {
+    showAlert('suspenseAlert', err.message);
+  }
+}
+
+function getArsDraft(id, originalAmount, existingSettlement = null) {
+  if (arsSettlementDrafts.has(id)) return arsSettlementDrafts.get(id);
+  const returned = Number(existingSettlement?.returnedAmount || 0);
+  const expense = Number(existingSettlement?.expenseAmount || 0);
+  const remaining = Number((Number(originalAmount || 0) - returned - expense).toFixed(2));
+  const draft = {
+    returned,
+    expense,
+    penalty: Number(existingSettlement?.penaltyAmount ?? remaining) || 0,
+    penaltyTouched: false
+  };
+  arsSettlementDrafts.set(id, draft);
+  return draft;
+}
+
+function calcArsPenalty(originalAmount, returned, expense) {
+  return Number((Number(originalAmount || 0) - Number(returned || 0) - Number(expense || 0)).toFixed(2));
+}
+
+function toggleArsSettlementForm(id) {
+  openArsSettlementId = openArsSettlementId === id ? null : id;
+  loadSuspenseList();
+}
+
+function updateArsSettlementDraft(id, field, value, originalAmount) {
+  const draft = arsSettlementDrafts.get(id);
+  if (!draft) return;
+  if (field === 'returned' || field === 'expense') {
+    draft[field] = Number(value || 0);
+    if (!draft.penaltyTouched) {
+      draft.penalty = Math.max(0, calcArsPenalty(originalAmount, draft.returned, draft.expense));
+    }
+  } else if (field === 'penalty') {
+    draft.penalty = Number(value || 0);
+    draft.penaltyTouched = true;
+  } else if (field === 'autoPenalty') {
+    draft.penalty = Math.max(0, calcArsPenalty(originalAmount, draft.returned, draft.expense));
+    draft.penaltyTouched = false;
+  }
+  arsSettlementDrafts.set(id, draft);
+  // Lightweight re-render: reload list (keeps inline UX consistent in this app)
+  loadSuspenseList();
+}
+
+async function submitArsSettlement(id, originalAmount) {
+  const draft = arsSettlementDrafts.get(id);
+  if (!draft) return;
+  const returnedAmount = Number(draft.returned || 0);
+  const expenseAmount = Number(draft.expense || 0);
+  const penaltyAmount = Number(draft.penalty || 0);
+  if ([returnedAmount, expenseAmount, penaltyAmount].some((n) => !Number.isFinite(n) || n < 0)) {
+    showAlert('suspenseAlert', 'Returned/Expense/Penalty must be valid non-negative numbers.');
+    return;
+  }
+  const total = Number((returnedAmount + expenseAmount + penaltyAmount).toFixed(2));
+  const original = Number(Number(originalAmount || 0).toFixed(2));
+  if (total !== original) {
+    showAlert('suspenseAlert', `Validation failed: Returned + Expense + Penalty must equal ${fmt(original)}.`);
+    return;
+  }
+  try {
+    await api(`/api/suspense/${id}/settle`, 'POST', { returnedAmount, expenseAmount, penaltyAmount });
+    showAlert('suspenseAlert', 'Settlement submitted for manager approval.', 'success');
+    openArsSettlementId = null;
+    arsSettlementDrafts.delete(id);
+    loadSuspenseList();
+    loadDashboard();
+  } catch (err) {
+    showAlert('suspenseAlert', err.message);
+  }
+}
+
+let openArsLateAdjustId = null;
+const arsLateAdjustDrafts = new Map(); // suspenseId -> { returned }
+
+function toggleArsLateAdjustForm(id) {
+  openArsLateAdjustId = openArsLateAdjustId === id ? null : id;
+  loadSuspenseList();
+}
+
+function updateArsLateAdjustDraft(id, value) {
+  arsLateAdjustDrafts.set(id, { returned: Number(value || 0) });
+  loadSuspenseList();
+}
+
+function getPenaltyRemaining(t) {
+  const basePenalty = Number(t?.lateClearance?.remainingPenalty);
+  if (Number.isFinite(basePenalty)) return basePenalty;
+  return Number(t?.suspenseSettlement?.penaltyAmount || 0);
+}
+
+async function submitArsLateReturn(id, remainingPenalty) {
+  const draft = arsLateAdjustDrafts.get(id) || { returned: 0 };
+  const returnedAmount = Number(draft.returned || 0);
+  if (!Number.isFinite(returnedAmount) || returnedAmount <= 0) {
+    showAlert('suspenseAlert', 'Returned amount must be a positive number.');
+    return;
+  }
+  if (returnedAmount > remainingPenalty) {
+    showAlert('suspenseAlert', 'Returned amount cannot exceed current penalty.');
+    return;
+  }
+  try {
+    await api(`/api/suspense/${id}/late-return`, 'POST', { returnedAmount });
+    showAlert('suspenseAlert', 'Late return applied. Penalty updated.', 'success');
+    openArsLateAdjustId = null;
+    arsLateAdjustDrafts.delete(id);
+    loadSuspenseList();
+    loadDashboard();
   } catch (err) {
     showAlert('suspenseAlert', err.message);
   }
@@ -415,24 +541,138 @@ async function loadSuspenseList() {
     const el = document.getElementById('suspenseList');
     if (!txs.length) { el.innerHTML = '<p class="text-muted small px-2">No suspense records.</p>'; return; }
     el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Worker</th><th>Amount</th><th>Reason</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Worker</th><th>Amount</th><th>ARS Balance</th><th>Reason</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody>
         ${txs.map(t => {
           const daysSince = Math.floor((Date.now() - new Date(t.createdAt)) / 86400000);
-          const overdueBadge = (t.status === 'pending' && daysSince >= 5) ? `<span class="badge bg-warning text-dark ms-1">${daysSince}d</span>` : '';
+          const overdueBadge = (['active', 'approved'].includes(t.status) && daysSince >= 5) ? `<span class="badge bg-warning text-dark ms-1">${daysSince}d</span>` : '';
+          const isOpen = openArsSettlementId === t._id;
+          const originalAmount = Number(t.amount || 0);
+          const settlement = t.suspenseSettlement || null;
+          const draft = (isOpen && (t.status === 'active' || t.status === 'approved')) ? getArsDraft(t._id, originalAmount, settlement?.reviewStatus === 'rejected' ? settlement : null) : null;
+          const calcPenalty = draft ? calcArsPenalty(originalAmount, draft.returned, draft.expense) : 0;
+          const total = draft ? Number((draft.returned + draft.expense + draft.penalty).toFixed(2)) : 0;
+          const totalOk = draft ? Number(total.toFixed(2)) === Number(originalAmount.toFixed(2)) : true;
+          const balanceDisplay = t.status === 'pending' ? '—' : fmt(t.arsBalance ?? 0);
+
+          const lateAdjustOpen = openArsLateAdjustId === t._id;
+          const penaltyRemaining = getPenaltyRemaining(t);
+          const lateDraft = arsLateAdjustDrafts.get(t._id) || { returned: 0 };
+          const lateReturned = Number(lateDraft.returned || 0);
+          const lateRemainingAfter = Number((penaltyRemaining - lateReturned).toFixed(2));
+          const lateValid = Number.isFinite(lateReturned) && lateReturned > 0 && lateReturned <= penaltyRemaining;
+
+          const actionMarkup = (t.status === 'active' || t.status === 'approved') ? `
+                <button class="btn cds-btn-sm me-1" onclick="toggleArsSettlementForm('${t._id}')">${isOpen ? 'Close' : 'Settle ARS'}</button>
+                <button class="btn cds-btn-sm danger" onclick="markPenalty('${t._id}')">Penalty</button>
+              ` : (['closed', 'penalty', 'auto_penalty_applied', 'partially_settled', 'partially_cleared', 'fully_cleared'].includes(t.status) && penaltyRemaining > 0) ? `
+                <button class="btn cds-btn-sm me-1" onclick="toggleArsLateAdjustForm('${t._id}')">${lateAdjustOpen ? 'Close' : 'Adjust Penalty / Late Return'}</button>
+              ` : (t.status === 'settlement_pending' ? `<span class="small text-muted">Settlement pending approval</span>` : '—');
+
+          const inlineForm = isOpen && (t.status === 'active' || t.status === 'approved') ? `
+            <tr class="bg-body-tertiary">
+              <td colspan="7">
+                <div class="p-3 rounded-3 border">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div>
+                      <div class="small text-muted">ARS Settlement (Inline)</div>
+                      <div><strong>Total ARS:</strong> ${fmt(originalAmount)}</div>
+                    </div>
+                    <div class="text-end">
+                      <div class="small ${totalOk ? 'text-success' : 'text-danger'}">
+                        Total: ${fmt(total)} ${totalOk ? '✓' : '✗'}
+                      </div>
+                      <div class="small text-muted">Returned + Expense + Penalty must match total</div>
+                    </div>
+                  </div>
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1">Returned Amount (₹)</label>
+                      <input class="form-control cds-input" type="number" min="0" step="0.01"
+                        value="${draft.returned}"
+                        oninput="updateArsSettlementDraft('${t._id}','returned', this.value, ${originalAmount})" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1">Expense Amount (₹)</label>
+                      <input class="form-control cds-input" type="number" min="0" step="0.01"
+                        value="${draft.expense}"
+                        oninput="updateArsSettlementDraft('${t._id}','expense', this.value, ${originalAmount})" />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1">Penalty Amount (₹)</label>
+                      <div class="input-group">
+                        <input class="form-control cds-input" type="number" min="0" step="0.01"
+                          value="${draft.penalty}"
+                          oninput="updateArsSettlementDraft('${t._id}','penalty', this.value, ${originalAmount})" />
+                        <button class="btn btn-outline-secondary" type="button"
+                          onclick="updateArsSettlementDraft('${t._id}','autoPenalty', null, ${originalAmount})"
+                          title="Reset to auto-calculated remaining">Auto</button>
+                      </div>
+                      <div class="small text-muted mt-1">Auto remaining: ${fmt(Math.max(0, calcPenalty))}${draft.penaltyTouched ? ' (manual override)' : ''}</div>
+                    </div>
+                    <div class="col-md-3 d-grid">
+                      <button class="btn cds-btn-primary" ${totalOk ? '' : 'disabled'}
+                        onclick="submitArsSettlement('${t._id}', ${originalAmount})">
+                        Submit Settlement
+                      </button>
+                      ${!totalOk ? `<div class="small text-danger mt-1">Fix amounts so total equals ${fmt(originalAmount)}.</div>` : ''}
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ` : '';
+
+          const lateInline = (['closed', 'penalty', 'auto_penalty_applied', 'partially_settled', 'partially_cleared', 'fully_cleared'].includes(t.status) && penaltyRemaining > 0) ? `
+            <tr>
+              <td colspan="7" class="p-0">
+                <div class="inline-slide ${lateAdjustOpen ? 'open' : ''}">
+                  <div class="p-3 border-top bg-white">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                      <div>
+                        <div class="small text-muted">Late Return / Penalty Adjustment</div>
+                        <div class="small"><strong>Current Penalty:</strong> ${fmt(penaltyRemaining)}</div>
+                      </div>
+                      <div class="text-end small text-muted">
+                        Status: ${statusBadge(t.status)}
+                      </div>
+                    </div>
+                    <div class="row g-2 align-items-end">
+                      <div class="col-md-4">
+                        <label class="form-label small mb-1">Returned Amount (₹)</label>
+                        <input class="form-control cds-input" type="number" min="0" step="0.01"
+                          value="${lateReturned || ''}"
+                          oninput="updateArsLateAdjustDraft('${t._id}', this.value)" />
+                        ${lateReturned > penaltyRemaining ? `<div class="small text-danger mt-1">Returned cannot exceed penalty.</div>` : ''}
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small mb-1">Remaining Penalty (auto)</label>
+                        <input class="form-control cds-input" type="text" readonly value="${fmt(Math.max(0, lateRemainingAfter))}" />
+                      </div>
+                      <div class="col-md-4 d-grid">
+                        <button class="btn cds-btn-primary" ${lateValid ? '' : 'disabled'} onclick="submitArsLateReturn('${t._id}', ${penaltyRemaining})">
+                          Apply Late Return
+                        </button>
+                        <div class="small text-muted mt-1">Adds credit to Main Balance and reduces penalty.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ` : '';
+
           return `<tr>
             <td><strong>${escHtml(t.workerName || '-')}</strong></td>
             <td>${fmt(t.amount)}</td>
+            <td>${balanceDisplay}</td>
             <td class="text-muted small">${escHtml(t.reason || '-')}</td>
             <td>${statusBadge(t.status)}${overdueBadge}</td>
             <td class="small">${fmtDate(t.createdAt)}</td>
             <td>
-              ${t.status === 'pending' ? `
-                <button class="btn cds-btn-sm me-1" onclick="convertSuspense('${t._id}')">→ Expense</button>
-                <button class="btn cds-btn-sm danger" onclick="markPenalty('${t._id}')">Penalty</button>
-              ` : '—'}
+              ${actionMarkup}
             </td>
-          </tr>`;
+          </tr>${inlineForm}${lateInline}`;
         }).join('')}
       </tbody>
     </table></div>`;
@@ -442,7 +682,6 @@ async function loadSuspenseList() {
 // Daily
 function calcDenom() {
   const total =
-    (parseInt(document.getElementById('d1000').value) || 0) * 1000 +
     (parseInt(document.getElementById('d500').value) || 0) * 500 +
     (parseInt(document.getElementById('d200').value) || 0) * 200 +
     (parseInt(document.getElementById('d100').value) || 0) * 100 +
@@ -451,14 +690,12 @@ function calcDenom() {
     (parseInt(document.getElementById('d10').value) || 0) * 10 +
     (parseInt(document.getElementById('d5').value) || 0) * 5 +
     (parseInt(document.getElementById('d2').value) || 0) * 2 +
-    (parseInt(document.getElementById('d1').value) || 0) * 1 +
-    (parseFloat(document.getElementById('dCoins').value) || 0);
+    (parseInt(document.getElementById('d1').value) || 0) * 1;
   document.getElementById('denomTotalDisplay').textContent = fmt(total);
 }
 
 async function closeDay() {
   const denomination = {
-    thousands: parseInt(document.getElementById('d1000').value) || 0,
     fiveHundreds: parseInt(document.getElementById('d500').value) || 0,
     twoHundreds: parseInt(document.getElementById('d200').value) || 0,
     hundreds: parseInt(document.getElementById('d100').value) || 0,
@@ -467,12 +704,12 @@ async function closeDay() {
     tens: parseInt(document.getElementById('d10').value) || 0,
     fives: parseInt(document.getElementById('d5').value) || 0,
     twos: parseInt(document.getElementById('d2').value) || 0,
-    ones: parseInt(document.getElementById('d1').value) || 0,
-    coins: parseFloat(document.getElementById('dCoins').value) || 0
+    ones: parseInt(document.getElementById('d1').value) || 0
   };
+  const arsBalance = parseFloat(document.getElementById('dArs').value) || 0;
   try {
-    const res = await api('/api/daily/close', 'POST', { denomination });
-    showAlert('dailyAlert', `Day closed. Closing Balance: ${fmt(res.closingBalance)}`, 'success');
+    const res = await api('/api/daily/close', 'POST', { denomination, arsBalance });
+    showAlert('dailyAlert', `Day closed. Main: ${fmt(res.closingBalance)} | ARS: ${fmt(res.closingArsBalance || 0)}`, 'success');
     loadDaily();
   } catch (err) {
     showAlert('dailyAlert', err.message);
@@ -487,8 +724,13 @@ async function loadDaily() {
     const badge = document.getElementById('dailyStatusBadge');
     if (badge) {
       badge.innerHTML = today.isClosed
-        ? `<span class="cds-badge badge-approved">Day Closed — ${fmt(today.closingBalance)}</span>`
-        : `<span class="cds-badge badge-pending">Day Open — Opening: ${fmt(today.openingBalance)}</span>`;
+        ? `<span class="cds-badge badge-approved">Day Closed — Main: ${fmt(today.closingBalance || 0)} | ARS: ${fmt(today.closingArsBalance || 0)}</span>`
+        : `<span class="cds-badge badge-pending">Day Open — Opening Main: ${fmt(today.openingBalance || 0)} | Opening ARS: ${fmt(today.openingArsBalance || 0)}</span>`;
+    }
+    const arsInput = document.getElementById('dArs');
+    if (arsInput) {
+      const bal = await api('/api/balance');
+      arsInput.value = Number(bal.suspenseArsTotal || 0).toFixed(2);
     }
   } catch (e) {
     console.error(e);
@@ -501,12 +743,14 @@ async function loadDaily() {
     const el = document.getElementById('dailyList');
     if (!records.length) { el.innerHTML = '<p class="text-muted small px-2">No records yet.</p>'; return; }
     el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Date</th><th>Opening</th><th>Closing</th><th>Status</th><th>Closed By</th></tr></thead>
+      <thead><tr><th>Date</th><th>Opening Main</th><th>Opening ARS</th><th>Closing Main</th><th>Closing ARS</th><th>Status</th><th>Closed By</th></tr></thead>
       <tbody>
         ${records.map(r => `<tr>
           <td>${r.date}</td>
-          <td>${fmt(r.openingBalance)}</td>
+          <td>${fmt(r.openingBalance || 0)}</td>
+          <td>${fmt(r.openingArsBalance || 0)}</td>
           <td>${r.closingBalance != null ? fmt(r.closingBalance) : '—'}</td>
+          <td>${r.closingArsBalance != null ? fmt(r.closingArsBalance) : '—'}</td>
           <td>${r.isClosed ? statusBadge('approved') : statusBadge('pending')}</td>
           <td class="small">${r.closedBy || '—'}</td>
         </tr>`).join('')}
@@ -525,7 +769,7 @@ async function loadTransactions() {
     setLoading('pendingTxList', 'Loading pending approvals...');
     setLoading('historyTxList', 'Loading approval history...');
     const allowReview = currentUserRole === 'manager' || currentUserRole === 'admin';
-    const pendingTxs = await api('/api/transactions?status=pending');
+    const pendingTxs = await api('/api/transactions/pending');
     const pendingEl = document.getElementById('pendingTxList');
     if (pendingEl) {
       pendingEl.innerHTML = pendingTxs.length
@@ -550,17 +794,59 @@ async function loadTransactions() {
 }
 
 function buildTxTable(txs, showType, allowReview = false) {
+  const suspenseSettlementBreakdown = (t) => {
+    const s = t?.suspenseSettlement;
+    if (!s) return '';
+    const original = Number(t.amount || 0);
+    const returned = Number(s.returnedAmount || 0);
+    const expense = Number(s.expenseAmount || 0);
+    const penalty = Number(s.penaltyAmount || 0);
+    const total = Number((returned + expense + penalty).toFixed(2));
+    const ok = Number(total.toFixed(2)) === Number(original.toFixed(2));
+    return `
+      <div class="mt-2 p-2 rounded-3 border bg-white">
+        <div class="row g-2">
+          <div class="col-sm-6 col-lg-3">
+            <div class="small text-muted">Original ARS</div>
+            <div><strong>${fmt(original)}</strong></div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="small text-muted">Returned Amount</div>
+            <div><strong>${fmt(returned)}</strong></div>
+            <div class="small text-muted">Cash received back</div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="small text-muted">Expense Amount</div>
+            <div><strong>${fmt(expense)}</strong></div>
+            <div class="small text-muted">Based on bills</div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="small text-muted">Penalty Amount</div>
+            <div><strong>${fmt(penalty)}</strong></div>
+            <div class="small ${ok ? 'text-success' : 'text-danger'}">Total: ${fmt(total)} ${ok ? '✓' : '✗'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
   return `<div class="table-responsive"><table class="table cds-table">
     <thead><tr>${showType ? '<th>Type</th>' : ''}<th>Description</th><th>Amount</th><th>Status</th><th>Created</th><th>Reviewed By</th>${allowReview ? '<th>Actions</th>' : ''}</tr></thead>
     <tbody>
       ${txs.map(t => `<tr>
         ${showType ? `<td>${typeBadge(t.type)}</td>` : ''}
-        <td>${escHtml(t.description)}</td>
+        <td>
+          <div>${escHtml(t.description)}</div>
+          ${t.type === 'suspense' && t.status === 'settlement_pending' ? suspenseSettlementBreakdown(t) : ''}
+        </td>
         <td>${fmt(t.amount)}</td>
         <td>${statusBadge(t.status)}</td>
         <td class="small">${fmtDateTime(t.createdAt)}</td>
         <td class="small">${t.reviewedBy || '—'}</td>
         ${allowReview ? `<td>${t.status === 'pending' ? `
+          <button class="btn cds-btn-approve me-1" onclick="reviewTx('${t._id}', 'approve')">Approve</button>
+          <button class="btn cds-btn-reject" onclick="reviewTx('${t._id}', 'reject')">Reject</button>
+        ` : t.status === 'settlement_pending' ? `
           <button class="btn cds-btn-approve me-1" onclick="reviewTx('${t._id}', 'approve')">Approve</button>
           <button class="btn cds-btn-reject" onclick="reviewTx('${t._id}', 'reject')">Reject</button>
         ` : '—'}</td>` : ''}
@@ -607,12 +893,11 @@ async function addUser() {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(`Delete user "${name}"?`)) return;
   try {
     await api(`/api/users/${id}`, 'DELETE');
     loadUsers();
   } catch (err) {
-    alert(err.message);
+    showAlert('userAlert', err.message);
   }
 }
 
@@ -711,7 +996,7 @@ async function loadInventoryProducts(existingProducts = null) {
     const select = document.getElementById('reqProduct');
     if (select) {
       select.innerHTML = '<option value="">Select product</option>' + products.map((p) =>
-        `<option value="${p._id}">${escHtml(p.name)} (${escHtml(p.sku)}) - Stock: ${p.totalStock}</option>`).join('');
+        `<option value="${p._id}" data-available="${p.availableStock}">${escHtml(p.name)} (${escHtml(p.sku)}) - Available: ${p.availableStock}</option>`).join('');
     }
   } catch (err) {
     showAlert('invDashAlert', err.message);
@@ -719,11 +1004,18 @@ async function loadInventoryProducts(existingProducts = null) {
 }
 
 async function createStockRequest() {
-  const productId = document.getElementById('reqProduct')?.value;
+  const productSelect = document.getElementById('reqProduct');
+  const productId = productSelect?.value;
   const quantity = parseInt(document.getElementById('reqQty')?.value, 10);
   const section = document.getElementById('reqSection')?.value;
   if (!productId || Number.isNaN(quantity) || quantity <= 0 || !section) {
     showAlert('invRequestAlert', 'Select product, quantity and section.');
+    return;
+  }
+  const selectedOption = productSelect.options[productSelect.selectedIndex];
+  const availableStock = parseInt(selectedOption.getAttribute('data-available') || 0, 10);
+  if (quantity > availableStock) {
+    showAlert('invRequestAlert', `Cannot request more than available quantity (${availableStock}).`);
     return;
   }
   try {
@@ -852,6 +1144,9 @@ async function loadInventoryMovements() {
 
 // ─── VEHICLE LOG BOOK ────────────────────────────────────────────────────────
 let vehicleExpenseRows = [];
+let openVehicleRejectId = null;
+const vehicleRejectDrafts = new Map(); // logId -> reason
+let currentVehicleDraftId = null;
 
 function vehicleExpenseRowMarkup(idx, row = {}) {
   const type = row.expenseType || 'service';
@@ -974,6 +1269,25 @@ function calcVehicleFuelUsed() {
 }
 
 async function submitVehicleLog() {
+  const payload = collectVehicleFormPayload();
+  if (!payload.driverName || !payload.vehicleNumber || !payload.fromLocation || !payload.toLocation || !payload.startDateTime || !payload.endDateTime) {
+    showAlert('vehicleAlert', 'Please fill all required fields.');
+    return;
+  }
+  try {
+    await api('/api/vehicle-logs', 'POST', payload);
+    showAlert('vehicleAlert', 'Vehicle log submitted for manager approval.', 'success');
+    resetVehicleForm();
+    currentVehicleDraftId = null;
+    await applyVehicleBaseline();
+    loadVehicleHistory();
+    loadVehicleWaitingList();
+  } catch (err) {
+    showAlert('vehicleAlert', err.message);
+  }
+}
+
+function collectVehicleFormPayload() {
   const remainingRaw = document.getElementById('remainingFuel')?.value;
   const fuelUsedInputRaw = document.getElementById('fuelUsedInput')?.value;
   const payload = {
@@ -998,20 +1312,128 @@ async function submitVehicleLog() {
     const description = row.querySelector('[data-expense-field="description"]')?.value || '';
     if (expenseType && date && amount >= 0) payload.expenses.push({ expenseType, amount, date, description });
   });
-  if (!payload.driverName || !payload.vehicleNumber || !payload.fromLocation || !payload.toLocation || !payload.startDateTime || !payload.endDateTime) {
-    showAlert('vehicleAlert', 'Please fill all required fields.');
+  return payload;
+}
+
+function resetVehicleForm() {
+  ['driverName', 'fromLocation', 'toLocation', 'startDateTime', 'endDateTime', 'endKm', 'fuelAdded', 'remainingFuel', 'fuelFillDate', 'fuelUsedInput', 'mileageReason'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const distanceEl = document.getElementById('distanceTravelled');
+  if (distanceEl) distanceEl.value = '0.00';
+  const fuelUsedEl = document.getElementById('fuelUsed');
+  if (fuelUsedEl) fuelUsedEl.value = '';
+  const actualMileageEl = document.getElementById('actualMileage');
+  if (actualMileageEl) actualMileageEl.value = '';
+  const lowFuelEl = document.getElementById('lowFuelBadge');
+  if (lowFuelEl) lowFuelEl.innerHTML = '';
+  const mileageDeltaEl = document.getElementById('mileageDelta');
+  if (mileageDeltaEl) mileageDeltaEl.textContent = '';
+  vehicleExpenseRows = [];
+  renderVehicleExpenseRows();
+}
+
+async function saveVehicleWaitingDraft() {
+  const payload = collectVehicleFormPayload();
+  if (!payload.vehicleNumber) {
+    showAlert('vehicleAlert', 'Vehicle number is required to save waiting entry.');
     return;
   }
   try {
-    await api('/api/vehicle-logs', 'POST', payload);
-    showAlert('vehicleAlert', 'Vehicle log submitted for manager approval.', 'success');
-    ['driverName', 'fromLocation', 'toLocation', 'startDateTime', 'endDateTime', 'endKm', 'fuelAdded', 'remainingFuel', 'fuelFillDate'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    vehicleExpenseRows = [];
+    const res = await api('/api/vehicle-logs/waiting', 'POST', { ...payload, draftId: currentVehicleDraftId });
+    currentVehicleDraftId = res?.draft?._id || null;
+    showAlert('vehicleAlert', 'Saved to waiting list.', 'success');
+    loadVehicleWaitingList();
+  } catch (err) {
+    showAlert('vehicleAlert', err.message);
+  }
+}
+
+async function loadVehicleWaitingList() {
+  const el = document.getElementById('vehicleWaitingList');
+  if (!el) return;
+  try {
+    setLoading('vehicleWaitingList', 'Loading waiting list...');
+    const drafts = await api('/api/vehicle-logs/waiting');
+    if (!drafts.length) {
+      el.innerHTML = '<p class="text-muted small px-2">No waiting entries.</p>';
+      return;
+    }
+    el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
+      <thead><tr><th>Vehicle</th><th>Driver</th><th>Route</th><th>Updated</th><th>Actions</th></tr></thead>
+      <tbody>${drafts.map((d) => `<tr>
+        <td><strong>${escHtml(d.vehicleNumber || '-')}</strong></td>
+        <td>${escHtml(d.driverName || '-')}</td>
+        <td class="small">${escHtml(d.fromLocation || '-')} → ${escHtml(d.toLocation || '-')}</td>
+        <td class="small">${fmtDateTime(d.updatedAt || d.createdAt)}</td>
+        <td>
+          <button class="btn cds-btn-sm me-1" onclick="editVehicleWaitingDraft('${d._id}')">Edit</button>
+          <button class="btn cds-btn-sm me-1" onclick="submitVehicleWaitingDraft('${d._id}')">Send Approval</button>
+          <button class="btn cds-btn-sm danger" onclick="deleteVehicleWaitingDraft('${d._id}')">Delete</button>
+        </td>
+      </tr>`).join('')}</tbody></table></div>`;
+  } catch (err) {
+    const alertId = document.getElementById('vehicleWaitingAlert');
+    if (alertId) showAlert('vehicleWaitingAlert', err.message);
+    if (el) el.innerHTML = '<p class="text-muted small px-2">Could not load waiting list.</p>';
+  }
+}
+
+async function editVehicleWaitingDraft(id) {
+  try {
+    const drafts = await api('/api/vehicle-logs/waiting');
+    const d = drafts.find((x) => x._id === id);
+    if (!d) {
+      showAlert('vehicleAlert', 'Waiting entry not found.');
+      return;
+    }
+    currentVehicleDraftId = d._id;
+    document.getElementById('driverName').value = d.driverName || '';
+    document.getElementById('vehicleNumber').value = d.vehicleNumber || '';
+    document.getElementById('fromLocation').value = d.fromLocation || '';
+    document.getElementById('toLocation').value = d.toLocation || '';
+    document.getElementById('startDateTime').value = d.startDateTime ? new Date(d.startDateTime).toISOString().slice(0, 16) : '';
+    document.getElementById('endDateTime').value = d.endDateTime ? new Date(d.endDateTime).toISOString().slice(0, 16) : '';
+    document.getElementById('endKm').value = d.endKm ?? '';
+    document.getElementById('fuelAdded').value = d.fuelAdded ?? 0;
+    document.getElementById('remainingFuel').value = d.remainingFuel ?? '';
+    document.getElementById('fuelUsedInput').value = d.fuelUsedInput ?? '';
+    document.getElementById('fuelFillDate').value = d.fuelFillDate ? new Date(d.fuelFillDate).toISOString().slice(0, 10) : '';
+    document.getElementById('mileageReason').value = d.mileageReason || '';
+    vehicleExpenseRows = (d.expenses || []).map((e) => ({
+      expenseType: e.expenseType,
+      amount: e.amount,
+      date: e.date ? new Date(e.date).toISOString().slice(0, 10) : '',
+      description: e.description || ''
+    }));
     renderVehicleExpenseRows();
     await applyVehicleBaseline();
+    calcVehicleDistance();
+    calcVehicleFuelUsed();
+    showAlert('vehicleAlert', 'Waiting entry loaded. Update and save or send for approval.', 'success');
+  } catch (err) {
+    showAlert('vehicleAlert', err.message);
+  }
+}
+
+async function deleteVehicleWaitingDraft(id) {
+  try {
+    await api(`/api/vehicle-logs/waiting/${id}`, 'DELETE');
+    if (currentVehicleDraftId === id) currentVehicleDraftId = null;
+    showAlert('vehicleAlert', 'Waiting entry deleted.', 'success');
+    loadVehicleWaitingList();
+  } catch (err) {
+    showAlert('vehicleAlert', err.message);
+  }
+}
+
+async function submitVehicleWaitingDraft(id) {
+  try {
+    await api(`/api/vehicle-logs/waiting/${id}/submit`, 'POST');
+    if (currentVehicleDraftId === id) currentVehicleDraftId = null;
+    showAlert('vehicleAlert', 'Waiting entry submitted for manager approval.', 'success');
+    loadVehicleWaitingList();
     loadVehicleHistory();
   } catch (err) {
     showAlert('vehicleAlert', err.message);
@@ -1049,6 +1471,8 @@ async function loadVehicleEntryForm() {
   await applyVehicleBaseline();
   vehicleExpenseRows = [];
   renderVehicleExpenseRows();
+  currentVehicleDraftId = null;
+  loadVehicleWaitingList();
 }
 
 function vehicleStatusBadge(status) {
@@ -1057,21 +1481,46 @@ function vehicleStatusBadge(status) {
 }
 
 function renderVehicleLogsTable(logs, includeActions = false) {
+  const getReason = (id) => vehicleRejectDrafts.get(id) || '';
   return `<div class="table-responsive"><table class="table cds-table">
-    <thead><tr><th>Vehicle</th><th>Driver</th><th>Route</th><th>KM</th><th>Fuel</th><th>Expenses</th><th>Status</th>${includeActions ? '<th>Actions</th>' : ''}</tr></thead>
-    <tbody>${logs.map((l) => `<tr>
+    <thead><tr><th>Vehicle</th><th>Driver</th><th>Route</th><th>KM</th><th>Fuel</th><th>Expenses</th><th>Status</th><th>Manager Approved</th>${includeActions ? '<th>Actions</th>' : ''}</tr></thead>
+    <tbody>${logs.map((l) => {
+      const rejectOpen = openVehicleRejectId === l._id;
+      return `<tr>
       <td><strong>${escHtml(l.vehicleNumber)}</strong></td>
       <td>${escHtml(l.driverName)}</td>
       <td><div class="small">${escHtml(l.fromLocation)} → ${escHtml(l.toLocation)}</div><div class="small text-muted">${fmtDateTime(l.startDateTime)} to ${fmtDateTime(l.endDateTime)}</div></td>
       <td><div class="small">Start: ${l.startKm}</div><div class="small">End: ${l.endKm}</div><div><strong>${(l.distanceTravelled || 0).toFixed(2)} km</strong></div></td>
       <td><div class="small">Avail: ${l.availableFuel} L</div><div class="small">Added: ${l.fuelAdded} L</div><div class="small">Remain: ${l.remainingFuel} L ${l.isLowFuel ? '<span class="badge bg-warning text-dark">LOW</span>' : ''}</div><div class="small">Used: ${(l.fuelUsed || 0).toFixed(2)} L</div><div class="small">Mileage: ${l.mileage != null ? l.mileage : '—'} km/L</div></td>
       <td><div class="small">${(l.expenses || []).length} item(s)</div><div class="small">${fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}</div></td>
-      <td>${vehicleStatusBadge(l.status)}${l.rejectReason ? `<div class="small text-danger mt-1">Reason: ${escHtml(l.rejectReason)}</div>` : ''}<div class="small text-muted mt-1">${escHtml(l.createdBy || '')}</div></td>
+      <td>${vehicleStatusBadge(l.status)}${l.rejectReason ? `<div class="small text-danger mt-1">Reason: ${escHtml(l.rejectReason)}</div>` : ''}<div class="small text-muted mt-1">By: ${escHtml(l.createdBy || '')}</div></td>
+      <td>${l.status === 'approved' ? `<strong>${escHtml(l.reviewedBy || '-')}</strong><div class="small text-muted">${fmtDateTime(l.reviewedAt)}</div>` : (l.status === 'rejected' ? `<span class="text-danger">Rejected by ${escHtml(l.reviewedBy || '-')}</span>` : '—')}</td>
       ${includeActions ? `<td>${l.status === 'pending' ? `
         <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">Approve</button>
-        <button class="btn cds-btn-reject" onclick="reviewVehicleLog('${l._id}', 'reject')">Reject</button>
+        <button class="btn cds-btn-reject" onclick="toggleVehicleRejectForm('${l._id}')">Reject</button>
       ` : '—'}</td>` : ''}
-    </tr>`).join('')}</tbody></table></div>`;
+    </tr>
+    ${includeActions ? `
+      <tr>
+        <td colspan="8" class="p-0">
+          <div class="inline-slide ${rejectOpen ? 'open' : ''}">
+            <div class="p-3 border-top bg-white">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-9">
+                  <label class="form-label small mb-1">Reject Reason</label>
+                  <input type="text" class="form-control cds-input" value="${escHtml(getReason(l._id))}"
+                    oninput="updateVehicleRejectDraft('${l._id}', this.value)" placeholder="Enter reason (required)" />
+                </div>
+                <div class="col-md-3 d-grid">
+                  <button class="btn cds-btn-reject" onclick="submitVehicleReject('${l._id}')">Submit Rejection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    ` : ''}`;
+    }).join('')}</tbody></table></div>`;
 }
 
 async function loadVehicleHistory() {
@@ -1108,13 +1557,34 @@ async function loadVehicleApprovals() {
 
 async function reviewVehicleLog(id, action) {
   const payload = { action };
-  if (action === 'reject') {
-    const reason = prompt('Enter reject reason');
-    if (!reason) return;
-    payload.reason = reason;
-  }
   try {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', payload);
+    loadVehicleApprovals();
+    loadDashboard();
+  } catch (err) {
+    showAlert('vehicleApprovalAlert', err.message);
+  }
+}
+
+function toggleVehicleRejectForm(id) {
+  openVehicleRejectId = openVehicleRejectId === id ? null : id;
+  loadVehicleApprovals();
+}
+
+function updateVehicleRejectDraft(id, value) {
+  vehicleRejectDrafts.set(id, String(value || ''));
+}
+
+async function submitVehicleReject(id) {
+  const reason = String(vehicleRejectDrafts.get(id) || '').trim();
+  if (!reason) {
+    showAlert('vehicleApprovalAlert', 'Reject reason is required.', 'warning');
+    return;
+  }
+  try {
+    await api(`/api/vehicle-logs/${id}/review`, 'POST', { action: 'reject', reason });
+    vehicleRejectDrafts.delete(id);
+    openVehicleRejectId = null;
     loadVehicleApprovals();
     loadDashboard();
   } catch (err) {
@@ -1125,23 +1595,39 @@ async function reviewVehicleLog(id, action) {
 async function loadVehicleReports() {
   try {
     setLoading('vehicleReportList', 'Loading vehicle reports...');
-    const rows = await api('/api/vehicle-logs/reports');
+    const dateInput = document.getElementById('vehicleReportDate')?.value;
+    const url = dateInput ? `/api/vehicle-logs?status=approved&date=${dateInput}` : '/api/vehicle-logs?status=approved';
+    const logs = await api(url);
     const el = document.getElementById('vehicleReportList');
     if (!el) return;
-    el.innerHTML = rows.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Vehicle</th><th>Trips</th><th>Distance (km)</th><th>Fuel Used (L)</th><th>Mileage (km/L)</th><th>Expenses</th><th>Low Fuel Trips</th></tr></thead>
-      <tbody>${rows.map((r) => `<tr>
-        <td><strong>${escHtml(r.vehicleNumber)}</strong></td>
-        <td>${r.tripCount}</td>
-        <td>${Number(r.totalDistance || 0).toFixed(2)}</td>
-        <td>${Number(r.totalFuelUsed || 0).toFixed(2)}</td>
-        <td>${r.avgMileage != null ? r.avgMileage : '—'}</td>
-        <td>${fmt(r.totalExpenses || 0)}</td>
-        <td>${r.lowFuelCount || 0}</td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No approved vehicle logs for reports.</p>';
+    el.innerHTML = logs.length ? renderVehicleLogsTable(logs, false) : '<p class="text-muted small px-2">No approved vehicle logs for selected date.</p>';
   } catch (err) {
     showAlert('vehicleReportAlert', err.message);
   }
+}
+
+function printVehicleReport() {
+  const el = document.getElementById('vehicleReportList');
+  if (!el || !el.innerHTML.includes('<table')) {
+    showAlert('vehicleReportAlert', 'No data to print.');
+    return;
+  }
+  const dateInput = document.getElementById('vehicleReportDate')?.value;
+  const title = dateInput ? `Vehicle Report - ${dateInput}` : 'Vehicle Report';
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write('<html><head><title>' + title + '</title>');
+  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
+  printWindow.document.write('<style>@page { size: landscape; } body { padding: 20px; font-family: sans-serif; } .cds-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; } .badge-approved { background: #d1fae5; color: #065f46; } .badge-rejected { background: #fee2e2; color: #991b1b; } .badge-pending { background: #fef3c7; color: #92400e; } table { width: 100%; border-collapse: collapse; margin-top: 10px; } th, td { border: 1px solid #dee2e6; padding: 8px; font-size: 12px; } th { background-color: #f8f9fa; } .small { font-size: 0.875em; } .text-muted { color: #6c757d; } .text-danger { color: #dc3545; } .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; } .bg-warning { background-color: #ffc107; color: #000; }</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write('<h4>' + title + '</h4>');
+  printWindow.document.write(el.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.onload = function() {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
 }
 
 // ─── MANAGER PAGE ─────────────────────────────────────────────────────────────
@@ -1243,7 +1729,6 @@ async function loadManagerData() {
 
 async function reviewTx(id, action) {
   const label = action === 'approve' ? 'approve' : 'reject';
-  if (!confirm(`Are you sure you want to ${label} this transaction?`)) return;
   try {
     await api(`/api/transactions/${id}/${action}`, 'POST');
     showAlert('approvalAlert', `Transaction ${label}d successfully.`, action === 'approve' ? 'success' : 'warning');

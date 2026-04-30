@@ -13,14 +13,69 @@ const transactionSchema = new mongoose.Schema({
   type: { type: String, enum: ['credit', 'expense', 'suspense'], required: true },
   description: { type: String, required: true },
   amount: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'approved', 'rejected', 'converted', 'penalty'], default: 'pending' },
+  status: {
+    type: String,
+    enum: [
+      'pending',
+      'approved',
+      'rejected',
+      'converted',
+      'penalty',
+      'active',
+      'settlement_pending',
+      'closed',
+      'auto_penalty_applied',
+      // Late return / penalty adjustment after settlement
+      'partially_settled',
+      'partially_cleared',
+      'fully_cleared'
+    ],
+    default: 'pending'
+  },
   // Suspense specific
   workerName: { type: String },
   reason: { type: String },
+  arsBalance: { type: Number, default: 0 },
+  suspenseHistory: {
+    type: [{
+      event: { type: String, required: true },
+      by: { type: String, default: '' },
+      at: { type: Date, default: Date.now },
+      data: { type: mongoose.Schema.Types.Mixed, default: {} }
+    }],
+    default: []
+  },
+  suspenseSettlement: {
+    returnedAmount: { type: Number, default: 0 },
+    expenseAmount: { type: Number, default: 0 },
+    penaltyAmount: { type: Number, default: 0 },
+    submittedAt: { type: Date },
+    submittedBy: { type: String },
+    reviewedAt: { type: Date },
+    reviewedBy: { type: String },
+    reviewStatus: { type: String, enum: ['pending', 'approved', 'rejected'] }
+  },
+  lateClearance: {
+    totalReturned: { type: Number, default: 0 },
+    remainingPenalty: { type: Number, default: 0 },
+    lastAdjustedAt: { type: Date },
+    lastAdjustedBy: { type: String, default: '' }
+  },
+  suspenseSettlementStatus: {
+    type: String,
+    enum: ['pending_approval', 'active', 'settlement_pending', 'closed', 'auto_penalty_applied'],
+    default: undefined
+  },
   // Convert to expense tracking
   convertedExpenseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' },
   isFromSuspense: { type: Boolean, default: false },
   originalSuspenseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' },
+  suspenseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' },
+  settlementComponent: {
+    type: String,
+    enum: ['settlement_expense', 'settlement_penalty', 'late_return_credit', 'late_return_expense'],
+    default: undefined
+  },
   // Penalty tracking
   penaltyApplied: { type: Boolean, default: false },
   penaltyAt: { type: Date },
@@ -35,10 +90,11 @@ const transactionSchema = new mongoose.Schema({
 const dailyRecordSchema = new mongoose.Schema({
   date: { type: String, required: true, unique: true }, // YYYY-MM-DD
   openingBalance: { type: Number, required: true },
+  openingArsBalance: { type: Number, default: 0 },
   closingBalance: { type: Number },
+  closingArsBalance: { type: Number, default: 0 },
   isClosed: { type: Boolean, default: false },
   denomination: {
-    thousands: { type: Number, default: 0 },
     fiveHundreds: { type: Number, default: 0 },
     twoHundreds: { type: Number, default: 0 },
     hundreds: { type: Number, default: 0 },
@@ -47,8 +103,7 @@ const dailyRecordSchema = new mongoose.Schema({
     tens: { type: Number, default: 0 },
     fives: { type: Number, default: 0 },
     twos: { type: Number, default: 0 },
-    ones: { type: Number, default: 0 },
-    coins: { type: Number, default: 0 }
+    ones: { type: Number, default: 0 }
   },
   closedBy: { type: String },
   closedAt: { type: Date }
@@ -161,6 +216,31 @@ vehicleLogSchema.pre('save', function updateVehicleModified(next) {
   next();
 });
 
+const vehicleLogDraftSchema = new mongoose.Schema({
+  driverName: { type: String, trim: true, default: '' },
+  vehicleNumber: { type: String, trim: true, uppercase: true, default: '' },
+  fromLocation: { type: String, trim: true, default: '' },
+  toLocation: { type: String, trim: true, default: '' },
+  startDateTime: { type: Date },
+  endDateTime: { type: Date },
+  endKm: { type: Number, min: 0 },
+  fuelAdded: { type: Number, min: 0, default: 0 },
+  remainingFuel: { type: Number, min: 0, default: null },
+  fuelUsedInput: { type: Number, min: 0, default: null },
+  fuelFillDate: { type: Date },
+  mileageReason: { type: String, trim: true, default: '' },
+  correctedFromLogId: { type: mongoose.Schema.Types.ObjectId, ref: 'VehicleLog' },
+  expenses: { type: [vehicleExpenseSchema], default: [] },
+  createdBy: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+vehicleLogDraftSchema.pre('save', function updateVehicleDraftModified(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
 const User = mongoose.model('User', userSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const DailyRecord = mongoose.model('DailyRecord', dailyRecordSchema);
@@ -169,5 +249,6 @@ const StockRequest = mongoose.model('StockRequest', stockRequestSchema);
 const StockMovement = mongoose.model('StockMovement', stockMovementSchema);
 const VehicleProfile = mongoose.model('VehicleProfile', vehicleProfileSchema);
 const VehicleLog = mongoose.model('VehicleLog', vehicleLogSchema);
+const VehicleLogDraft = mongoose.model('VehicleLogDraft', vehicleLogDraftSchema);
 
-module.exports = { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog };
+module.exports = { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog, VehicleLogDraft };
