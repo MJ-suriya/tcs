@@ -310,10 +310,11 @@
                 <div class="denom-row"><label>₹1 ×</label><input type="number" id="d1" class="form-control cds-input"
                     value="0" min="0" onchange="calcDenom()" /></div>
                 <div class="denom-row"><label>ARS Balance</label><input type="number" id="dArs"
-                    class="form-control cds-input" value="0" step="0.01" min="0" /></div>
+                    class="form-control cds-input" value="0" step="0.01" min="0" oninput="calcDenom()" /></div>
               </div>
-              <div class="denom-total mt-3">Main Balance Total: <strong id="denomTotalDisplay">₹0</strong></div><button
-                class="btn cds-btn-primary w-100 mt-3" onclick="closeDay()">Close Day</button>
+              <div class="denom-total mt-3">Main Balance Total: <strong id="denomTotalDisplay">₹0</strong></div>
+              <div class="denom-total mt-1">Combined Total Balance (Main + ARS): <strong id="combinedTotalDisplay">₹0</strong></div>
+              <button class="btn cds-btn-primary w-100 mt-3" onclick="closeDay()">Close Day</button>
             </div>
           </div>
           <div class="col-lg-7">

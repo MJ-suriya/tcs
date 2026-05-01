@@ -701,6 +701,10 @@ function calcDenom() {
     (parseInt(document.getElementById('d2').value) || 0) * 2 +
     (parseInt(document.getElementById('d1').value) || 0) * 1;
   document.getElementById('denomTotalDisplay').textContent = fmt(total);
+
+  const arsBal = parseFloat(document.getElementById('dArs')?.value) || 0;
+  const combinedEl = document.getElementById('combinedTotalDisplay');
+  if (combinedEl) combinedEl.textContent = fmt(total + arsBal);
 }
 
 async function closeDay() {
@@ -733,13 +737,14 @@ async function loadDaily() {
     const badge = document.getElementById('dailyStatusBadge');
     if (badge) {
       badge.innerHTML = today.isClosed
-        ? `<span class="cds-badge badge-approved">Day Closed — Main: ${fmt(today.closingBalance || 0)} | ARS: ${fmt(today.closingArsBalance || 0)}</span>`
-        : `<span class="cds-badge badge-pending">Day Open — Opening Main: ${fmt(today.openingBalance || 0)} | Opening ARS: ${fmt(today.openingArsBalance || 0)}</span>`;
+        ? `<span class="cds-badge badge-approved">Day Closed — Main: ${fmt(today.closingBalance || 0)} | ARS: ${fmt(today.closingArsBalance || 0)} | Combined: ${fmt((today.closingBalance || 0) + (today.closingArsBalance || 0))}</span>`
+        : `<span class="cds-badge badge-pending">Day Open — Opening Main: ${fmt(today.openingBalance || 0)} | Opening ARS: ${fmt(today.openingArsBalance || 0)} | Combined: ${fmt((today.openingBalance || 0) + (today.openingArsBalance || 0))}</span>`;
     }
     const arsInput = document.getElementById('dArs');
     if (arsInput) {
       const bal = await api('/api/balance');
       arsInput.value = Number(bal.suspenseArsTotal || 0).toFixed(2);
+      calcDenom();
     }
   } catch (e) {
     console.error(e);
@@ -751,15 +756,21 @@ async function loadDaily() {
     const records = await api('/api/daily');
     const el = document.getElementById('dailyList');
     if (!records.length) { el.innerHTML = '<p class="text-muted small px-2">No records yet.</p>'; return; }
+    
+    // Reverse records so oldest is at the top and newest is at the bottom
+    const displayRecords = records.slice().reverse();
+
     el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Date</th><th>Opening Main</th><th>Opening ARS</th><th>Closing Main</th><th>Closing ARS</th><th>Status</th><th>Closed By</th></tr></thead>
+      <thead><tr><th>Date</th><th>Opening Main</th><th>Opening ARS</th><th>Combined Opening</th><th>Closing Main</th><th>Closing ARS</th><th>Combined Closing</th><th>Status</th><th>Closed By</th></tr></thead>
       <tbody>
-        ${records.map(r => `<tr>
+        ${displayRecords.map(r => `<tr>
           <td>${r.date}</td>
           <td>${fmt(r.openingBalance || 0)}</td>
           <td>${fmt(r.openingArsBalance || 0)}</td>
+          <td><strong>${fmt((r.openingBalance || 0) + (r.openingArsBalance || 0))}</strong></td>
           <td>${r.closingBalance != null ? fmt(r.closingBalance) : '—'}</td>
           <td>${r.closingArsBalance != null ? fmt(r.closingArsBalance) : '—'}</td>
+          <td><strong>${r.closingBalance != null ? fmt((r.closingBalance || 0) + (r.closingArsBalance || 0)) : '—'}</strong></td>
           <td>${r.isClosed ? statusBadge('approved') : statusBadge('pending')}</td>
           <td class="small">${r.closedBy || '—'}</td>
         </tr>`).join('')}
@@ -1740,10 +1751,13 @@ async function reviewTx(id, action) {
   const label = action === 'approve' ? 'approve' : 'reject';
   try {
     await api(`/api/transactions/${id}/${action}`, 'POST');
-    showAlert('approvalAlert', `Transaction ${label}d successfully.`, action === 'approve' ? 'success' : 'warning');
-    loadManagerData();
+    // If there is an alert placeholder we can show the alert, or just refresh
+    // We'll call loadTransactions to update the pending and history views
+    loadTransactions();
+    // We also update dashboard balances if needed
+    loadDashboard();
   } catch (err) {
-    showAlert('approvalAlert', err.message);
+    alert(err.message);
   }
 }
 
