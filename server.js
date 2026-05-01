@@ -3,7 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const connectDB = require('./db');
-const { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog, VehicleLogDraft } = require('./models');
+const { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry } = require('./models');
 
 const app = express();
 
@@ -384,6 +384,22 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });
+});
+
+// POST /api/change-password
+app.post('/api/change-password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Both current and new password are required' });
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.password !== currentPassword) return res.status(401).json({ error: 'Incorrect current password' });
+    user.password = newPassword;
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/me
@@ -1497,6 +1513,175 @@ app.get('/api/vehicle-logs/pending-count', requireManagerOrAdmin, async (req, re
   try {
     const pendingVehicleLogs = await VehicleLog.countDocuments({ status: 'pending' });
     res.json({ pendingVehicleLogs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCRAP MANAGEMENT ROUTES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/scrap/products
+app.get('/api/scrap/products', requireAuth, async (req, res) => {
+  try {
+    const products = await ScrapProduct.find().sort({ name: 1 });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/products (Admin only)
+app.post('/api/scrap/products', requireAdmin, async (req, res) => {
+  try {
+    const { name, pricePerKg } = req.body;
+    if (!name || pricePerKg == null) return res.status(400).json({ error: 'Name and Price per KG are required' });
+    const product = await ScrapProduct.create({
+      name,
+      pricePerKg: Number(pricePerKg),
+      createdBy: req.session.user.username
+    });
+    res.json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/scrap/products/:id (Admin only)
+app.delete('/api/scrap/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const p = await ScrapProduct.findByIdAndDelete(req.params.id);
+    if (!p) return res.status(404).json({ error: 'Scrap product not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/scrap/products/:id (Admin only)
+app.put('/api/scrap/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const { pricePerKg } = req.body;
+    if (pricePerKg == null) return res.status(400).json({ error: 'Price per KG is required' });
+    const p = await ScrapProduct.findById(req.params.id);
+    if (!p) return res.status(404).json({ error: 'Scrap product not found' });
+    
+    p.pricePerKg = Number(pricePerKg);
+    await p.save();
+    res.json({ success: true, product: p });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/scrap/entries
+app.get('/api/scrap/entries', requireAuth, async (req, res) => {
+  try {
+    const { status, date } = req.query;
+    let filter = {};
+    if (status) filter.status = status;
+    if (date) {
+      const start = new Date(`${date}T00:00:00.000Z`);
+      const end = new Date(`${date}T23:59:59.999Z`);
+      filter.createdAt = { $gte: start, $lte: end };
+    }
+    const entries = await ScrapEntry.find(filter).sort({ createdAt: -1 });
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/entries (Security primarily)
+app.post('/api/scrap/entries', requireAuth, async (req, res) => {
+  try {
+    const { companyName, vehicleNumber, ownerName, productId, weight } = req.body;
+    if (!companyName || !vehicleNumber || !ownerName || !productId || !weight) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+    const product = await ScrapProduct.findById(productId);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    
+    const w = Number(weight);
+    if (w <= 0) return res.status(400).json({ error: 'Weight must be positive' });
+    
+    const totalAmount = Number((w * product.pricePerKg).toFixed(2));
+    
+    const entry = await ScrapEntry.create({
+      companyName,
+      vehicleNumber,
+      ownerName,
+      product: product._id,
+      productName: product.name,
+      weight: w,
+      pricePerKg: product.pricePerKg,
+      totalAmount,
+      createdBy: req.session.user.username
+    });
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/entries/:id/approve (Manager/Admin)
+app.post('/api/scrap/entries/:id/approve', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const entry = await ScrapEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    if (entry.status !== 'pending') return res.status(400).json({ error: 'Only pending entries can be approved' });
+    
+    entry.status = 'approved';
+    entry.reviewedBy = req.session.user.username;
+    entry.reviewedAt = new Date();
+    await entry.save();
+    
+    // Optional: Log it in main balance? User didn't request this specifically, but "Total Scrap Value" implies it's tracked.
+    // They said "Add summary cards ... Total Scrap Value". It may not directly affect CDB based on description, just scrap reporting.
+    
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/entries/:id/reject (Manager/Admin)
+app.post('/api/scrap/entries/:id/reject', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const entry = await ScrapEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    if (entry.status !== 'pending') return res.status(400).json({ error: 'Only pending entries can be rejected' });
+    
+    entry.status = 'rejected';
+    entry.rejectReason = reason || '';
+    entry.reviewedBy = req.session.user.username;
+    entry.reviewedAt = new Date();
+    await entry.save();
+    
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/scrap/dashboard
+app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
+  try {
+    const totalEntries = await ScrapEntry.countDocuments();
+    const pendingApprovals = await ScrapEntry.countDocuments({ status: 'pending' });
+    const approvedEntriesCount = await ScrapEntry.countDocuments({ status: 'approved' });
+    
+    const approvedEntries = await ScrapEntry.find({ status: 'approved' });
+    const totalScrapValue = approvedEntries.reduce((sum, e) => sum + (Number(e.totalAmount) || 0), 0);
+    
+    res.json({
+      totalEntries,
+      pendingApprovals,
+      approvedEntries: approvedEntriesCount,
+      totalScrapValue
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

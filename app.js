@@ -205,6 +205,15 @@ function loadSectionData(name) {
   else if (name === 'vehicleHistory') loadVehicleHistory();
   else if (name === 'vehicleApprovals') loadVehicleApprovals();
   else if (name === 'vehicleReports') loadVehicleReports();
+  else if (name === 'scrapDashboard') initScrapDashboard();
+  else if (name === 'scrapProducts') loadScrapProducts();
+  else if (name === 'scrapEntry') {
+    loadScrapProductDropdown();
+    loadScrapMyEntries();
+  }
+  else if (name === 'scrapHistory') loadScrapMyHistory();
+  else if (name === 'scrapApprovals') loadScrapApprovals();
+  else if (name === 'scrapReports') loadScrapReports();
 }
 
 async function initAdmin() {
@@ -1742,6 +1751,330 @@ async function reviewTx(id, action) {
 function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── SCRAP MANAGEMENT ──────────────────────────────────────────────────────────
+
+async function initScrapDashboard() {
+  try {
+    const data = await api('/api/scrap/dashboard');
+    document.getElementById('scrapTotalEntries').textContent = data.totalEntries;
+    document.getElementById('scrapPendingCount').textContent = data.pendingApprovals;
+    document.getElementById('scrapApprovedCount').textContent = data.approvedEntries;
+    document.getElementById('scrapTotalValue').textContent = fmt(data.totalScrapValue);
+    
+    const entries = await api('/api/scrap/entries?status=approved');
+    const tbody = entries.slice(0, 10).map(e => `<tr>
+      <td>${fmtDate(e.createdAt)}</td>
+      <td>${escHtml(e.companyName)}</td>
+      <td>${escHtml(e.productName)}</td>
+      <td>${e.weight} KG</td>
+      <td>${fmt(e.totalAmount)}</td>
+    </tr>`).join('');
+    
+    document.getElementById('scrapDashTable').innerHTML = `
+      <div class="table-responsive"><table class="table cds-table mb-0">
+        <thead><tr><th>Date</th><th>Company</th><th>Product</th><th>Weight</th><th>Amount</th></tr></thead>
+        <tbody>${tbody || '<tr><td colspan="5" class="text-center">No approved entries</td></tr>'}</tbody>
+      </table></div>`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadScrapProducts() {
+  const el = document.getElementById('scrapProductList');
+  if (!el) return;
+  try {
+    const prods = await api('/api/scrap/products');
+    el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
+      <thead><tr><th>Product Name</th><th>Price/KG</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${prods.map(p => `<tr>
+          <td>${escHtml(p.name)}</td>
+          <td>${fmt(p.pricePerKg)}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="editScrapProductPrice('${p._id}', ${p.pricePerKg})">Update Price</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteScrapProduct('${p._id}')">Delete</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="3" class="text-center">No products found</td></tr>'}
+      </tbody>
+    </table></div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+  }
+}
+
+async function editScrapProductPrice(id, currentPrice) {
+  const newPrice = prompt('Enter new price per KG (₹):', currentPrice);
+  if (newPrice === null) return;
+  const priceNum = Number(newPrice);
+  if (isNaN(priceNum) || priceNum < 0) return alert('Invalid price entered');
+  
+  try {
+    await api(`/api/scrap/products/${id}`, 'PUT', { pricePerKg: priceNum });
+    loadScrapProducts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function addScrapProduct() {
+  const name = document.getElementById('scrapProductName').value;
+  const price = document.getElementById('scrapProductPrice').value;
+  if (!name || !price) return showAlert('scrapProductAlert', 'Enter name and price');
+  try {
+    await api('/api/scrap/products', 'POST', { name, pricePerKg: price });
+    document.getElementById('scrapProductName').value = '';
+    document.getElementById('scrapProductPrice').value = '';
+    showAlert('scrapProductAlert', 'Product added', 'success');
+    loadScrapProducts();
+  } catch (err) {
+    showAlert('scrapProductAlert', err.message);
+  }
+}
+
+async function deleteScrapProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  try {
+    await api(`/api/scrap/products/${id}`, 'DELETE');
+    loadScrapProducts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+let allScrapProducts = [];
+async function loadScrapProductDropdown() {
+  const sel = document.getElementById('scrapProductSelect');
+  if (!sel) return;
+  try {
+    allScrapProducts = await api('/api/scrap/products');
+    sel.innerHTML = `<option value="">Select Product</option>` + 
+      allScrapProducts.map(p => `<option value="${p._id}">${escHtml(p.name)} (₹${p.pricePerKg}/kg)</option>`).join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function calcScrapTotal() {
+  const sel = document.getElementById('scrapProductSelect');
+  const weight = document.getElementById('scrapWeight').value;
+  if (!sel || !sel.value) return;
+  const prod = allScrapProducts.find(p => p._id === sel.value);
+  if (prod) {
+    document.getElementById('scrapPriceKg').value = prod.pricePerKg;
+    if (weight) {
+      document.getElementById('scrapTotalAmount').value = (Number(weight) * prod.pricePerKg).toFixed(2);
+    } else {
+      document.getElementById('scrapTotalAmount').value = '';
+    }
+  }
+}
+
+async function submitScrapEntry() {
+  const companyName = document.getElementById('scrapCompany').value;
+  const vehicleNumber = document.getElementById('scrapVehicle').value;
+  const ownerName = document.getElementById('scrapOwner').value;
+  const productId = document.getElementById('scrapProductSelect').value;
+  const weight = document.getElementById('scrapWeight').value;
+  
+  if (!companyName || !vehicleNumber || !ownerName || !productId || !weight) {
+    return showAlert('scrapEntryAlert', 'All fields are required');
+  }
+  
+  try {
+    await api('/api/scrap/entries', 'POST', { companyName, vehicleNumber, ownerName, productId, weight });
+    showAlert('scrapEntryAlert', 'Entry submitted successfully', 'success');
+    document.getElementById('scrapCompany').value = '';
+    document.getElementById('scrapVehicle').value = '';
+    document.getElementById('scrapOwner').value = '';
+    document.getElementById('scrapProductSelect').value = '';
+    document.getElementById('scrapWeight').value = '';
+    document.getElementById('scrapPriceKg').value = '';
+    document.getElementById('scrapTotalAmount').value = '';
+    loadScrapMyEntries();
+  } catch (err) {
+    showAlert('scrapEntryAlert', err.message);
+  }
+}
+
+async function loadScrapMyEntries() {
+  const el = document.getElementById('scrapMyEntryList');
+  if (!el) return;
+  try {
+    const entries = await api('/api/scrap/entries?status=pending');
+    el.innerHTML = _renderScrapTable(entries, false);
+  } catch (err) {
+    el.innerHTML = err.message;
+  }
+}
+
+async function loadScrapMyHistory() {
+  const el = document.getElementById('scrapHistoryList');
+  if (!el) return;
+  try {
+    const entries = await api('/api/scrap/entries');
+    el.innerHTML = _renderScrapTable(entries, false);
+  } catch (err) {
+    el.innerHTML = err.message;
+  }
+}
+
+async function loadScrapApprovals() {
+  const el = document.getElementById('scrapPendingList');
+  if (!el) return;
+  try {
+    const entries = await api('/api/scrap/entries?status=pending');
+    el.innerHTML = _renderScrapTable(entries, true);
+  } catch (err) {
+    el.innerHTML = err.message;
+  }
+}
+
+async function reviewScrap(id, action) {
+  try {
+    let body = {};
+    if (action === 'reject') {
+      const r = prompt('Reason for rejection:');
+      if (r === null) return;
+      body.reason = r;
+    }
+    await api(`/api/scrap/entries/${id}/${action}`, 'POST', body);
+    showAlert('scrapApprovalAlert', `Entry ${action}ed successfully`, 'success');
+    loadScrapApprovals();
+  } catch (err) {
+    showAlert('scrapApprovalAlert', err.message);
+  }
+}
+
+async function loadScrapReports() {
+  const el = document.getElementById('scrapReportList');
+  if (!el) return;
+  const d = document.getElementById('scrapReportDate').value;
+  try {
+    const url = d ? `/api/scrap/entries?status=approved&date=${d}` : '/api/scrap/entries?status=approved';
+    const entries = await api(url);
+    el.innerHTML = _renderScrapTable(entries, false);
+  } catch (err) {
+    el.innerHTML = err.message;
+  }
+}
+
+function printScrapReport() {
+  const d = document.getElementById('scrapReportDate').value;
+  const title = d ? `Scrap Report - ${d}` : 'Scrap Report - All Time';
+  const html = document.getElementById('scrapReportList').innerHTML;
+  const w = window.open();
+  w.document.write(`
+    <html><head><title>${title}</title>
+    <style>
+      @page { size: landscape; }
+      body { font-family: sans-serif; padding: 20px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { background-color: #f2f2f2; }
+    </style>
+    </head><body>
+      <h2>${title}</h2>
+      ${html}
+      <script>window.print();</script>
+    </body></html>
+  `);
+  w.document.close();
+}
+
+function _renderScrapTable(entries, isApproval) {
+  if (!entries.length) return '<div class="alert alert-info">No records found.</div>';
+  return `<div class="table-responsive"><table class="table cds-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Company</th>
+        <th>Vehicle</th>
+        <th>Product</th>
+        <th>Weight</th>
+        <th>Total (₹)</th>
+        ${isApproval ? '<th>Action</th>' : ''}
+      </tr>
+    </thead>
+    <tbody>
+      ${entries.map(e => `
+        <tr>
+          <td>${fmtDateTime(e.createdAt)}</td>
+          <td>${statusBadge(e.status)}</td>
+          <td>${escHtml(e.companyName)}<br><small class="text-muted">${escHtml(e.ownerName)}</small></td>
+          <td>${escHtml(e.vehicleNumber)}</td>
+          <td>${escHtml(e.productName)}<br><small class="text-muted">₹${e.pricePerKg}/kg</small></td>
+          <td><strong>${e.weight} KG</strong></td>
+          <td><strong>${fmt(e.totalAmount)}</strong></td>
+          ${isApproval ? `<td>
+            <button class="btn btn-sm btn-success mb-1 w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
+            <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
+          </td>` : ''}
+        </tr>
+      `).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+// ─── CHANGE PASSWORD ─────────────────────────────────────────────────────────
+function showChangePasswordModal() {
+  let modalEl = document.getElementById('cdsChangePasswordOverlay');
+  if (!modalEl) {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div id="cdsChangePasswordOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div class="cds-card form-structured" style="width: 100%; max-width: 400px; margin: 20px; position: relative;">
+          <button onclick="hideChangePasswordModal()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;">&times;</button>
+          <div class="card-header-cds mb-3">
+            <h5 style="margin:0;">Change Password</h5>
+          </div>
+          <div id="changePasswordAlert"></div>
+          <div class="mb-3">
+            <label class="form-label">Current Password</label>
+            <input type="password" id="changePasswordCurrent" class="form-control cds-input" />
+          </div>
+          <div class="mb-4">
+            <label class="form-label">New Password</label>
+            <input type="password" id="changePasswordNew" class="form-control cds-input" />
+          </div>
+          <button class="btn cds-btn-primary w-100" id="btnSubmitChangePassword" onclick="submitChangePassword()">Update Password</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div.firstElementChild);
+    modalEl = document.getElementById('cdsChangePasswordOverlay');
+  }
+  document.getElementById('changePasswordCurrent').value = '';
+  document.getElementById('changePasswordNew').value = '';
+  document.getElementById('changePasswordAlert').innerHTML = '';
+  modalEl.style.display = 'flex';
+}
+
+function hideChangePasswordModal() {
+  const modalEl = document.getElementById('cdsChangePasswordOverlay');
+  if (modalEl) modalEl.style.display = 'none';
+}
+
+async function submitChangePassword() {
+  const currentPassword = document.getElementById('changePasswordCurrent').value;
+  const newPassword = document.getElementById('changePasswordNew').value;
+  if (!currentPassword || !newPassword) {
+    showAlert('changePasswordAlert', 'Please enter both current and new password.');
+    return;
+  }
+  const btn = document.getElementById('btnSubmitChangePassword');
+  try {
+    if (btn) btn.disabled = true;
+    await api('/api/change-password', 'POST', { currentPassword, newPassword });
+    showAlert('changePasswordAlert', 'Password updated! Logging out...', 'success');
+    setTimeout(() => doLogout(), 1500);
+  } catch (err) {
+    showAlert('changePasswordAlert', err.message);
+    if (btn) btn.disabled = false;
+  }
 }
 
 // ─── Page Init ───────────────────────────────────────────────────────────────

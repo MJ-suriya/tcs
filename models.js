@@ -241,6 +241,42 @@ vehicleLogDraftSchema.pre('save', function updateVehicleDraftModified(next) {
   next();
 });
 
+const scrapProductSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true, unique: true },
+  pricePerKg: { type: Number, required: true, min: 0 },
+  createdBy: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+scrapProductSchema.pre('save', function updateScrapProductModified(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+const scrapEntrySchema = new mongoose.Schema({
+  companyName: { type: String, required: true, trim: true },
+  vehicleNumber: { type: String, required: true, trim: true, uppercase: true },
+  ownerName: { type: String, required: true, trim: true },
+  product: { type: mongoose.Schema.Types.ObjectId, ref: 'ScrapProduct', required: true },
+  productName: { type: String, required: true },
+  weight: { type: Number, required: true, min: 0 },
+  pricePerKg: { type: Number, required: true, min: 0 },
+  totalAmount: { type: Number, required: true, min: 0 },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  rejectReason: { type: String, trim: true, default: '' },
+  createdBy: { type: String, required: true },
+  reviewedBy: { type: String },
+  reviewedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+scrapEntrySchema.pre('save', function updateScrapEntryModified(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
 const User = mongoose.model('User', userSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const DailyRecord = mongoose.model('DailyRecord', dailyRecordSchema);
@@ -250,5 +286,7 @@ const StockMovement = mongoose.model('StockMovement', stockMovementSchema);
 const VehicleProfile = mongoose.model('VehicleProfile', vehicleProfileSchema);
 const VehicleLog = mongoose.model('VehicleLog', vehicleLogSchema);
 const VehicleLogDraft = mongoose.model('VehicleLogDraft', vehicleLogDraftSchema);
+const ScrapProduct = mongoose.model('ScrapProduct', scrapProductSchema);
+const ScrapEntry = mongoose.model('ScrapEntry', scrapEntrySchema);
 
-module.exports = { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog, VehicleLogDraft };
+module.exports = { User, Transaction, DailyRecord, InventoryProduct, StockRequest, StockMovement, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry };
