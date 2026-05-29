@@ -99,7 +99,8 @@
           <div class="user-role">ERP User</div>
         </div>
       </div>
-      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()"
+        style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
       <button class="btn cds-btn-logout mt-2 w-100" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
@@ -123,12 +124,12 @@
               <div class="stat-value" id="currentBal">₹0</div>
             </div>
           </div>
-          <div class="col-sm-6 col-xl-3">
+          <!-- <div class="col-sm-6 col-xl-3">
             <div class="stat-card credits">
               <div class="stat-label">Total Credits</div>
               <div class="stat-value" id="totalCred">₹0</div>
             </div>
-          </div>
+          </div> -->
           <div class="col-sm-6 col-xl-3">
             <div class="stat-card expenses">
               <div class="stat-label">Total Expenses</div>
@@ -313,7 +314,8 @@
                     class="form-control cds-input" value="0" step="0.01" min="0" oninput="calcDenom()" /></div>
               </div>
               <div class="denom-total mt-3">Main Balance Total: <strong id="denomTotalDisplay">₹0</strong></div>
-              <div class="denom-total mt-1">Combined Total Balance (Main + ARS): <strong id="combinedTotalDisplay">₹0</strong></div>
+              <div class="denom-total mt-1">Combined Total Balance (Main + ARS): <strong
+                  id="combinedTotalDisplay">₹0</strong></div>
               <button class="btn cds-btn-primary w-100 mt-3" onclick="closeDay()">Close Day</button>
             </div>
           </div>
@@ -594,18 +596,60 @@
       </div>
       <div id="section-scrapDashboard" class="d-none">
         <div class="row g-4 mb-4">
-          <div class="col-sm-6 col-xl-3"><div class="stat-card current"><div class="stat-label">Total Scrap Entries</div><div class="stat-value" id="scrapTotalEntries">0</div></div></div>
-          <div class="col-sm-6 col-xl-3"><div class="stat-card credits"><div class="stat-label">Pending Approvals</div><div class="stat-value" id="scrapPendingCount">0</div></div></div>
-          <div class="col-sm-6 col-xl-3"><div class="stat-card expenses"><div class="stat-label">Approved Entries</div><div class="stat-value" id="scrapApprovedCount">0</div></div></div>
-          <div class="col-sm-6 col-xl-3"><div class="stat-card credits"><div class="stat-label">Total Scrap Value</div><div class="stat-value" id="scrapTotalValue">₹0</div></div></div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="stat-card current">
+              <div class="stat-label">Total Scrap Entries</div>
+              <div class="stat-value" id="scrapTotalEntries">0</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="stat-card credits">
+              <div class="stat-label">Pending Approvals</div>
+              <div class="stat-value" id="scrapPendingCount">0</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="stat-card expenses">
+              <div class="stat-label">Approved Entries</div>
+              <div class="stat-value" id="scrapApprovedCount">0</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="stat-card credits">
+              <div class="stat-label">Total Scrap Value</div>
+              <div class="stat-value" id="scrapTotalValue">₹0</div>
+            </div>
+          </div>
         </div>
-        <div class="cds-card"><div class="card-header-cds"><h5>Recent Approved Scrap</h5></div><div id="scrapDashTable"></div></div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>Recent Approved Scrap</h5>
+          </div>
+          <div id="scrapDashTable"></div>
+        </div>
       </div>
       <div id="section-scrapApprovals" class="d-none">
-        <div class="cds-card mb-4"><div class="card-header-cds"><h5>Pending Scrap Approvals</h5><button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻ Refresh</button></div><div id="scrapApprovalAlert"></div><div id="scrapPendingList"></div></div>
+        <div class="cds-card mb-4">
+          <div class="card-header-cds">
+            <h5>Pending Scrap Approvals</h5><button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻
+              Refresh</button>
+          </div>
+          <div id="scrapApprovalAlert"></div>
+          <div id="scrapPendingList"></div>
+        </div>
       </div>
       <div id="section-scrapReports" class="d-none">
-        <div class="cds-card"><div class="card-header-cds"><h5>Scrap Reports</h5><div class="d-flex gap-2"><input type="date" id="scrapReportDate" class="form-control cds-input sm" style="width: auto;" onchange="loadScrapReports()" /><button class="btn cds-btn-sm" onclick="printScrapReport()">🖨️ Print</button><button class="btn cds-btn-sm" onclick="loadScrapReports()">↻ Refresh</button></div></div><div id="scrapReportAlert"></div><div id="scrapReportList"></div></div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>Scrap Reports</h5>
+            <div class="d-flex gap-2"><input type="date" id="scrapReportDate" class="form-control cds-input sm"
+                style="width: auto;" onchange="loadScrapReports()" /><button class="btn cds-btn-sm"
+                onclick="printScrapReport()">🖨️ Print</button><button class="btn cds-btn-sm"
+                onclick="loadScrapReports()">↻ Refresh</button></div>
+          </div>
+          <div id="scrapReportAlert"></div>
+          <div id="scrapReportList"></div>
+        </div>
       </div>
       <div id="section-users" class="d-none">
         <div class="row g-4">
