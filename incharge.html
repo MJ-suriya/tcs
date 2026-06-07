@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Textile ERP — Incharge</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="dashboard-page">
+  <div class="cds-sidebar" id="sidebar">
+    <div class="sidebar-brand"><span class="brand-rupee">₹</span><span class="brand-name">Textile ERP</span></div>
+    <nav class="sidebar-nav">
+      <div class="text-uppercase small px-2 pt-2 text-muted">Inventory</div>
+      <a href="#" class="nav-link" onclick="showSection('inventoryDashboard')"><span class="nav-icon">•</span> Dashboard</a>
+      <a href="#" class="nav-link active" onclick="showSection('inventoryRequests')"><span class="nav-icon">•</span> Requests</a>
+      <a href="#" class="nav-link" onclick="showSection('inventoryMovements')"><span class="nav-icon">•</span> Movements</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge"><span class="user-avatar manager-avatar" id="sidebarAvatar">I</span><div><div class="user-name" id="sidebarUsername">Incharge</div><div class="user-role">Incharge</div></div></div>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="cds-main">
+    <div class="cds-topbar"><button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">☰</button><h2 class="topbar-title" id="pageTitle">Inventory - Stock Requests</h2><div class="topbar-date" id="todayDate"></div></div>
+    <div class="cds-content" id="mainContent">
+      <div id="section-inventoryDashboard" class="d-none">
+        <div id="invDashAlert"></div>
+        <div class="row g-4 mb-4">
+          <div class="col-sm-6 col-xl-3"><div class="stat-card current"><div class="stat-label">Total Products</div><div class="stat-value" id="invTotalProducts">0</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="stat-card credits"><div class="stat-label">Total Stock</div><div class="stat-value" id="invTotalStock">0</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="stat-card expenses"><div class="stat-label">Pending Requests</div><div class="stat-value" id="invPendingRequests">0</div></div></div>
+        </div>
+        <div class="cds-card"><div class="card-header-cds"><h5>Product Table</h5></div><div id="invProductTable"></div></div>
+      </div>
+      <div id="section-inventoryRequests">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds"><h5>Create Request</h5></div>
+              <div id="invRequestAlert"></div>
+              <div class="mb-3"><label class="form-label">Product</label><select id="reqProduct" class="form-select cds-input"></select></div>
+              <div class="mb-3"><label class="form-label">Quantity</label><input id="reqQty" type="number" min="1" class="form-control cds-input" /></div>
+              <div class="mb-4"><label class="form-label">Section</label><select id="reqSection" class="form-select cds-input"><option value="">Select</option><option>Mens</option><option>Womens</option><option>Kids</option></select></div>
+              <button class="btn cds-btn-primary w-100" onclick="createStockRequest()">Submit Request</button>
+            </div>
+          </div>
+          <div class="col-lg-8"><div class="cds-card"><div class="card-header-cds"><h5>My Requests</h5></div><div id="invRequestTable"></div></div></div>
+        </div>
+      </div>
+      <div id="section-inventoryMovements" class="d-none"><div class="cds-card"><div class="card-header-cds"><h5>Movement History</h5></div><div id="invMoveAlert"></div><div id="invMovementTable"></div></div></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

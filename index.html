@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<<<<<<< HEAD
 
 <head>
   <meta charset="UTF-8" />
@@ -39,6 +40,43 @@
   </style>
 </head>
 
+=======
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit Debit System — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .brand-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+/* Logo styling */
+.logo-img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+
+  /* Make it match your dark theme */
+  filter: brightness(0) invert(1);
+
+  /* Soft glow effect like premium apps */
+  opacity: 0.9;
+  transition: 0.3s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.08);
+  opacity: 1;
+}
+  </style>
+</head>
+>>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 <body class="login-page">
   <div class="login-split">
     <div class="login-brand">
@@ -56,6 +94,7 @@
         <p class="form-sub">Sign in to your account</p>
         <div id="loginAlert"></div>
         <div class="mb-4">
+<<<<<<< HEAD
           <label class="form-label fw-500">Username or EC.no</label>
           <input type="text" id="username" class="form-control cds-input" placeholder="Enter username"
             autocomplete="username" />
@@ -64,6 +103,14 @@
           <label class="form-label fw-500">Password</label>
           <input type="password" id="password" class="form-control cds-input" placeholder="Enter password"
             autocomplete="current-password" />
+=======
+          <label class="form-label fw-500">Username</label>
+          <input type="text" id="username" class="form-control cds-input" placeholder="Enter username" autocomplete="username" />
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-500">Password</label>
+          <input type="password" id="password" class="form-control cds-input" placeholder="Enter password" autocomplete="current-password" />
+>>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
         </div>
         <button class="btn cds-btn-primary w-100" onclick="doLogin()">Sign In</button>
       </div>
@@ -71,5 +118,9 @@
   </div>
   <script src="app.js"></script>
 </body>
+<<<<<<< HEAD
 
 </html>
+=======
+</html>
+>>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
