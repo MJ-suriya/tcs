@@ -3,7 +3,6 @@ const fmt = (n) => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDi
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 const fmtDateTime = (d) => new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-<<<<<<< HEAD
 function formatDateTime12h(dateInput) {
   if (!dateInput) return '';
   const d = new Date(dateInput);
@@ -22,8 +21,6 @@ function formatDateTime12h(dateInput) {
   return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
 }
 
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 function showAlert(elId, msg, type = 'danger') {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -45,6 +42,136 @@ function setLoading(elId, message = 'Loading...') {
   const el = document.getElementById(elId);
   if (!el) return;
   el.innerHTML = loadingMarkup(message);
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+function showCenteredSuccess(message) {
+  const overlay = document.createElement('div');
+  overlay.id = 'centeredSuccessOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(15, 25, 35, 0.4)';
+  overlay.style.zIndex = '99999';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.backdropFilter = 'blur(4px)';
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 0.2s ease-out';
+  
+  const card = document.createElement('div');
+  card.style.background = '#ffffff';
+  card.style.padding = '30px 40px';
+  card.style.borderRadius = '16px';
+  card.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
+  card.style.textAlign = 'center';
+  card.style.maxWidth = '360px';
+  card.style.width = '90%';
+  card.style.transform = 'scale(0.85)';
+  card.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  
+  card.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+    <h5 style="margin-bottom: 6px; font-weight: 700; color: #1a2233; font-family: 'DM Sans', sans-serif;">Success!</h5>
+    <p style="color: #6b7a99; margin-bottom: 0; font-size: 13.5px; line-height: 1.5; font-family: 'DM Sans', sans-serif;">${escHtml(message)}</p>
+  `;
+  
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  
+  setTimeout(() => {
+    overlay.style.opacity = '1';
+    card.style.transform = 'scale(1)';
+  }, 50);
+  
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    card.style.transform = 'scale(0.85)';
+    setTimeout(() => {
+      overlay.remove();
+    }, 200);
+  }, 2300);
+}
+
+function showCenteredError(message) {
+  const overlay = document.createElement('div');
+  overlay.id = 'centeredErrorOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(15, 25, 35, 0.4)';
+  overlay.style.zIndex = '99999';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.backdropFilter = 'blur(4px)';
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 0.2s ease-out';
+  
+  const card = document.createElement('div');
+  card.style.background = '#ffffff';
+  card.style.padding = '30px 40px';
+  card.style.borderRadius = '16px';
+  card.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
+  card.style.textAlign = 'center';
+  card.style.maxWidth = '360px';
+  card.style.width = '90%';
+  card.style.transform = 'scale(0.85)';
+  card.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  
+  card.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+    <h5 style="margin-bottom: 6px; font-weight: 700; color: #dc3545; font-family: 'DM Sans', sans-serif;">Error!</h5>
+    <p style="color: #6b7a99; margin-bottom: 20px; font-size: 13.5px; line-height: 1.5; font-family: 'DM Sans', sans-serif;">${escHtml(message)}</p>
+    <button id="closeCenteredErrorBtn" class="btn btn-danger w-100" style="padding: 10px; border-radius: 8px; font-weight: 600; font-family: 'DM Sans', sans-serif; background-color: #dc3545; border-color: #dc3545;">OK</button>
+  `;
+  
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  
+  const dismiss = () => {
+    overlay.style.opacity = '0';
+    card.style.transform = 'scale(0.85)';
+    setTimeout(() => {
+      overlay.remove();
+    }, 200);
+  };
+  
+  setTimeout(() => {
+    overlay.style.opacity = '1';
+    card.style.transform = 'scale(1)';
+  }, 50);
+  
+  const closeBtn = card.querySelector('#closeCenteredErrorBtn');
+  closeBtn.addEventListener('click', dismiss);
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      dismiss();
+    }
+  });
+  
+  setTimeout(() => {
+    if (document.body.contains(overlay)) {
+      dismiss();
+    }
+  }, 5000);
 }
 
 function statusBadge(status) {
@@ -108,12 +235,7 @@ async function doLogin() {
   if (!username || !password) { showAlert('loginAlert', 'Please enter username and password.'); return; }
   try {
     const data = await api('/api/login', 'POST', { username, password });
-<<<<<<< HEAD
     if (data.role === 'security') window.location.href = '/security';
-=======
-    if (data.role === 'incharge') window.location.href = '/incharge';
-    else if (data.role === 'security') window.location.href = '/security';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     else if (data.role === 'manager') window.location.href = '/manager';
     else if (data.role === 'admin') window.location.href = '/admin';
     else window.location.href = '/';
@@ -150,42 +272,26 @@ function setNavVisibility(sectionName, visible) {
 }
 
 function setupManagerMenu() {
-<<<<<<< HEAD
   // Manager should not see users (admin-only)
   ['users'].forEach((section) => setNavVisibility(section, false));
   ['vehicleApprovals', 'vehicleReports', 'vehicleExpenses', 'vehicleFuel'].forEach((section) => setNavVisibility(section, true));
-=======
-  // Manager can approve/review, but should not see admin-only CDB entry forms.
-  ['credit', 'expense', 'suspense', 'users'].forEach((section) => setNavVisibility(section, false));
-  ['transactions', 'inventoryDashboard', 'inventoryAddProduct', 'inventoryRequests', 'inventoryApprovals', 'inventoryIssue', 'inventoryMovements', 'vehicleApprovals', 'vehicleReports']
-    .forEach((section) => setNavVisibility(section, true));
-  setNavVisibility('daily', true);
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   setNavVisibility('vehicleEntry', false);
+
+  // Set manager labels and column widths for list-only layouts
+  const fuelNav = document.getElementById('nav-vehicleFuel');
+  if (fuelNav) fuelNav.textContent = 'Fuel Logs';
+  const expenseNav = document.getElementById('nav-vehicleExpenses');
+  if (expenseNav) expenseNav.textContent = 'Expenses';
+
+  const fuelCol = document.getElementById('fuelHistoryCardCol');
+  if (fuelCol) fuelCol.className = 'col-12';
+  const expenseCol = document.getElementById('expenseLogCardCol');
+  if (expenseCol) expenseCol.className = 'col-12';
 }
 
 function setupSecurityMenu() {
-<<<<<<< HEAD
   ['users', 'vehicleApprovals', 'vehicleReports'].forEach((section) => setNavVisibility(section, false));
   ['vehicleEntry', 'vehicleHistory', 'vehicleExpenses', 'vehicleFuel'].forEach((section) => setNavVisibility(section, true));
-=======
-  ['dashboard', 'credit', 'expense', 'suspense', 'transactions', 'daily', 'inventoryDashboard', 'inventoryAddProduct',
-    'inventoryRequests', 'inventoryApprovals', 'inventoryIssue', 'inventoryMovements', 'users', 'vehicleApprovals', 'vehicleReports']
-    .forEach((section) => setNavVisibility(section, false));
-  ['vehicleEntry', 'vehicleHistory'].forEach((section) => setNavVisibility(section, true));
-}
-
-function setupManagerDailyView() {
-  const dailySection = document.getElementById('section-daily');
-  if (!dailySection) return;
-
-  // Manager can view daily status/history but cannot submit denomination close.
-  dailySection.querySelectorAll('.denom-grid, .denom-total, button[onclick="closeDay()"]')
-    .forEach((el) => el.classList.add('d-none'));
-
-  const header = dailySection.querySelector('.form-structured .card-header-cds h5');
-  if (header) header.textContent = 'Daily Closing (View Only)';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 }
 
 function showSection(name) {
@@ -197,28 +303,11 @@ function showSection(name) {
     if (l.getAttribute('onclick')?.includes(name)) l.classList.add('active');
   });
   const titles = {
-<<<<<<< HEAD
     users: 'Admin - User Management',
     vehicleProfiles: 'Vehicle Log - Profile Setup',
     vehicleEntry: 'Vehicle Log - New Entry',
     vehicleFuel: 'Vehicle Log - Add Fuel',
     vehicleExpenses: 'Vehicle Log - Expenses',
-=======
-    dashboard: 'CDB Dashboard',
-    credit: 'Petty Cash - Credit Entries',
-    expense: 'Petty Cash - Expenses',
-    suspense: 'Petty Cash - Suspense',
-    transactions: 'Petty Cash - Approvals',
-    daily: 'Petty Cash - Daily Closing',
-    inventoryDashboard: 'Inventory Dashboard',
-    inventoryAddProduct: 'Inventory - Add Product',
-    inventoryRequests: 'Inventory - Stock Requests',
-    inventoryApprovals: 'Inventory - Approvals',
-    inventoryIssue: 'Inventory - Stock Issue',
-    inventoryMovements: 'Inventory - Movement History',
-    users: 'Admin - User Management',
-    vehicleEntry: 'Vehicle Log - New Entry',
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     vehicleHistory: 'Vehicle Log - My Entries',
     vehicleApprovals: 'Vehicle Log - Approvals',
     vehicleReports: 'Vehicle Log - Reports'
@@ -232,7 +321,6 @@ function showSection(name) {
 }
 
 function loadSectionData(name) {
-<<<<<<< HEAD
   if (name === 'users') { loadBranchesDropdowns(); loadUsers(); }
   else if (name === 'fuelPrices') loadFuelPricesAdmin();
   else if (name === 'vehicleProfiles') loadVehicleProfilesAdmin();
@@ -249,30 +337,6 @@ function loadSectionData(name) {
   else if (name === 'scrapProducts') loadScrapProducts();
   else if (name === 'scrapEntry') {
     initScrapEntryForm();
-=======
-  if (name === 'dashboard') loadDashboard();
-  else if (name === 'credit') loadCredits();
-  else if (name === 'expense') loadExpenses();
-  else if (name === 'suspense') loadSuspenseList();
-  else if (name === 'daily') loadDaily();
-  else if (name === 'transactions') loadTransactions();
-  else if (name === 'inventoryDashboard') loadInventoryDashboard();
-  else if (name === 'inventoryAddProduct') loadInventoryProducts();
-  else if (name === 'inventoryRequests') loadInventoryRequests();
-  else if (name === 'inventoryApprovals') loadInventoryApprovals();
-  else if (name === 'inventoryIssue') loadInventoryIssue();
-  else if (name === 'inventoryMovements') loadInventoryMovements();
-  else if (name === 'users') loadUsers();
-  else if (name === 'vehicleEntry') loadVehicleEntryForm();
-  else if (name === 'vehicleHistory') loadVehicleHistory();
-  else if (name === 'vehicleApprovals') loadVehicleApprovals();
-  else if (name === 'vehicleReports') loadVehicleReports();
-  else if (name === 'scrapDashboard') initScrapDashboard();
-  else if (name === 'scrapProducts') loadScrapProducts();
-  else if (name === 'scrapEntry') {
-    loadScrapProductDropdown();
-    loadScrapMyEntries();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   }
   else if (name === 'scrapHistory') loadScrapMyHistory();
   else if (name === 'scrapApprovals') loadScrapApprovals();
@@ -285,10 +349,7 @@ async function initAdmin() {
     const me = await api('/api/me');
     if (!['admin', 'manager'].includes(me.role)) { window.location.href = '/'; return; }
     currentUserRole = me.role;
-<<<<<<< HEAD
     currentUser = me;
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     const u = document.getElementById('sidebarUsername');
     const a = document.getElementById('sidebarAvatar');
     if (u) u.textContent = me.username;
@@ -296,16 +357,11 @@ async function initAdmin() {
     if (me.role !== 'admin') {
       document.querySelectorAll('.admin-only').forEach((el) => el.classList.add('d-none'));
       setupManagerMenu();
-<<<<<<< HEAD
-=======
-      setupManagerDailyView();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     }
   } catch {
     window.location.href = '/';
     return;
   }
-<<<<<<< HEAD
   if (currentUserRole === 'manager') {
     showSection('vehicleApprovals');
   } else {
@@ -333,648 +389,6 @@ async function initSecurity() {
 }
 
 // Users
-=======
-  showSection('dashboard');
-}
-
-// Dashboard
-async function loadDashboard() {
-  const pageRoot = document.getElementById('section-dashboard');
-  setLoading('recentTxList', 'Loading recent transactions...');
-  setLoading('dashPendingList', 'Loading pending items...');
-  try {
-    const bal = await api('/api/balance');
-    document.getElementById('openingBal').textContent = fmt(bal.opening || 0);
-    document.getElementById('currentBal').textContent = fmt(bal.balance || 0);
-    const totalCredEl = document.getElementById('totalCred');
-    if (totalCredEl) totalCredEl.textContent = fmt(bal.totalCredits || 0);
-    document.getElementById('totalExp').textContent = fmt(bal.totalExpenses || 0);
-    document.getElementById('totalPen').textContent = fmt(bal.totalPenalties || 0);
-    const suspenseArsEl = document.getElementById('suspenseArsTotal');
-    if (suspenseArsEl) suspenseArsEl.textContent = fmt(bal.suspenseArsTotal || 0);
-    const pendingSettlementEl = document.getElementById('pendingSettlementCount');
-    if (pendingSettlementEl) pendingSettlementEl.textContent = bal.totalPendingSettlements || 0;
-  } catch (e) {
-    console.error(e);
-    if (pageRoot) {
-      const existing = document.getElementById('dashLoadAlert');
-      if (!existing) {
-        const alert = document.createElement('div');
-        alert.id = 'dashLoadAlert';
-        alert.className = 'alert alert-warning py-2 mb-3';
-        alert.textContent = 'Could not load dashboard balances.';
-        pageRoot.prepend(alert);
-      }
-    }
-  }
-
-  try {
-    const txs = await api('/api/transactions');
-    const recent = txs.slice(0, 6);
-    const el = document.getElementById('recentTxList');
-    if (!recent.length) { el.innerHTML = '<p class="text-muted small px-2">No transactions yet.</p>'; return; }
-    el.innerHTML = recent.map(t => `
-      <div class="tx-row">
-        <div class="tx-info">
-          <div class="tx-desc">${escHtml(t.description)}</div>
-          <div class="tx-meta">${fmtDate(t.createdAt)} · ${typeBadge(t.type)}</div>
-        </div>
-        <div class="tx-right">
-          <div class="tx-amount">${fmt(t.amount)}</div>
-          ${statusBadge(t.status)}
-        </div>
-      </div>`).join('');
-  } catch (e) {
-    console.error(e);
-    const el = document.getElementById('recentTxList');
-    if (el) el.innerHTML = '<p class="text-muted small px-2">Could not load recent transactions.</p>';
-  }
-
-  try {
-    const pending = await api('/api/transactions/pending');
-    let pendingVehicleLogs = 0;
-    if (currentUserRole === 'manager' || currentUserRole === 'admin') {
-      try {
-        const v = await api('/api/vehicle-logs/pending-count');
-        pendingVehicleLogs = v.pendingVehicleLogs || 0;
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    const el = document.getElementById('dashPendingList');
-    if (!pending.length && !pendingVehicleLogs) { el.innerHTML = '<p class="text-muted small px-2">No pending items.</p>'; return; }
-    const financeRows = pending.map(t => `
-      <div class="tx-row">
-        <div class="tx-info">
-          <div class="tx-desc">${escHtml(t.description)}</div>
-          <div class="tx-meta">${fmtDate(t.createdAt)} · ${typeBadge(t.type)}</div>
-        </div>
-        <div class="tx-right">
-          <div class="tx-amount">${fmt(t.amount)}</div>
-          ${statusBadge(t.status)}
-        </div>
-      </div>`).join('');
-    const vehicleRow = pendingVehicleLogs ? `<div class="tx-row">
-      <div class="tx-info">
-        <div class="tx-desc">Vehicle Log Book</div>
-        <div class="tx-meta">Pending manager approvals</div>
-      </div>
-      <div class="tx-right">
-        <div class="tx-amount">${pendingVehicleLogs}</div>
-        <span class="cds-badge badge-pending">PENDING</span>
-      </div>
-    </div>` : '';
-    el.innerHTML = financeRows + vehicleRow;
-  } catch (e) {
-    console.error(e);
-    const el = document.getElementById('dashPendingList');
-    if (el) el.innerHTML = '<p class="text-muted small px-2">Could not load pending items.</p>';
-  }
-}
-
-// Credits
-async function addCredit() {
-  const description = document.getElementById('credDesc')?.value?.trim();
-  const amount = parseFloat(document.getElementById('credAmount')?.value);
-  if (!description) { showAlert('creditAlert', 'Please enter a description.'); return; }
-  if (!amount || amount <= 0) { showAlert('creditAlert', 'Please enter a valid amount.'); return; }
-  try {
-    await api('/api/credit', 'POST', { description, amount });
-    showAlert('creditAlert', 'Credit added successfully.', 'success');
-    document.getElementById('credDesc').value = '';
-    document.getElementById('credAmount').value = '';
-    loadCredits();
-    loadDashboard();
-  } catch (err) {
-    showAlert('creditAlert', err.message);
-  }
-}
-
-async function loadCredits() {
-  try {
-    const txs = await api('/api/transactions?type=credit');
-    const el = document.getElementById('creditList');
-    if (!el) return;
-    if (!txs.length) { el.innerHTML = '<p class="text-muted small px-2">No credits yet.</p>'; return; }
-    el.innerHTML = buildTxTable(txs, false);
-  } catch (e) { console.error(e); }
-}
-
-// Expenses
-async function addExpense() {
-  const description = document.getElementById('expDesc').value.trim();
-  const amount = parseFloat(document.getElementById('expAmount').value);
-  if (!description) { showAlert('expenseAlert', 'Please enter a description.'); return; }
-  if (!amount || amount <= 0) { showAlert('expenseAlert', 'Please enter a valid amount.'); return; }
-  try {
-    await api('/api/expense', 'POST', { description, amount });
-    showAlert('expenseAlert', 'Expense submitted for approval.', 'success');
-    document.getElementById('expDesc').value = '';
-    document.getElementById('expAmount').value = '';
-    loadExpenses();
-  } catch (err) {
-    showAlert('expenseAlert', err.message);
-  }
-}
-
-async function loadExpenses() {
-  try {
-    const txs = await api('/api/transactions?type=expense');
-    const el = document.getElementById('expenseList');
-    if (!txs.length) { el.innerHTML = '<p class="text-muted small px-2">No expenses yet.</p>'; return; }
-    el.innerHTML = buildTxTable(txs, false);
-  } catch (e) { console.error(e); }
-}
-
-// Suspense
-let openArsSettlementId = null;
-const arsSettlementDrafts = new Map(); // suspenseId -> { returned, expense, penalty, penaltyTouched }
-
-async function addSuspense() {
-  const workerName = document.getElementById('susWorker').value.trim();
-  const amount = parseFloat(document.getElementById('susAmount').value);
-  const reason = document.getElementById('susReason').value.trim();
-  if (!workerName) { showAlert('suspenseAlert', 'Please enter worker name.'); return; }
-  if (!amount || amount <= 0) { showAlert('suspenseAlert', 'Please enter a valid amount.'); return; }
-  if (!reason) { showAlert('suspenseAlert', 'Please enter a reason.'); return; }
-  try {
-    await api('/api/suspense', 'POST', { workerName, amount, reason });
-    showAlert('suspenseAlert', 'Suspense record added.', 'success');
-    document.getElementById('susWorker').value = '';
-    document.getElementById('susAmount').value = '';
-    document.getElementById('susReason').value = '';
-    loadSuspenseList();
-  } catch (err) {
-    showAlert('suspenseAlert', err.message);
-  }
-}
-
-async function convertSuspense(id) {
-  try {
-    await api(`/api/suspense/${id}/convert`, 'POST');
-    showAlert('suspenseAlert', 'Suspense converted to expense and sent for approval.', 'success');
-    loadSuspenseList();
-  } catch (err) {
-    showAlert('suspenseAlert', err.message);
-  }
-}
-
-async function markPenalty(id) {
-  try {
-    await api(`/api/suspense/${id}/penalty`, 'POST');
-    showAlert('suspenseAlert', 'Penalty request submitted for manager approval.', 'warning');
-    loadSuspenseList();
-  } catch (err) {
-    showAlert('suspenseAlert', err.message);
-  }
-}
-
-function getArsDraft(id, originalAmount, existingSettlement = null) {
-  if (arsSettlementDrafts.has(id)) return arsSettlementDrafts.get(id);
-  const returned = Number(existingSettlement?.returnedAmount || 0);
-  const expense = Number(existingSettlement?.expenseAmount || 0);
-  const remaining = Number((Number(originalAmount || 0) - returned - expense).toFixed(2));
-  const draft = {
-    returned,
-    expense,
-    penalty: Number(existingSettlement?.penaltyAmount ?? remaining) || 0,
-    penaltyTouched: false
-  };
-  arsSettlementDrafts.set(id, draft);
-  return draft;
-}
-
-function calcArsPenalty(originalAmount, returned, expense) {
-  return Number((Number(originalAmount || 0) - Number(returned || 0) - Number(expense || 0)).toFixed(2));
-}
-
-function toggleArsSettlementForm(id) {
-  openArsSettlementId = openArsSettlementId === id ? null : id;
-  loadSuspenseList();
-}
-
-function updateArsSettlementDraft(id, field, value, originalAmount) {
-  const draft = arsSettlementDrafts.get(id);
-  if (!draft) return;
-  if (field === 'returned' || field === 'expense') {
-    draft[field] = Number(value || 0);
-    if (!draft.penaltyTouched) {
-      draft.penalty = Math.max(0, calcArsPenalty(originalAmount, draft.returned, draft.expense));
-    }
-  } else if (field === 'penalty') {
-    draft.penalty = Number(value || 0);
-    draft.penaltyTouched = true;
-  } else if (field === 'autoPenalty') {
-    draft.penalty = Math.max(0, calcArsPenalty(originalAmount, draft.returned, draft.expense));
-    draft.penaltyTouched = false;
-  }
-  arsSettlementDrafts.set(id, draft);
-  // Lightweight re-render: reload list (keeps inline UX consistent in this app)
-  loadSuspenseList();
-}
-
-async function submitArsSettlement(id, originalAmount) {
-  const draft = arsSettlementDrafts.get(id);
-  if (!draft) return;
-  const returnedAmount = Number(draft.returned || 0);
-  const expenseAmount = Number(draft.expense || 0);
-  const penaltyAmount = Number(draft.penalty || 0);
-  if ([returnedAmount, expenseAmount, penaltyAmount].some((n) => !Number.isFinite(n) || n < 0)) {
-    showAlert('suspenseAlert', 'Returned/Expense/Penalty must be valid non-negative numbers.');
-    return;
-  }
-  const total = Number((returnedAmount + expenseAmount + penaltyAmount).toFixed(2));
-  const original = Number(Number(originalAmount || 0).toFixed(2));
-  if (total !== original) {
-    showAlert('suspenseAlert', `Validation failed: Returned + Expense + Penalty must equal ${fmt(original)}.`);
-    return;
-  }
-  try {
-    await api(`/api/suspense/${id}/settle`, 'POST', { returnedAmount, expenseAmount, penaltyAmount });
-    showAlert('suspenseAlert', 'Settlement submitted for manager approval.', 'success');
-    openArsSettlementId = null;
-    arsSettlementDrafts.delete(id);
-    loadSuspenseList();
-    loadDashboard();
-  } catch (err) {
-    showAlert('suspenseAlert', err.message);
-  }
-}
-
-let openArsLateAdjustId = null;
-const arsLateAdjustDrafts = new Map(); // suspenseId -> { returned }
-
-function toggleArsLateAdjustForm(id) {
-  openArsLateAdjustId = openArsLateAdjustId === id ? null : id;
-  loadSuspenseList();
-}
-
-function updateArsLateAdjustDraft(id, value) {
-  arsLateAdjustDrafts.set(id, { returned: Number(value || 0) });
-  loadSuspenseList();
-}
-
-function getPenaltyRemaining(t) {
-  const basePenalty = Number(t?.lateClearance?.remainingPenalty);
-  if (Number.isFinite(basePenalty)) return basePenalty;
-  return Number(t?.suspenseSettlement?.penaltyAmount || 0);
-}
-
-async function submitArsLateReturn(id, remainingPenalty) {
-  const draft = arsLateAdjustDrafts.get(id) || { returned: 0 };
-  const returnedAmount = Number(draft.returned || 0);
-  if (!Number.isFinite(returnedAmount) || returnedAmount <= 0) {
-    showAlert('suspenseAlert', 'Returned amount must be a positive number.');
-    return;
-  }
-  if (returnedAmount > remainingPenalty) {
-    showAlert('suspenseAlert', 'Returned amount cannot exceed current penalty.');
-    return;
-  }
-  try {
-    await api(`/api/suspense/${id}/late-return`, 'POST', { returnedAmount });
-    showAlert('suspenseAlert', 'Late return applied. Penalty updated.', 'success');
-    openArsLateAdjustId = null;
-    arsLateAdjustDrafts.delete(id);
-    loadSuspenseList();
-    loadDashboard();
-  } catch (err) {
-    showAlert('suspenseAlert', err.message);
-  }
-}
-
-async function loadSuspenseList() {
-  try {
-    const txs = await api('/api/transactions?type=suspense');
-    const el = document.getElementById('suspenseList');
-    if (!txs.length) { el.innerHTML = '<p class="text-muted small px-2">No suspense records.</p>'; return; }
-    el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Worker</th><th>Amount</th><th>ARS Balance</th><th>Reason</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody>
-        ${txs.map(t => {
-          const daysSince = Math.floor((Date.now() - new Date(t.createdAt)) / 86400000);
-          const overdueBadge = (['active', 'approved'].includes(t.status) && daysSince >= 5) ? `<span class="badge bg-warning text-dark ms-1">${daysSince}d</span>` : '';
-          const isOpen = openArsSettlementId === t._id;
-          const originalAmount = Number(t.amount || 0);
-          const settlement = t.suspenseSettlement || null;
-          const draft = (isOpen && (t.status === 'active' || t.status === 'approved')) ? getArsDraft(t._id, originalAmount, settlement?.reviewStatus === 'rejected' ? settlement : null) : null;
-          const calcPenalty = draft ? calcArsPenalty(originalAmount, draft.returned, draft.expense) : 0;
-          const total = draft ? Number((draft.returned + draft.expense + draft.penalty).toFixed(2)) : 0;
-          const totalOk = draft ? Number(total.toFixed(2)) === Number(originalAmount.toFixed(2)) : true;
-          const balanceDisplay = t.status === 'pending' ? '—' : fmt(t.arsBalance ?? 0);
-
-          const lateAdjustOpen = openArsLateAdjustId === t._id;
-          const penaltyRemaining = getPenaltyRemaining(t);
-          const lateDraft = arsLateAdjustDrafts.get(t._id) || { returned: 0 };
-          const lateReturned = Number(lateDraft.returned || 0);
-          const lateRemainingAfter = Number((penaltyRemaining - lateReturned).toFixed(2));
-          const lateValid = Number.isFinite(lateReturned) && lateReturned > 0 && lateReturned <= penaltyRemaining;
-
-          const actionMarkup = (t.status === 'active' || t.status === 'approved') ? `
-                <button class="btn cds-btn-sm me-1" onclick="toggleArsSettlementForm('${t._id}')">${isOpen ? 'Close' : 'Settle ARS'}</button>
-                <button class="btn cds-btn-sm danger" onclick="markPenalty('${t._id}')">Penalty</button>
-              ` : (['closed', 'penalty', 'auto_penalty_applied', 'partially_settled', 'partially_cleared', 'fully_cleared'].includes(t.status) && penaltyRemaining > 0) ? `
-                <button class="btn cds-btn-sm me-1" onclick="toggleArsLateAdjustForm('${t._id}')">${lateAdjustOpen ? 'Close' : 'Adjust Penalty / Late Return'}</button>
-              ` : (t.status === 'settlement_pending' ? `<span class="small text-muted">Settlement pending approval</span>` : '—');
-
-          const inlineForm = isOpen && (t.status === 'active' || t.status === 'approved') ? `
-            <tr class="bg-body-tertiary">
-              <td colspan="7">
-                <div class="p-3 rounded-3 border">
-                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div>
-                      <div class="small text-muted">ARS Settlement (Inline)</div>
-                      <div><strong>Total ARS:</strong> ${fmt(originalAmount)}</div>
-                    </div>
-                    <div class="text-end">
-                      <div class="small ${totalOk ? 'text-success' : 'text-danger'}">
-                        Total: ${fmt(total)} ${totalOk ? '✓' : '✗'}
-                      </div>
-                      <div class="small text-muted">Returned + Expense + Penalty must match total</div>
-                    </div>
-                  </div>
-                  <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                      <label class="form-label small mb-1">Returned Amount (₹)</label>
-                      <input class="form-control cds-input" type="number" min="0" step="0.01"
-                        value="${draft.returned}"
-                        oninput="updateArsSettlementDraft('${t._id}','returned', this.value, ${originalAmount})" />
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label small mb-1">Expense Amount (₹)</label>
-                      <input class="form-control cds-input" type="number" min="0" step="0.01"
-                        value="${draft.expense}"
-                        oninput="updateArsSettlementDraft('${t._id}','expense', this.value, ${originalAmount})" />
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label small mb-1">Penalty Amount (₹)</label>
-                      <div class="input-group">
-                        <input class="form-control cds-input" type="number" min="0" step="0.01"
-                          value="${draft.penalty}"
-                          oninput="updateArsSettlementDraft('${t._id}','penalty', this.value, ${originalAmount})" />
-                        <button class="btn btn-outline-secondary" type="button"
-                          onclick="updateArsSettlementDraft('${t._id}','autoPenalty', null, ${originalAmount})"
-                          title="Reset to auto-calculated remaining">Auto</button>
-                      </div>
-                      <div class="small text-muted mt-1">Auto remaining: ${fmt(Math.max(0, calcPenalty))}${draft.penaltyTouched ? ' (manual override)' : ''}</div>
-                    </div>
-                    <div class="col-md-3 d-grid">
-                      <button class="btn cds-btn-primary" ${totalOk ? '' : 'disabled'}
-                        onclick="submitArsSettlement('${t._id}', ${originalAmount})">
-                        Submit Settlement
-                      </button>
-                      ${!totalOk ? `<div class="small text-danger mt-1">Fix amounts so total equals ${fmt(originalAmount)}.</div>` : ''}
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          ` : '';
-
-          const lateInline = (['closed', 'penalty', 'auto_penalty_applied', 'partially_settled', 'partially_cleared', 'fully_cleared'].includes(t.status) && penaltyRemaining > 0) ? `
-            <tr>
-              <td colspan="7" class="p-0">
-                <div class="inline-slide ${lateAdjustOpen ? 'open' : ''}">
-                  <div class="p-3 border-top bg-white">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                      <div>
-                        <div class="small text-muted">Late Return / Penalty Adjustment</div>
-                        <div class="small"><strong>Current Penalty:</strong> ${fmt(penaltyRemaining)}</div>
-                      </div>
-                      <div class="text-end small text-muted">
-                        Status: ${statusBadge(t.status)}
-                      </div>
-                    </div>
-                    <div class="row g-2 align-items-end">
-                      <div class="col-md-4">
-                        <label class="form-label small mb-1">Returned Amount (₹)</label>
-                        <input class="form-control cds-input" type="number" min="0" step="0.01"
-                          value="${lateReturned || ''}"
-                          oninput="updateArsLateAdjustDraft('${t._id}', this.value)" />
-                        ${lateReturned > penaltyRemaining ? `<div class="small text-danger mt-1">Returned cannot exceed penalty.</div>` : ''}
-                      </div>
-                      <div class="col-md-4">
-                        <label class="form-label small mb-1">Remaining Penalty (auto)</label>
-                        <input class="form-control cds-input" type="text" readonly value="${fmt(Math.max(0, lateRemainingAfter))}" />
-                      </div>
-                      <div class="col-md-4 d-grid">
-                        <button class="btn cds-btn-primary" ${lateValid ? '' : 'disabled'} onclick="submitArsLateReturn('${t._id}', ${penaltyRemaining})">
-                          Apply Late Return
-                        </button>
-                        <div class="small text-muted mt-1">Adds credit to Main Balance and reduces penalty.</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          ` : '';
-
-          return `<tr>
-            <td><strong>${escHtml(t.workerName || '-')}</strong></td>
-            <td>${fmt(t.amount)}</td>
-            <td>${balanceDisplay}</td>
-            <td class="text-muted small">${escHtml(t.reason || '-')}</td>
-            <td>${statusBadge(t.status)}${overdueBadge}</td>
-            <td class="small">${fmtDate(t.createdAt)}</td>
-            <td>
-              ${actionMarkup}
-            </td>
-          </tr>${inlineForm}${lateInline}`;
-        }).join('')}
-      </tbody>
-    </table></div>`;
-  } catch (e) { console.error(e); }
-}
-
-// Daily
-function calcDenom() {
-  const total =
-    (parseInt(document.getElementById('d500').value) || 0) * 500 +
-    (parseInt(document.getElementById('d200').value) || 0) * 200 +
-    (parseInt(document.getElementById('d100').value) || 0) * 100 +
-    (parseInt(document.getElementById('d50').value) || 0) * 50 +
-    (parseInt(document.getElementById('d20').value) || 0) * 20 +
-    (parseInt(document.getElementById('d10').value) || 0) * 10 +
-    (parseInt(document.getElementById('d5').value) || 0) * 5 +
-    (parseInt(document.getElementById('d2').value) || 0) * 2 +
-    (parseInt(document.getElementById('d1').value) || 0) * 1;
-  document.getElementById('denomTotalDisplay').textContent = fmt(total);
-
-  const arsBal = parseFloat(document.getElementById('dArs')?.value) || 0;
-  const combinedEl = document.getElementById('combinedTotalDisplay');
-  if (combinedEl) combinedEl.textContent = fmt(total + arsBal);
-}
-
-async function closeDay() {
-  const denomination = {
-    fiveHundreds: parseInt(document.getElementById('d500').value) || 0,
-    twoHundreds: parseInt(document.getElementById('d200').value) || 0,
-    hundreds: parseInt(document.getElementById('d100').value) || 0,
-    fifties: parseInt(document.getElementById('d50').value) || 0,
-    twenties: parseInt(document.getElementById('d20').value) || 0,
-    tens: parseInt(document.getElementById('d10').value) || 0,
-    fives: parseInt(document.getElementById('d5').value) || 0,
-    twos: parseInt(document.getElementById('d2').value) || 0,
-    ones: parseInt(document.getElementById('d1').value) || 0
-  };
-  const arsBalance = parseFloat(document.getElementById('dArs').value) || 0;
-  try {
-    const res = await api('/api/daily/close', 'POST', { denomination, arsBalance });
-    showAlert('dailyAlert', `Day closed. Main: ${fmt(res.closingBalance)} | ARS: ${fmt(res.closingArsBalance || 0)}`, 'success');
-    loadDaily();
-  } catch (err) {
-    showAlert('dailyAlert', err.message);
-  }
-}
-
-async function loadDaily() {
-  setLoading('dailyStatusBadge', 'Loading today status...');
-  setLoading('dailyList', 'Loading daily records...');
-  try {
-    const today = await api('/api/daily/today');
-    const badge = document.getElementById('dailyStatusBadge');
-    if (badge) {
-      badge.innerHTML = today.isClosed
-        ? `<span class="cds-badge badge-approved">Day Closed — Main: ${fmt(today.closingBalance || 0)} | ARS: ${fmt(today.closingArsBalance || 0)} | Combined: ${fmt((today.closingBalance || 0) + (today.closingArsBalance || 0))}</span>`
-        : `<span class="cds-badge badge-pending">Day Open — Opening Main: ${fmt(today.openingBalance || 0)} | Opening ARS: ${fmt(today.openingArsBalance || 0)} | Combined: ${fmt((today.openingBalance || 0) + (today.openingArsBalance || 0))}</span>`;
-    }
-    const arsInput = document.getElementById('dArs');
-    if (arsInput) {
-      const bal = await api('/api/balance');
-      arsInput.value = Number(bal.suspenseArsTotal || 0).toFixed(2);
-      calcDenom();
-    }
-  } catch (e) {
-    console.error(e);
-    const badge = document.getElementById('dailyStatusBadge');
-    if (badge) badge.innerHTML = '<span class="cds-badge badge-rejected">Could not load today status</span>';
-  }
-
-  try {
-    const records = await api('/api/daily');
-    const el = document.getElementById('dailyList');
-    if (!records.length) { el.innerHTML = '<p class="text-muted small px-2">No records yet.</p>'; return; }
-    
-    // Reverse records so oldest is at the top and newest is at the bottom
-    const displayRecords = records.slice().reverse();
-
-    el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Date</th><th>Opening Main</th><th>Opening ARS</th><th>Combined Opening</th><th>Closing Main</th><th>Closing ARS</th><th>Combined Closing</th><th>Status</th><th>Closed By</th></tr></thead>
-      <tbody>
-        ${displayRecords.map(r => `<tr>
-          <td>${r.date}</td>
-          <td>${fmt(r.openingBalance || 0)}</td>
-          <td>${fmt(r.openingArsBalance || 0)}</td>
-          <td><strong>${fmt((r.openingBalance || 0) + (r.openingArsBalance || 0))}</strong></td>
-          <td>${r.closingBalance != null ? fmt(r.closingBalance) : '—'}</td>
-          <td>${r.closingArsBalance != null ? fmt(r.closingArsBalance) : '—'}</td>
-          <td><strong>${r.closingBalance != null ? fmt((r.closingBalance || 0) + (r.closingArsBalance || 0)) : '—'}</strong></td>
-          <td>${r.isClosed ? statusBadge('approved') : statusBadge('pending')}</td>
-          <td class="small">${r.closedBy || '—'}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table></div>`;
-  } catch (e) {
-    console.error(e);
-    const el = document.getElementById('dailyList');
-    if (el) el.innerHTML = '<p class="text-muted small px-2">Could not load daily records.</p>';
-  }
-}
-
-// All Transactions
-async function loadTransactions() {
-  try {
-    setLoading('pendingTxList', 'Loading pending approvals...');
-    setLoading('historyTxList', 'Loading approval history...');
-    const allowReview = currentUserRole === 'manager' || currentUserRole === 'admin';
-    const pendingTxs = await api('/api/transactions/pending');
-    const pendingEl = document.getElementById('pendingTxList');
-    if (pendingEl) {
-      pendingEl.innerHTML = pendingTxs.length
-        ? buildTxTable(pendingTxs, true, allowReview)
-        : '<p class="text-muted small px-2">No pending approvals.</p>';
-    }
-
-    const type = document.getElementById('historyFilterType')?.value || '';
-    const status = document.getElementById('historyFilterStatus')?.value || '';
-    let url = '/api/transactions?';
-    if (type) url += `type=${type}&`;
-    if (status) url += `status=${status}&`;
-    const allTxs = await api(url);
-    const historyTxs = allTxs.filter((t) => t.status !== 'pending');
-    const historyEl = document.getElementById('historyTxList');
-    if (historyEl) {
-      historyEl.innerHTML = historyTxs.length
-        ? buildTxTable(historyTxs, true, false)
-        : '<p class="text-muted small px-2">No approval history found.</p>';
-    }
-  } catch (e) { console.error(e); }
-}
-
-function buildTxTable(txs, showType, allowReview = false) {
-  const suspenseSettlementBreakdown = (t) => {
-    const s = t?.suspenseSettlement;
-    if (!s) return '';
-    const original = Number(t.amount || 0);
-    const returned = Number(s.returnedAmount || 0);
-    const expense = Number(s.expenseAmount || 0);
-    const penalty = Number(s.penaltyAmount || 0);
-    const total = Number((returned + expense + penalty).toFixed(2));
-    const ok = Number(total.toFixed(2)) === Number(original.toFixed(2));
-    return `
-      <div class="mt-2 p-2 rounded-3 border bg-white">
-        <div class="row g-2">
-          <div class="col-sm-6 col-lg-3">
-            <div class="small text-muted">Original ARS</div>
-            <div><strong>${fmt(original)}</strong></div>
-          </div>
-          <div class="col-sm-6 col-lg-3">
-            <div class="small text-muted">Returned Amount</div>
-            <div><strong>${fmt(returned)}</strong></div>
-            <div class="small text-muted">Cash received back</div>
-          </div>
-          <div class="col-sm-6 col-lg-3">
-            <div class="small text-muted">Expense Amount</div>
-            <div><strong>${fmt(expense)}</strong></div>
-            <div class="small text-muted">Based on bills</div>
-          </div>
-          <div class="col-sm-6 col-lg-3">
-            <div class="small text-muted">Penalty Amount</div>
-            <div><strong>${fmt(penalty)}</strong></div>
-            <div class="small ${ok ? 'text-success' : 'text-danger'}">Total: ${fmt(total)} ${ok ? '✓' : '✗'}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  return `<div class="table-responsive"><table class="table cds-table">
-    <thead><tr>${showType ? '<th>Type</th>' : ''}<th>Description</th><th>Amount</th><th>Status</th><th>Created</th><th>Reviewed By</th>${allowReview ? '<th>Actions</th>' : ''}</tr></thead>
-    <tbody>
-      ${txs.map(t => `<tr>
-        ${showType ? `<td>${typeBadge(t.type)}</td>` : ''}
-        <td>
-          <div>${escHtml(t.description)}</div>
-          ${t.type === 'suspense' && t.status === 'settlement_pending' ? suspenseSettlementBreakdown(t) : ''}
-        </td>
-        <td>${fmt(t.amount)}</td>
-        <td>${statusBadge(t.status)}</td>
-        <td class="small">${fmtDateTime(t.createdAt)}</td>
-        <td class="small">${t.reviewedBy || '—'}</td>
-        ${allowReview ? `<td>${t.status === 'pending' ? `
-          <button class="btn cds-btn-approve me-1" onclick="reviewTx('${t._id}', 'approve')">Approve</button>
-          <button class="btn cds-btn-reject" onclick="reviewTx('${t._id}', 'reject')">Reject</button>
-        ` : t.status === 'settlement_pending' ? `
-          <button class="btn cds-btn-approve me-1" onclick="reviewTx('${t._id}', 'approve')">Approve</button>
-          <button class="btn cds-btn-reject" onclick="reviewTx('${t._id}', 'reject')">Reject</button>
-        ` : '—'}</td>` : ''}
-      </tr>`).join('')}
-    </tbody>
-  </table></div>`;
-}
-
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 // Users
 async function loadUsers() {
   try {
@@ -983,7 +397,6 @@ async function loadUsers() {
     const el = document.getElementById('userList');
     if (!users.length) { el.innerHTML = '<p class="text-muted small px-2">No users found.</p>'; return; }
     el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-<<<<<<< HEAD
       <thead><tr><th>EC.no</th><th>Username</th><th>Location</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
       <tbody>
         ${users.map(u => {
@@ -1004,22 +417,11 @@ async function loadUsers() {
             </td>
           </tr>`;
         }).join('')}
-=======
-      <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
-      <tbody>
-        ${users.map(u => `<tr>
-          <td><strong>${escHtml(u.username)}</strong></td>
-          <td><span class="cds-badge ${u.role === 'admin' ? 'badge-type-expense' : 'badge-type-suspense'}">${u.role.toUpperCase()}</span></td>
-          <td class="small">${fmtDate(u.createdAt)}</td>
-          <td>${u.username !== 'admin' ? `<button class="btn cds-btn-sm danger" onclick="deleteUser('${u._id}', '${escHtml(u.username)}')">Delete</button>` : '—'}</td>
-        </tr>`).join('')}
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
       </tbody>
     </table></div>`;
   } catch (e) { console.error(e); }
 }
 
-<<<<<<< HEAD
 async function saveUserAdmin() {
   const username = document.getElementById('newUsername').value.trim();
   const password = document.getElementById('newPassword').value;
@@ -1045,25 +447,12 @@ async function saveUserAdmin() {
       showAlert('userAlert', 'User created successfully.', 'success');
     }
     clearUserAdminForm();
-=======
-async function addUser() {
-  const username = document.getElementById('newUsername').value.trim();
-  const password = document.getElementById('newPassword').value;
-  const role = document.getElementById('newRole').value;
-  if (!username || !password) { showAlert('userAlert', 'Username and password required.'); return; }
-  try {
-    await api('/api/users', 'POST', { username, password, role });
-    showAlert('userAlert', 'User created successfully.', 'success');
-    document.getElementById('newUsername').value = '';
-    document.getElementById('newPassword').value = '';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     loadUsers();
   } catch (err) {
     showAlert('userAlert', err.message);
   }
 }
 
-<<<<<<< HEAD
 function editUserAdmin(uString) {
   try {
     const u = JSON.parse(decodeURIComponent(uString));
@@ -1115,8 +504,6 @@ function clearUserAdminForm() {
   document.getElementById('btnCancelUser').classList.add('d-none');
 }
 
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 async function deleteUser(id, name) {
   try {
     await api(`/api/users/${id}`, 'DELETE');
@@ -1126,249 +513,6 @@ async function deleteUser(id, name) {
   }
 }
 
-<<<<<<< HEAD
-=======
-// ─── INVENTORY ────────────────────────────────────────────────────────────────
-async function addInventoryProduct() {
-  const payload = {
-    name: document.getElementById('invName')?.value?.trim(),
-    category: document.getElementById('invCategory')?.value?.trim(),
-    sku: document.getElementById('invSku')?.value?.trim(),
-    quantity: parseInt(document.getElementById('invQty')?.value, 10),
-    location: document.getElementById('invLocation')?.value?.trim(),
-    color: document.getElementById('invColor')?.value?.trim(),
-    size: document.getElementById('invSize')?.value?.trim(),
-    minStock: parseInt(document.getElementById('invMinStock')?.value, 10)
-  };
-  if (!payload.name || !payload.category || !payload.sku || !payload.location || Number.isNaN(payload.quantity)) {
-    showAlert('invProductAlert', 'Name, category, SKU, quantity and location are required.');
-    return;
-  }
-  try {
-    const res = await api('/api/inventory/products', 'POST', payload);
-    showAlert('invProductAlert', res.mode === 'refilled' ? 'Existing SKU refilled successfully.' : 'Product added successfully.', 'success');
-    ['invName', 'invCategory', 'invSku', 'invQty', 'invLocation', 'invColor', 'invSize'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    document.getElementById('invMinStock').value = 30;
-    loadInventoryProducts();
-    loadInventoryDashboard();
-  } catch (err) {
-    showAlert('invProductAlert', err.message);
-  }
-}
-
-async function loadInventoryDashboard() {
-  try {
-    setLoading('invRecentMovements', 'Loading recent movements...');
-    setLoading('invProductTable', 'Loading products...');
-    setLoading('invProductTableAdd', 'Loading products...');
-    const data = await api('/api/inventory/dashboard');
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    set('invTotalProducts', data.totalProducts || 0);
-    set('invTotalStock', (data.products || []).reduce((sum, p) => sum + (p.totalStock || 0), 0));
-    set('invPendingRequests', data.pendingRequests || 0);
-    if (currentUserRole !== 'incharge') set('invLowStockCount', (data.lowStockItems || []).length);
-
-    const movementEl = document.getElementById('invRecentMovements');
-    if (movementEl) {
-      const movements = data.recentMovements || [];
-      movementEl.innerHTML = movements.length ? movements.map((m) => `
-        <div class="tx-row">
-          <div class="tx-info">
-            <div class="tx-desc">${escHtml(m.productName)} (${escHtml(m.sku)})</div>
-            <div class="tx-meta">${m.movementType.toUpperCase()} · ${escHtml(m.from)} → ${escHtml(m.to)}</div>
-          </div>
-          <div class="tx-right">
-            <div class="tx-amount">${m.quantity}</div>
-            <span class="small text-muted">${fmtDateTime(m.timestamp)}</span>
-          </div>
-        </div>`).join('') : '<p class="text-muted small px-2">No movements yet.</p>';
-    }
-    loadInventoryProducts(data.products || []);
-  } catch (err) {
-    showAlert('invDashAlert', err.message);
-  }
-}
-
-async function loadInventoryProducts(existingProducts = null) {
-  try {
-    const q = document.getElementById('invFilterQ')?.value?.trim() || '';
-    const lowStockOnly = (currentUserRole !== 'incharge' && document.getElementById('invFilterLow')?.checked) ? 'true' : '';
-    let products = existingProducts;
-    if (!products) {
-      const query = new URLSearchParams();
-      if (q) query.set('q', q);
-      if (lowStockOnly) query.set('lowStock', 'true');
-      products = await api(`/api/inventory/products?${query.toString()}`);
-    }
-    const showLowStock = currentUserRole !== 'incharge';
-    const html = products.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>Location</th><th>Total</th><th>Reserved</th><th>Min</th></tr></thead>
-      <tbody>${products.map((p) => `<tr>
-        <td><strong>${escHtml(p.name)}</strong>${p.color ? `<div class="small text-muted">Color: ${escHtml(p.color)}</div>` : ''}${p.size ? `<div class="small text-muted">Size: ${escHtml(p.size)}</div>` : ''}</td>
-        <td>${escHtml(p.sku)}</td>
-        <td>${escHtml(p.category)}</td>
-        <td>${escHtml(p.location)}</td>
-        <td>${p.totalStock}</td>
-        <td>${p.reservedStock}</td>
-        <td>${p.minStock}${showLowStock && p.availableStock < p.minStock ? ' <span class="badge bg-warning text-dark">Low</span>' : ''}</td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No inventory products found.</p>';
-    const el = document.getElementById('invProductTable');
-    if (el) el.innerHTML = html;
-    const elAdd = document.getElementById('invProductTableAdd');
-    if (elAdd) elAdd.innerHTML = html;
-
-    const select = document.getElementById('reqProduct');
-    if (select) {
-      select.innerHTML = '<option value="">Select product</option>' + products.map((p) =>
-        `<option value="${p._id}" data-available="${p.availableStock}">${escHtml(p.name)} (${escHtml(p.sku)}) - Available: ${p.availableStock}</option>`).join('');
-    }
-  } catch (err) {
-    showAlert('invDashAlert', err.message);
-  }
-}
-
-async function createStockRequest() {
-  const productSelect = document.getElementById('reqProduct');
-  const productId = productSelect?.value;
-  const quantity = parseInt(document.getElementById('reqQty')?.value, 10);
-  const section = document.getElementById('reqSection')?.value;
-  if (!productId || Number.isNaN(quantity) || quantity <= 0 || !section) {
-    showAlert('invRequestAlert', 'Select product, quantity and section.');
-    return;
-  }
-  const selectedOption = productSelect.options[productSelect.selectedIndex];
-  const availableStock = parseInt(selectedOption.getAttribute('data-available') || 0, 10);
-  if (quantity > availableStock) {
-    showAlert('invRequestAlert', `Cannot request more than available quantity (${availableStock}).`);
-    return;
-  }
-  try {
-    await api('/api/inventory/requests', 'POST', { productId, quantity, section });
-    showAlert('invRequestAlert', 'Stock request submitted.', 'success');
-    document.getElementById('reqQty').value = '';
-    loadInventoryRequests();
-    loadInventoryDashboard();
-  } catch (err) {
-    showAlert('invRequestAlert', err.message);
-  }
-}
-
-async function loadInventoryRequests() {
-  try {
-    setLoading('invRequestTable', 'Loading requests...');
-    await loadInventoryProducts();
-    const requests = await api('/api/inventory/requests');
-    const el = document.getElementById('invRequestTable');
-    if (!el) return;
-    el.innerHTML = requests.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Product</th><th>Qty</th><th>Section</th><th>Status</th><th>Requested By</th><th>Date</th></tr></thead>
-      <tbody>${requests.map((r) => `<tr>
-        <td>${escHtml(r.productName)}<div class="small text-muted">${escHtml(r.sku)}</div></td>
-        <td>${r.quantity}</td>
-        <td>${escHtml(r.section)}</td>
-        <td>${statusBadge(r.status)}</td>
-        <td>${escHtml(r.requestedBy)}</td>
-        <td class="small">${fmtDateTime(r.createdAt)}</td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No requests found.</p>';
-  } catch (err) {
-    showAlert('invRequestAlert', err.message);
-  }
-}
-
-async function reviewInventoryRequest(id, action) {
-  try {
-    await api(`/api/inventory/requests/${id}/review`, 'POST', { action });
-    showAlert('invApprovalAlert', `Request ${action}d.`, action === 'approve' ? 'success' : 'warning');
-    loadInventoryApprovals();
-    loadInventoryIssue();
-    loadInventoryDashboard();
-  } catch (err) {
-    showAlert('invApprovalAlert', err.message);
-  }
-}
-
-async function loadInventoryApprovals() {
-  try {
-    setLoading('invApprovalTable', 'Loading approvals...');
-    const requests = await api('/api/inventory/requests?status=pending');
-    const el = document.getElementById('invApprovalTable');
-    if (!el) return;
-    el.innerHTML = requests.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Product</th><th>Qty</th><th>Section</th><th>Requested By</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody>${requests.map((r) => `<tr>
-        <td>${escHtml(r.productName)}<div class="small text-muted">${escHtml(r.sku)}</div></td>
-        <td>${r.quantity}</td>
-        <td>${escHtml(r.section)}</td>
-        <td>${escHtml(r.requestedBy)}</td>
-        <td class="small">${fmtDateTime(r.createdAt)}</td>
-        <td>
-          <button class="btn cds-btn-approve me-1" onclick="reviewInventoryRequest('${r._id}','approve')">Approve</button>
-          <button class="btn cds-btn-reject" onclick="reviewInventoryRequest('${r._id}','reject')">Reject</button>
-        </td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No pending approvals.</p>';
-  } catch (err) {
-    showAlert('invApprovalAlert', err.message);
-  }
-}
-
-async function issueInventoryRequest(id) {
-  try {
-    await api(`/api/inventory/requests/${id}/issue`, 'POST');
-    showAlert('invIssueAlert', 'Stock issued successfully.', 'success');
-    loadInventoryIssue();
-    loadInventoryMovements();
-    loadInventoryDashboard();
-  } catch (err) {
-    showAlert('invIssueAlert', err.message);
-  }
-}
-
-async function loadInventoryIssue() {
-  try {
-    setLoading('invIssueTable', 'Loading issue queue...');
-    const requests = await api('/api/inventory/requests?status=approved');
-    const el = document.getElementById('invIssueTable');
-    if (!el) return;
-    el.innerHTML = requests.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Product</th><th>Qty</th><th>Section</th><th>Approved By</th><th>Date</th><th>Issue</th></tr></thead>
-      <tbody>${requests.map((r) => `<tr>
-        <td>${escHtml(r.productName)}<div class="small text-muted">${escHtml(r.sku)}</div></td>
-        <td>${r.quantity}</td>
-        <td>${escHtml(r.section)}</td>
-        <td>${escHtml(r.reviewedBy || '-')}</td>
-        <td class="small">${fmtDateTime(r.reviewedAt || r.createdAt)}</td>
-        <td><button class="btn cds-btn-primary btn-sm" onclick="issueInventoryRequest('${r._id}')">Issue</button></td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No approved requests to issue.</p>';
-  } catch (err) {
-    showAlert('invIssueAlert', err.message);
-  }
-}
-
-async function loadInventoryMovements() {
-  try {
-    setLoading('invMovementTable', 'Loading movements...');
-    const movements = await api('/api/inventory/movements');
-    const el = document.getElementById('invMovementTable');
-    if (!el) return;
-    el.innerHTML = movements.length ? `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Type</th><th>Product</th><th>Qty</th><th>From</th><th>To</th><th>Approved By</th><th>Timestamp</th></tr></thead>
-      <tbody>${movements.map((m) => `<tr>
-        <td>${statusBadge(m.movementType === 'inbound' ? 'approved' : 'pending')}</td>
-        <td>${escHtml(m.productName)}<div class="small text-muted">${escHtml(m.sku)}</div></td>
-        <td>${m.quantity}</td>
-        <td>${escHtml(m.from)}</td>
-        <td>${escHtml(m.to)}</td>
-        <td>${escHtml(m.approvedBy || '-')}</td>
-        <td class="small">${fmtDateTime(m.timestamp)}</td>
-      </tr>`).join('')}</tbody></table></div>` : '<p class="text-muted small px-2">No movement records.</p>';
-  } catch (err) {
-    showAlert('invMoveAlert', err.message);
-  }
-}
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 
 // ─── VEHICLE LOG BOOK ────────────────────────────────────────────────────────
 let vehicleExpenseRows = [];
@@ -1410,7 +554,6 @@ function removeVehicleExpenseRow(idx) {
   renderVehicleExpenseRows();
 }
 
-<<<<<<< HEAD
 let currentUser = null;
 let allBranches = [];
 let allVehicles = [];
@@ -1422,55 +565,73 @@ let scrapDateTimePicker = null;
 let expenseInLogActive = false;
 let cachedFuelPrices = {};
 let cachedFuelLogs = [];
-let cachedVehicleExpenses = [];
+let cachedExpenses = [];
 
 async function loadVehicleList() {
   try {
     allVehicles = await api('/api/vehicles');
-    let activeVehicles = allVehicles.filter((v) => v.status !== 'inactive');
+    let activeVehicles = allVehicles.filter((v) => v.status === 'active');
     if (currentUser && currentUser.role === 'security' && currentUser.branchName) {
       activeVehicles = activeVehicles.filter(v => 
-        v.branchName && v.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
+        v.branchName && v.branchName.trim().toLowerCase() === currentUser.branchName.trim().toLowerCase()
       );
     }
 
     const inputs = document.querySelectorAll('.vehicle-select-shortname');
     inputs.forEach((input) => {
-      const listId = input.getAttribute('list');
-      if (listId) {
-        const datalist = document.getElementById(listId);
-        if (datalist) {
-          datalist.innerHTML = activeVehicles.map((v) => {
-            const val = v.shortName || v.vehicleNumber;
-            const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
-            return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
-          }).join('');
-        }
-      } else if (input.tagName === 'SELECT') {
-        const currentVal = input.value;
-        input.innerHTML = '<option value="">Select Vehicle...</option>' + activeVehicles.map((v) => {
+      if (input.tagName === 'SELECT') {
+        const placeholder = input.querySelector('option[value=""]') ? input.querySelector('option[value=""]').outerHTML : '<option value="">Select Vehicle...</option>';
+        input.innerHTML = placeholder + activeVehicles.map((v) => {
           const val = v.shortName || v.vehicleNumber;
           const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
           return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
         }).join('');
-        if (currentVal) input.value = currentVal;
+        return;
       }
+
+      const listId = input.getAttribute('list');
+      if (!listId) return;
+      const datalist = document.getElementById(listId);
+      if (!datalist) return;
+
+      datalist.innerHTML = activeVehicles.map((v) => {
+        const val = v.shortName || v.vehicleNumber;
+        const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
+        return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+      }).join('');
     });
-=======
-async function loadVehicleList() {
-  const datalist = document.getElementById('vehicleNumberList');
-  if (!datalist) return;
-  datalist.innerHTML = '';
-  try {
-    const vehicles = await api('/api/vehicles');
-    datalist.innerHTML = vehicles.map((v) => `<option value="${escHtml(v.vehicleNumber)}">${escHtml(v.vehicleNumber)}</option>`).join('');
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     showAlert('vehicleAlert', err.message);
   }
 }
 
-<<<<<<< HEAD
+function updateVehicleDetailsDisplay(vehicleNumber, tankCapacity, expectedMileage) {
+  const displayEl = document.getElementById('vehicleDetailsDisplay');
+  if (!displayEl) return;
+
+  if (!vehicleNumber) {
+    displayEl.classList.add('d-none');
+    return;
+  }
+
+  displayEl.classList.remove('d-none');
+
+  const numEl = document.getElementById('vehicleNumberDisplay');
+  if (numEl) {
+    numEl.textContent = vehicleNumber;
+  }
+
+  const capEl = document.getElementById('tankCapacityDisplay');
+  if (capEl) {
+    capEl.textContent = tankCapacity ? `${tankCapacity} L` : '0 L';
+  }
+
+  const milEl = document.getElementById('expectedMileageDisplay');
+  if (milEl) {
+    milEl.textContent = expectedMileage && expectedMileage !== '—' ? `${expectedMileage} km/L` : '—';
+  }
+}
+
 async function onVehicleShortNameInput(selectId, numId) {
   const shortNameVal = document.getElementById(selectId)?.value?.trim();
   const numEl = document.getElementById(numId);
@@ -1515,8 +676,6 @@ async function onVehicleShortNameInput(selectId, numId) {
   }
 }
 
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 async function applyVehicleBaseline() {
   const vehicleNumber = document.getElementById('vehicleNumber')?.value?.trim().toUpperCase();
   const vehicleInput = document.getElementById('vehicleNumber');
@@ -1524,7 +683,6 @@ async function applyVehicleBaseline() {
   if (!vehicleNumber) return;
   try {
     const baseline = await api(`/api/vehicle-logs/baseline?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
-<<<<<<< HEAD
     activeVehicleBaseline = baseline;
     const startKmEl = document.getElementById('startKm');
     if (startKmEl) startKmEl.value = baseline.startKm || 0;
@@ -1542,58 +700,17 @@ async function applyVehicleBaseline() {
 
     calcVehicleDistance();
     calcVehicleMileage();
-=======
-    const startKmEl = document.getElementById('startKm');
-    const avFuelEl = document.getElementById('availableFuel');
-    const expMileageEl = document.getElementById('expectedMileage');
-    const pKmEl = document.getElementById('profileOpeningKm');
-    const pFuelEl = document.getElementById('profileOpeningFuel');
-    const pExpEl = document.getElementById('profileExpectedMileage');
-    if (startKmEl) startKmEl.value = baseline.startKm || 0;
-    if (avFuelEl) avFuelEl.value = baseline.availableFuel || 0;
-    if (expMileageEl) expMileageEl.value = baseline.expectedMileage != null ? baseline.expectedMileage : '';
-    if (pKmEl) pKmEl.value = baseline.startKm || 0;
-    if (pFuelEl) pFuelEl.value = baseline.availableFuel || 0;
-    if (pExpEl) pExpEl.value = baseline.expectedMileage != null ? baseline.expectedMileage : '';
-    calcVehicleDistance();
-    calcVehicleFuelUsed();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
-<<<<<<< HEAD
-function updateVehicleDetailsDisplay(vehicleNum, capacity, mileage) {
-  const displayDiv = document.getElementById('vehicleDetailsDisplay');
-  if (!displayDiv) return;
-
-  if (!vehicleNum) {
-    displayDiv.classList.add('d-none');
-    return;
-  }
-
-  displayDiv.classList.remove('d-none');
-
-  const numEl = document.getElementById('displayVehicleNumber');
-  if (numEl) numEl.innerHTML = `🚗 <b>Vehicle No:</b> ${escHtml(vehicleNum)}`;
-
-  const capEl = document.getElementById('displayTankCapacity');
-  if (capEl) capEl.innerHTML = `⛽ <b>Tank Capacity:</b> ${capacity || 0} L`;
-
-  const milEl = document.getElementById('displayExpectedMileage');
-  if (milEl) milEl.innerHTML = `📈 <b>Std Mileage:</b> ${mileage != null && mileage !== '—' ? mileage + ' km/L' : '—'}`;
-}
-
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 function calcVehicleDistance() {
   const startKm = Number(document.getElementById('startKm')?.value || 0);
   const endKm = Number(document.getElementById('endKm')?.value || 0);
   const distance = Math.max(0, endKm - startKm);
   const el = document.getElementById('distanceTravelled');
   if (el) el.value = distance.toFixed(2);
-<<<<<<< HEAD
 
   if (fuelInLogActive) {
     calcFuelInLog();
@@ -1768,10 +885,10 @@ function toggleFuelInLog() {
     if (priceL) priceL.value = '';
     const bunkN = document.getElementById('fuelBunkNameInLog');
     if (bunkN) bunkN.value = '';
-    const locI = document.getElementById('fuelLocationInLog');
-    if (locI) locI.value = '';
     const priceI = document.getElementById('fuelPriceInLog');
     if (priceI) priceI.value = '0.00';
+    const locN = document.getElementById('fuelLocationInLog');
+    if (locN) locN.value = '';
     const displayE = document.getElementById('fuelMileageDisplayInLog');
     if (displayE) displayE.innerHTML = '';
   }
@@ -1858,59 +975,17 @@ function calcFuelInLog() {
           Enter End KM and Fuel Added to see calculated mileage.
         </div>
       `;
-=======
-}
-
-function calcVehicleFuelUsed() {
-  const availableFuel = Number(document.getElementById('availableFuel')?.value || 0);
-  const fuelAdded = Number(document.getElementById('fuelAdded')?.value || 0);
-  const remainingRaw = document.getElementById('remainingFuel')?.value;
-  const remainingFuel = remainingRaw === '' ? null : Number(remainingRaw);
-  const distance = Number(document.getElementById('distanceTravelled')?.value || 0);
-  const expectedMileage = Number(document.getElementById('expectedMileage')?.value || 0);
-  const fuelUsedManualRaw = document.getElementById('fuelUsedInput')?.value;
-  const fuelUsedManual = fuelUsedManualRaw === '' ? null : Number(fuelUsedManualRaw);
-  const fuelUsedEl = document.getElementById('fuelUsed');
-  const lowFuelEl = document.getElementById('lowFuelBadge');
-  const actualMileageEl = document.getElementById('actualMileage');
-  const mileageDeltaEl = document.getElementById('mileageDelta');
-  let fuelUsed = null;
-  let finalRemaining = null;
-  if (remainingFuel != null && Number.isFinite(remainingFuel)) {
-    fuelUsed = availableFuel + fuelAdded - remainingFuel;
-    finalRemaining = remainingFuel;
-  } else if (fuelUsedManual != null && Number.isFinite(fuelUsedManual)) {
-    fuelUsed = fuelUsedManual;
-    finalRemaining = availableFuel + fuelAdded - fuelUsedManual;
-  } else if (expectedMileage > 0 && distance >= 0) {
-    fuelUsed = distance / expectedMileage;
-    finalRemaining = availableFuel + fuelAdded - fuelUsed;
-  }
-  if (fuelUsedEl) fuelUsedEl.value = fuelUsed != null && Number.isFinite(fuelUsed) ? Math.max(0, fuelUsed).toFixed(2) : '';
-  if (lowFuelEl) lowFuelEl.innerHTML = finalRemaining != null && finalRemaining <= 2 ? '<span class="cds-badge badge-rejected">LOW FUEL</span>' : '';
-  const actual = fuelUsed && fuelUsed > 0 ? (distance / fuelUsed) : 0;
-  if (actualMileageEl) actualMileageEl.value = fuelUsed > 0 ? actual.toFixed(2) : '';
-  if (mileageDeltaEl) {
-    if (fuelUsed > 0 && expectedMileage > 0) {
-      const delta = actual - expectedMileage;
-      mileageDeltaEl.textContent = `${delta >= 0 ? '+' : ''}${delta.toFixed(2)} km/L vs expected`;
-      mileageDeltaEl.className = delta < 0 ? 'small text-danger mt-1' : 'small text-success mt-1';
-    } else {
-      mileageDeltaEl.textContent = '';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     }
   }
 }
 
 async function submitVehicleLog() {
-<<<<<<< HEAD
   if (fuelInLogActive) {
     const fuelAdded = Number(document.getElementById('fuelAddedLitersInLog')?.value || 0);
     const pricePerLitre = Number(document.getElementById('fuelPricePerLitreInLog')?.value || 0);
     const bunk = document.getElementById('fuelBunkNameInLog')?.value?.trim();
-    const location = document.getElementById('fuelLocationInLog')?.value?.trim();
-    if (fuelAdded <= 0 || pricePerLitre <= 0 || !bunk || !location) {
-      showAlert('vehicleAlert', 'Please fill all fuel fields (including bunk location) with positive/valid values.');
+    if (fuelAdded <= 0 || pricePerLitre <= 0 || !bunk) {
+      showCenteredError('Please fill all fuel fields with positive values.');
       return;
     }
   }
@@ -1919,46 +994,43 @@ async function submitVehicleLog() {
     const amount = Number(document.getElementById('expenseAmountInLog')?.value || 0);
     const desc = document.getElementById('expenseDescInLog')?.value?.trim();
     if (amount <= 0 || !desc) {
-      showAlert('vehicleAlert', 'Please enter a positive amount and description for the emergency expense.');
+      showCenteredError('Please enter a positive amount and description for the emergency expense.');
       return;
     }
   }
 
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   const payload = collectVehicleFormPayload();
   if (!payload.driverName || !payload.vehicleNumber || !payload.fromLocation || !payload.toLocation || !payload.startDateTime || !payload.endDateTime) {
-    showAlert('vehicleAlert', 'Please fill all required fields.');
+    showCenteredError('Please fill all required fields.');
     return;
   }
   try {
     await api('/api/vehicle-logs', 'POST', payload);
-<<<<<<< HEAD
-    showAlert('vehicleAlert', 'Vehicle log submitted successfully.', 'success');
+    showCenteredSuccess('Vehicle log submitted successfully.');
     
     currentVehicleDraftId = null;
 
     resetVehicleForm();
     
-=======
-    showAlert('vehicleAlert', 'Vehicle log submitted for manager approval.', 'success');
-    resetVehicleForm();
-    currentVehicleDraftId = null;
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     await applyVehicleBaseline();
     loadVehicleHistory();
     loadVehicleWaitingList();
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
 function collectVehicleFormPayload() {
-<<<<<<< HEAD
   const driverName = document.getElementById('driverName')?.value?.trim() || (fuelInLogActive ? 'Fuel Log' : '');
   const vehicleNumber = document.getElementById('vehicleNumber')?.value?.trim().toUpperCase();
   const fromLocation = document.getElementById('fromLocation')?.value?.trim();
-  const toLocation = document.getElementById('toLocation')?.value?.trim() || (fuelInLogActive ? fromLocation : '');
+  let toLocation = document.getElementById('toLocation')?.value?.trim();
+  if (toLocation === 'other') {
+    toLocation = document.getElementById('toLocationCustom')?.value?.trim() || '';
+  }
+  if (!toLocation && fuelInLogActive) {
+    toLocation = fromLocation;
+  }
   const startDateTime = document.getElementById('startDateTime')?.value;
   const endDateTime = document.getElementById('endDateTime')?.value || (fuelInLogActive ? startDateTime : '');
   const endKm = Number(document.getElementById('endKm')?.value);
@@ -1975,7 +1047,7 @@ function collectVehicleFormPayload() {
   if (fuelInLogActive) {
     const fuelAdded = Number(document.getElementById('fuelAddedLitersInLog')?.value || 0);
     const pricePerLitre = Number(document.getElementById('fuelPricePerLitreInLog')?.value || 0);
-    const bunk = document.getElementById('fuelBunkNameInLog')?.value?.trim();
+    const bunk = document.getElementById('fuelBunkNameInLog')?.value?.trim() || '';
     const location = document.getElementById('fuelLocationInLog')?.value?.trim() || '';
     const price = fuelAdded * pricePerLitre;
 
@@ -1983,7 +1055,7 @@ function collectVehicleFormPayload() {
       expenseType: 'oil',
       amount: price,
       date: new Date(),
-      description: `FUEL_ADDITION:qty=${fuelAdded};current=${(Number(document.getElementById('tankCapacity')?.value || 0) - fuelAdded).toFixed(2)};bunk=${bunk};loc=${location}`
+      description: `FUEL_ADDITION:qty=${fuelAdded};current=${(Number(document.getElementById('tankCapacity')?.value || 0) - fuelAdded).toFixed(2)};bunk=${bunk};location=${location}`
     });
   }
 
@@ -2055,7 +1127,12 @@ function resetVehicleForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  updateVehicleDetailsDisplay('', 0, 0);
+
+  const toCustomEl = document.getElementById('toLocationCustom');
+  if (toCustomEl) {
+    toCustomEl.value = '';
+    toCustomEl.classList.add('d-none');
+  }
 
   const fromEl = document.getElementById('fromLocation');
   if (fromEl) {
@@ -2100,77 +1177,32 @@ function resetVehicleForm() {
     if (priceL) priceL.value = '';
     const bunkN = document.getElementById('fuelBunkNameInLog');
     if (bunkN) bunkN.value = '';
-    const locI = document.getElementById('fuelLocationInLog');
-    if (locI) locI.value = '';
     const priceI = document.getElementById('fuelPriceInLog');
     if (priceI) priceI.value = '0.00';
+    const locN = document.getElementById('fuelLocationInLog');
+    if (locN) locN.value = '';
     const displayE = document.getElementById('fuelMileageDisplayInLog');
     if (displayE) displayE.innerHTML = '';
   }
 
   expenseInLogActive = true;
   toggleExpenseInLog();
-=======
-  const remainingRaw = document.getElementById('remainingFuel')?.value;
-  const fuelUsedInputRaw = document.getElementById('fuelUsedInput')?.value;
-  const payload = {
-    driverName: document.getElementById('driverName')?.value?.trim(),
-    vehicleNumber: document.getElementById('vehicleNumber')?.value?.trim().toUpperCase(),
-    fromLocation: document.getElementById('fromLocation')?.value?.trim(),
-    toLocation: document.getElementById('toLocation')?.value?.trim(),
-    startDateTime: document.getElementById('startDateTime')?.value,
-    endDateTime: document.getElementById('endDateTime')?.value,
-    endKm: Number(document.getElementById('endKm')?.value),
-    fuelAdded: Number(document.getElementById('fuelAdded')?.value || 0),
-    remainingFuel: remainingRaw === '' ? null : Number(remainingRaw),
-    fuelUsedInput: fuelUsedInputRaw === '' ? null : Number(fuelUsedInputRaw),
-    mileageReason: document.getElementById('mileageReason')?.value?.trim() || '',
-    fuelFillDate: document.getElementById('fuelFillDate')?.value || null,
-    expenses: []
-  };
-  document.querySelectorAll('[data-expense-row]').forEach((row) => {
-    const expenseType = row.querySelector('[data-expense-field="expenseType"]')?.value;
-    const amount = Number(row.querySelector('[data-expense-field="amount"]')?.value || 0);
-    const date = row.querySelector('[data-expense-field="date"]')?.value;
-    const description = row.querySelector('[data-expense-field="description"]')?.value || '';
-    if (expenseType && date && amount >= 0) payload.expenses.push({ expenseType, amount, date, description });
-  });
-  return payload;
-}
-
-function resetVehicleForm() {
-  ['driverName', 'fromLocation', 'toLocation', 'startDateTime', 'endDateTime', 'endKm', 'fuelAdded', 'remainingFuel', 'fuelFillDate', 'fuelUsedInput', 'mileageReason'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const distanceEl = document.getElementById('distanceTravelled');
-  if (distanceEl) distanceEl.value = '0.00';
-  const fuelUsedEl = document.getElementById('fuelUsed');
-  if (fuelUsedEl) fuelUsedEl.value = '';
-  const actualMileageEl = document.getElementById('actualMileage');
-  if (actualMileageEl) actualMileageEl.value = '';
-  const lowFuelEl = document.getElementById('lowFuelBadge');
-  if (lowFuelEl) lowFuelEl.innerHTML = '';
-  const mileageDeltaEl = document.getElementById('mileageDelta');
-  if (mileageDeltaEl) mileageDeltaEl.textContent = '';
-  vehicleExpenseRows = [];
-  renderVehicleExpenseRows();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
+  updateVehicleDetailsDisplay('', 0, 0);
 }
 
 async function saveVehicleWaitingDraft() {
   const payload = collectVehicleFormPayload();
   if (!payload.vehicleNumber) {
-    showAlert('vehicleAlert', 'Vehicle number is required to save waiting entry.');
+    showCenteredError('Vehicle number is required to save waiting entry.');
     return;
   }
   try {
     const res = await api('/api/vehicle-logs/waiting', 'POST', { ...payload, draftId: currentVehicleDraftId });
     currentVehicleDraftId = res?.draft?._id || null;
-    showAlert('vehicleAlert', 'Saved to waiting list.', 'success');
+    showCenteredSuccess('Saved to waiting list.');
     loadVehicleWaitingList();
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
@@ -2179,16 +1211,12 @@ async function loadVehicleWaitingList() {
   if (!el) return;
   try {
     setLoading('vehicleWaitingList', 'Loading waiting list...');
-<<<<<<< HEAD
     let drafts = await api('/api/vehicle-logs/waiting');
     if (currentUser && currentUser.branchName) {
       drafts = drafts.filter(d => 
         d.branchName && d.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
       );
     }
-=======
-    const drafts = await api('/api/vehicle-logs/waiting');
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     if (!drafts.length) {
       el.innerHTML = '<p class="text-muted small px-2">No waiting entries.</p>';
       return;
@@ -2202,10 +1230,6 @@ async function loadVehicleWaitingList() {
         <td class="small">${fmtDateTime(d.updatedAt || d.createdAt)}</td>
         <td>
           <button class="btn cds-btn-sm me-1" onclick="editVehicleWaitingDraft('${d._id}')">Edit</button>
-<<<<<<< HEAD
-=======
-          <button class="btn cds-btn-sm me-1" onclick="submitVehicleWaitingDraft('${d._id}')">Send Approval</button>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           <button class="btn cds-btn-sm danger" onclick="deleteVehicleWaitingDraft('${d._id}')">Delete</button>
         </td>
       </tr>`).join('')}</tbody></table></div>`;
@@ -2227,7 +1251,6 @@ async function editVehicleWaitingDraft(id) {
     currentVehicleDraftId = d._id;
     document.getElementById('driverName').value = d.driverName || '';
     document.getElementById('vehicleNumber').value = d.vehicleNumber || '';
-<<<<<<< HEAD
 
 
     const v = allVehicles.find((x) => x.vehicleNumber === d.vehicleNumber);
@@ -2237,7 +1260,31 @@ async function editVehicleWaitingDraft(id) {
     await applyVehicleBaseline();
 
     document.getElementById('fromLocation').value = d.fromLocation || '';
-    document.getElementById('toLocation').value = d.toLocation || '';
+    const targetToLocation = d.toLocation || '';
+    const toSelect = document.getElementById('toLocation');
+    const toCustom = document.getElementById('toLocationCustom');
+    if (toSelect) {
+      const isKnownBranch = allBranches.some(b => b.name.toLowerCase() === targetToLocation.toLowerCase());
+      if (isKnownBranch) {
+        toSelect.value = targetToLocation;
+        if (toCustom) {
+          toCustom.classList.add('d-none');
+          toCustom.value = '';
+        }
+      } else if (targetToLocation) {
+        toSelect.value = 'other';
+        if (toCustom) {
+          toCustom.classList.remove('d-none');
+          toCustom.value = targetToLocation;
+        }
+      } else {
+        toSelect.value = '';
+        if (toCustom) {
+          toCustom.classList.add('d-none');
+          toCustom.value = '';
+        }
+      }
+    }
     document.getElementById('startDateTime').value = d.startDateTime ? formatDateTime12h(d.startDateTime) : formatDateTime12h(new Date());
     const targetEndDate = d.endDateTime ? new Date(d.endDateTime) : new Date();
     if (endDateTimePicker) {
@@ -2247,59 +1294,46 @@ async function editVehicleWaitingDraft(id) {
     }
     document.getElementById('endKm').value = d.endKm ?? '';
 
-    let hasFuel = false;
-    let fuelAddedVal = '';
-    let bunkVal = '';
-    let locationVal = '';
-    let fuelTypeVal = d.fuelType || 'petrol';
-    let pricePerLitreVal = d.pricePerLitre || '';
-
     currentFuelAdditions = [];
+    fuelInLogActive = false;
+    const fuelSection = document.getElementById('fuelSectionInLog');
+    if (fuelSection) {
+      fuelSection.classList.add('d-none');
+    }
+
     if (Array.isArray(d.expenses)) {
       d.expenses.forEach(exp => {
         if (exp.expenseType === 'oil' && exp.description) {
-          const match = exp.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]*)(?:;loc=(.*))?$/);
+          const match = exp.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
           if (match) {
-            hasFuel = true;
-            fuelAddedVal = match[1];
-            bunkVal = match[3];
-            locationVal = match[4] || '';
             currentFuelAdditions.push({
               added: Number(match[1]),
               current: Number(match[2]),
               bunk: match[3],
+              location: match[4] || '',
               price: Number(exp.amount)
             });
+
+            // Populate the single fuel addition inputs in the form
+            fuelInLogActive = true;
+            if (fuelSection) {
+              fuelSection.classList.remove('d-none');
+            }
+            const addedEl = document.getElementById('fuelAddedLitersInLog');
+            if (addedEl) addedEl.value = match[1];
+            const priceEl = document.getElementById('fuelPricePerLitreInLog');
+            if (priceEl) priceEl.value = d.pricePerLitre || (Number(exp.amount) / Number(match[1])).toFixed(2);
+            const bunkEl = document.getElementById('fuelBunkNameInLog');
+            if (bunkEl) bunkEl.value = match[3];
+            const locEl = document.getElementById('fuelLocationInLog');
+            if (locEl) locEl.value = match[4] || '';
+            const typeEl = document.getElementById('fuelTypeSelectInLog');
+            if (typeEl) typeEl.value = d.fuelType || 'petrol';
           }
         }
       });
     }
     renderFuelAdditions();
-
-    if (hasFuel || d.isFuelLog || (d.fuelAdded && d.fuelAdded > 0)) {
-      fuelInLogActive = false; // toggle will set it to true
-      toggleFuelInLog();
-      
-      const addedL = document.getElementById('fuelAddedLitersInLog');
-      if (addedL) addedL.value = fuelAddedVal || d.fuelAdded || '';
-      
-      const priceL = document.getElementById('fuelPricePerLitreInLog');
-      if (priceL) priceL.value = pricePerLitreVal;
-      
-      const bunkN = document.getElementById('fuelBunkNameInLog');
-      if (bunkN) bunkN.value = bunkVal;
-      
-      const locN = document.getElementById('fuelLocationInLog');
-      if (locN) locN.value = locationVal;
-      
-      const typeS = document.getElementById('fuelTypeSelectInLog');
-      if (typeS) typeS.value = fuelTypeVal;
-      
-      calcFuelInLog();
-    } else {
-      fuelInLogActive = true; // toggle will set it to false
-      toggleFuelInLog();
-    }
 
     const emergencyExp = Array.isArray(d.expenses) ? d.expenses.find(exp => !exp.description || !exp.description.startsWith('FUEL_ADDITION:')) : null;
     if (emergencyExp) {
@@ -2320,31 +1354,9 @@ async function editVehicleWaitingDraft(id) {
     await applyVehicleBaseline();
     calcVehicleDistance();
     calcVehicleMileage();
-=======
-    document.getElementById('fromLocation').value = d.fromLocation || '';
-    document.getElementById('toLocation').value = d.toLocation || '';
-    document.getElementById('startDateTime').value = d.startDateTime ? new Date(d.startDateTime).toISOString().slice(0, 16) : '';
-    document.getElementById('endDateTime').value = d.endDateTime ? new Date(d.endDateTime).toISOString().slice(0, 16) : '';
-    document.getElementById('endKm').value = d.endKm ?? '';
-    document.getElementById('fuelAdded').value = d.fuelAdded ?? 0;
-    document.getElementById('remainingFuel').value = d.remainingFuel ?? '';
-    document.getElementById('fuelUsedInput').value = d.fuelUsedInput ?? '';
-    document.getElementById('fuelFillDate').value = d.fuelFillDate ? new Date(d.fuelFillDate).toISOString().slice(0, 10) : '';
-    document.getElementById('mileageReason').value = d.mileageReason || '';
-    vehicleExpenseRows = (d.expenses || []).map((e) => ({
-      expenseType: e.expenseType,
-      amount: e.amount,
-      date: e.date ? new Date(e.date).toISOString().slice(0, 10) : '',
-      description: e.description || ''
-    }));
-    renderVehicleExpenseRows();
-    await applyVehicleBaseline();
-    calcVehicleDistance();
-    calcVehicleFuelUsed();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
-    showAlert('vehicleAlert', 'Waiting entry loaded. Update and save or send for approval.', 'success');
+    showCenteredSuccess('Waiting entry loaded. Update and save or send for approval.');
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
@@ -2352,10 +1364,10 @@ async function deleteVehicleWaitingDraft(id) {
   try {
     await api(`/api/vehicle-logs/waiting/${id}`, 'DELETE');
     if (currentVehicleDraftId === id) currentVehicleDraftId = null;
-    showAlert('vehicleAlert', 'Waiting entry deleted.', 'success');
+    showCenteredSuccess('Waiting entry deleted.');
     loadVehicleWaitingList();
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
@@ -2363,15 +1375,14 @@ async function submitVehicleWaitingDraft(id) {
   try {
     await api(`/api/vehicle-logs/waiting/${id}/submit`, 'POST');
     if (currentVehicleDraftId === id) currentVehicleDraftId = null;
-    showAlert('vehicleAlert', 'Waiting entry submitted for manager approval.', 'success');
+    showCenteredSuccess('Waiting entry submitted for manager approval.');
     loadVehicleWaitingList();
     loadVehicleHistory();
   } catch (err) {
-    showAlert('vehicleAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
-<<<<<<< HEAD
 async function loadVehicleProfilesAdmin() {
   const el = document.getElementById('vehicleProfilesList');
   if (!el) return;
@@ -2534,29 +1545,6 @@ async function saveVehicleProfileAdmin() {
     await loadVehicleList(); // Update datalists in new entry form
   } catch (err) {
     showAlert('vehicleProfilesAlert', err.message);
-=======
-async function saveVehicleProfile() {
-  const vehicleNumber = document.getElementById('vehicleNumber')?.value?.trim().toUpperCase();
-  const openingKm = Number(document.getElementById('profileOpeningKm')?.value);
-  const openingFuel = Number(document.getElementById('profileOpeningFuel')?.value);
-  const expectedMileage = document.getElementById('profileExpectedMileage')?.value;
-  if (!vehicleNumber) {
-    showAlert('vehicleAlert', 'Enter vehicle number first to save profile.');
-    return;
-  }
-  try {
-    await api('/api/vehicle-profiles', 'POST', {
-      vehicleNumber,
-      openingKm,
-      openingFuel,
-      expectedMileage
-    });
-    showAlert('vehicleAlert', 'Vehicle profile saved.', 'success');
-    await loadVehicleList();
-    await applyVehicleBaseline();
-  } catch (err) {
-    showAlert('vehicleAlert', err.message);
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   }
 }
 
@@ -2564,7 +1552,6 @@ async function loadVehicleEntryForm() {
   setLoading('vehicleHistoryList', 'Loading vehicle history...');
   setLoading('vehicleHistoryListCompact', 'Loading vehicle history...');
   await loadVehicleList();
-<<<<<<< HEAD
   await loadBranchesDropdowns();
   await applyVehicleBaseline();
   currentVehicleDraftId = null;
@@ -2590,25 +1577,15 @@ async function loadVehicleEntryForm() {
     }
   }
 
-=======
-  await applyVehicleBaseline();
-  vehicleExpenseRows = [];
-  renderVehicleExpenseRows();
-  currentVehicleDraftId = null;
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   loadVehicleWaitingList();
 }
 
 function vehicleStatusBadge(status) {
-<<<<<<< HEAD
   let cls = 'badge-pending';
   if (status === 'approved') cls = 'badge-approved';
   else if (status === 'rejected') cls = 'badge-rejected';
   else if (status === 'queried') cls = 'badge-rejected';
   else if (status === 'answered') cls = 'badge-converted';
-=======
-  const cls = status === 'approved' ? 'badge-approved' : status === 'rejected' ? 'badge-rejected' : 'badge-pending';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   return `<span class="cds-badge ${cls}">${status.toUpperCase()}</span>`;
 }
 
@@ -2617,7 +1594,6 @@ function renderVehicleLogsTable(logs, includeActions = false) {
   return `<div class="table-responsive"><table class="table cds-table">
     <thead><tr><th>Vehicle</th><th>Driver</th><th>Route</th><th>KM</th><th>Fuel</th><th>Expenses</th><th>Status</th><th>Manager Approved</th>${includeActions ? '<th>Actions</th>' : ''}</tr></thead>
     <tbody>${logs.map((l) => {
-<<<<<<< HEAD
     const rejectOpen = openVehicleRejectId === l._id;
     const isFuel = l.isFuelLog || l.fuelAdded > 0;
     const matchedV = allVehicles.find(v => v.vehicleNumber === l.vehicleNumber);
@@ -2632,6 +1608,16 @@ function renderVehicleLogsTable(logs, includeActions = false) {
         mileageStyle = 'style="color: #dc2626; font-weight: 600;"'; // red
       } else {
         mileageStyle = 'style="color: #16a34a; font-weight: 600;"'; // green
+      }
+    }
+
+    let bunkDetails = '';
+    if (isFuel && l.description) {
+      const match = l.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
+      if (match) {
+        const bunkName = match[3] || 'N/A';
+        const bunkLoc = match[4] || l.fromLocation || 'N/A';
+        bunkDetails = `<div class="small text-muted mt-1" style="font-size: 11px; border-top: 1px dashed #e5e8ef; padding-top: 3px;">Bunk: <strong>${escHtml(bunkName)}</strong> (${escHtml(bunkLoc)})</div>`;
       }
     }
 
@@ -2658,7 +1644,8 @@ function renderVehicleLogsTable(logs, includeActions = false) {
              <div class="small">Remain: ${l.remainingFuel} L ${l.isLowFuel ? '<span class="badge bg-warning text-dark">LOW</span>' : ''}</div>
              
              <div class="small">Mileage: <span ${mileageStyle}>${l.mileage != null ? l.mileage : '—'} km/L</span></div>
-             <div class="small text-muted">Std Mileage: ${stdMileage} ${stdMileage !== '—' ? 'km/L' : ''}</div>`
+             <div class="small text-muted">Std Mileage: ${stdMileage} ${stdMileage !== '—' ? 'km/L' : ''}</div>
+             ${bunkDetails}`
         : `—`
       }
       </td>
@@ -2694,16 +1681,22 @@ function renderVehicleLogsTable(logs, includeActions = false) {
       </td>
       ${includeActions ? `<td>
         ${l.status === 'pending' ? `
-          <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">Approve</button>
-          <button class="btn cds-btn-reject" onclick="toggleVehicleRejectForm('${l._id}')">Reject</button>
+          ${isFuel ? `
+            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">OK</button>
+            <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
+          ` : `
+            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">Approve</button>
+            <button class="btn cds-btn-reject" onclick="toggleVehicleRejectForm('${l._id}')">Reject</button>
+          `}
         ` : (isFuel ? `
           ${l.status === 'approved' ? `
+            <button class="btn btn-success btn-sm me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">OK</button>
             <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
           ` : (l.status === 'queried' ? `
-            <button class="btn btn-secondary btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">Remove Query</button>
+            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">OK</button>
             <div class="small text-muted mt-1">Awaiting Answer</div>
           ` : (l.status === 'answered' ? `
-            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">Remove Query</button>
+            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">OK</button>
             <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
           ` : '—'))}
         ` : '—')}
@@ -2712,52 +1705,22 @@ function renderVehicleLogsTable(logs, includeActions = false) {
     ${includeActions ? `
       <tr>
         <td colspan="9" class="p-0">
-=======
-      const rejectOpen = openVehicleRejectId === l._id;
-      return `<tr>
-      <td><strong>${escHtml(l.vehicleNumber)}</strong></td>
-      <td>${escHtml(l.driverName)}</td>
-      <td><div class="small">${escHtml(l.fromLocation)} → ${escHtml(l.toLocation)}</div><div class="small text-muted">${fmtDateTime(l.startDateTime)} to ${fmtDateTime(l.endDateTime)}</div></td>
-      <td><div class="small">Start: ${l.startKm}</div><div class="small">End: ${l.endKm}</div><div><strong>${(l.distanceTravelled || 0).toFixed(2)} km</strong></div></td>
-      <td><div class="small">Avail: ${l.availableFuel} L</div><div class="small">Added: ${l.fuelAdded} L</div><div class="small">Remain: ${l.remainingFuel} L ${l.isLowFuel ? '<span class="badge bg-warning text-dark">LOW</span>' : ''}</div><div class="small">Used: ${(l.fuelUsed || 0).toFixed(2)} L</div><div class="small">Mileage: ${l.mileage != null ? l.mileage : '—'} km/L</div></td>
-      <td><div class="small">${(l.expenses || []).length} item(s)</div><div class="small">${fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}</div></td>
-      <td>${vehicleStatusBadge(l.status)}${l.rejectReason ? `<div class="small text-danger mt-1">Reason: ${escHtml(l.rejectReason)}</div>` : ''}<div class="small text-muted mt-1">By: ${escHtml(l.createdBy || '')}</div></td>
-      <td>${l.status === 'approved' ? `<strong>${escHtml(l.reviewedBy || '-')}</strong><div class="small text-muted">${fmtDateTime(l.reviewedAt)}</div>` : (l.status === 'rejected' ? `<span class="text-danger">Rejected by ${escHtml(l.reviewedBy || '-')}</span>` : '—')}</td>
-      ${includeActions ? `<td>${l.status === 'pending' ? `
-        <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">Approve</button>
-        <button class="btn cds-btn-reject" onclick="toggleVehicleRejectForm('${l._id}')">Reject</button>
-      ` : '—'}</td>` : ''}
-    </tr>
-    ${includeActions ? `
-      <tr>
-        <td colspan="8" class="p-0">
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           <div class="inline-slide ${rejectOpen ? 'open' : ''}">
             <div class="p-3 border-top bg-white">
               <div class="row g-2 align-items-end">
                 <div class="col-md-9">
-<<<<<<< HEAD
                   <label class="form-label small mb-1">${isFuel ? 'Query Question (Question to Security)' : 'Reject Reason'}</label>
                   <input type="text" class="form-control cds-input" value="${escHtml(getReason(l._id))}"
                     oninput="updateVehicleRejectDraft('${l._id}', this.value)" placeholder="${isFuel ? 'Enter question for security (required)' : 'Enter reason (required)'}" />
                 </div>
                 <div class="col-md-3 d-grid">
                   <button class="btn cds-btn-reject" onclick="submitVehicleReject('${l._id}')">${isFuel ? 'Submit Query' : 'Submit Rejection'}</button>
-=======
-                  <label class="form-label small mb-1">Reject Reason</label>
-                  <input type="text" class="form-control cds-input" value="${escHtml(getReason(l._id))}"
-                    oninput="updateVehicleRejectDraft('${l._id}', this.value)" placeholder="Enter reason (required)" />
-                </div>
-                <div class="col-md-3 d-grid">
-                  <button class="btn cds-btn-reject" onclick="submitVehicleReject('${l._id}')">Submit Rejection</button>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
                 </div>
               </div>
             </div>
           </div>
         </td>
       </tr>
-<<<<<<< HEAD
     ` : (l.status === 'queried' && currentUserRole === 'security' ? `
       <tr>
         <td colspan="8" class="p-0">
@@ -2776,26 +1739,18 @@ function renderVehicleLogsTable(logs, includeActions = false) {
       </tr>
     ` : '')}`;
   }).join('')}</tbody></table></div>`;
-=======
-    ` : ''}`;
-    }).join('')}</tbody></table></div>`;
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 }
 
 async function loadVehicleHistory() {
   try {
     setLoading('vehicleHistoryList', 'Loading vehicle history...');
     setLoading('vehicleHistoryListCompact', 'Loading vehicle history...');
-<<<<<<< HEAD
     let logs = await api('/api/vehicle-logs');
     if (currentUser && currentUser.branchName) {
       logs = logs.filter(l => 
         l.branchName && l.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
       );
     }
-=======
-    const logs = await api('/api/vehicle-logs');
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     const html = logs.length ? renderVehicleLogsTable(logs, false) : '<p class="text-muted small px-2">No vehicle logs found.</p>';
     const el = document.getElementById('vehicleHistoryList');
     if (el) el.innerHTML = html;
@@ -2807,79 +1762,44 @@ async function loadVehicleHistory() {
   }
 }
 
-<<<<<<< HEAD
 let currentReviewedLogs = [];
 
-function updateApprovalVehicleDatalist() {
-  const datalist = document.getElementById('approvalVehicleSearchList');
-  if (!datalist) return;
-
-  const branchFilter = document.getElementById('approvalBranchFilter')?.value || '';
-  
-  let vehicles = allVehicles.filter(v => v.status !== 'inactive');
-  if (branchFilter) {
-    vehicles = vehicles.filter(v => v.branchName && v.branchName.toLowerCase() === branchFilter.toLowerCase());
-  }
-
-  datalist.innerHTML = vehicles.map((v) => {
-    const val = v.shortName || v.vehicleNumber;
-    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
-    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
-  }).join('');
-}
-
-function onApprovalBranchFilterChange() {
-  updateApprovalVehicleDatalist();
-  renderFilteredReviewedLogs();
-}
-
 function renderFilteredReviewedLogs() {
+  const vehicleVal = document.getElementById('approvalVehicleSelect')?.value || '';
+  const fromDateVal = document.getElementById('approvalFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('approvalToDateFilter')?.value || '';
   const branchVal = document.getElementById('approvalBranchFilter')?.value || '';
-  const inputVal = document.getElementById('approvalVehicleSearch')?.value?.trim() || '';
-  const dateVal = document.getElementById('approvalDateFilter')?.value || '';
   const el = document.getElementById('vehicleReviewedList');
   if (!el) return;
 
   let logsToRender = currentReviewedLogs;
-  if (currentUser && currentUser.branchName) {
+
+  // Filter by branch
+  if (branchVal) {
+    logsToRender = logsToRender.filter(l => 
+      l.branchName && l.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()
+    );
+  } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
     logsToRender = logsToRender.filter(l => 
       l.branchName && l.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
     );
   }
 
-  // 1. Branch filter
-  if (branchVal) {
-    logsToRender = logsToRender.filter(l => {
-      let bName = l.branchName || '';
-      if (!bName) {
-        const vNum = (l.vehicleNumber || '').toLowerCase();
-        const profile = allVehicles.find(v => v.vehicleNumber.toLowerCase() === vNum);
-        bName = profile ? (profile.branchName || '') : '';
-      }
-      return bName.toLowerCase() === branchVal.toLowerCase();
-    });
+  // 1. Vehicle Filter (Dropdown selection match)
+  if (vehicleVal) {
+    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
   }
 
-  // 2. Vehicle Filter (by Short Name or Vehicle Number)
-  if (inputVal) {
-    const matched = allVehicles.find(v =>
-      String(v.shortName || '').toUpperCase() === inputVal.toUpperCase() ||
-      String(v.vehicleNumber || '').toUpperCase() === inputVal.toUpperCase()
-    );
-    const filterNum = matched ? matched.vehicleNumber.toUpperCase() : inputVal.toUpperCase();
-
-    logsToRender = logsToRender.filter(l =>
-      String(l.vehicleNumber || '').toUpperCase().includes(filterNum)
-    );
+  // 2. Date Filter (From and To date range)
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0,0,0,0);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) >= fromDate);
   }
-
-  // 3. Date Filter (if chosen, show that date, else show all)
-  if (dateVal) {
-    const [yr, mo, dy] = dateVal.split('-').map(Number);
-    logsToRender = logsToRender.filter(l => {
-      const d = new Date(l.startDateTime);
-      return d.getFullYear() === yr && (d.getMonth() + 1) === mo && d.getDate() === dy;
-    });
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23,59,59,999);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) <= toDate);
   }
 
   el.innerHTML = logsToRender.length
@@ -2887,22 +1807,70 @@ function renderFilteredReviewedLogs() {
     : '<p class="text-muted small px-2">No reviewed logs found matching the filters.</p>';
 }
 
+function updateApprovalVehicleSelectOptions() {
+  const branchFilter = document.getElementById('approvalBranchFilter');
+  const selectEl = document.getElementById('approvalVehicleSelect');
+  if (!selectEl) return;
+
+  const selectedBranch = branchFilter ? branchFilter.value : '';
+  const currentVal = selectEl.value;
+
+  let vehiclesForSelect = allVehicles.filter(v => v.status === 'active');
+  if (selectedBranch) {
+    vehiclesForSelect = vehiclesForSelect.filter(v => 
+      v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
+    );
+  }
+
+  selectEl.innerHTML = '<option value="">All Vehicles</option>' + vehiclesForSelect.map(v => {
+    const val = v.vehicleNumber;
+    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` : v.vehicleNumber;
+    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+  }).join('');
+
+  if (currentVal && vehiclesForSelect.some(v => v.vehicleNumber === currentVal)) {
+    selectEl.value = currentVal;
+  } else {
+    selectEl.value = '';
+  }
+}
+
+function filterApprovalLogs() {
+  updateApprovalVehicleSelectOptions();
+  renderFilteredReviewedLogs();
+}
+
 function clearApprovalFilters() {
-  const bFilter = document.getElementById('approvalBranchFilter');
-  if (bFilter) bFilter.value = '';
-  const vSearch = document.getElementById('approvalVehicleSearch');
-  if (vSearch) vSearch.value = '';
-  const dFilter = document.getElementById('approvalDateFilter');
-  if (dFilter) dFilter.value = '';
-  updateApprovalVehicleDatalist();
+  const vSelect = document.getElementById('approvalVehicleSelect');
+  if (vSelect) vSelect.value = '';
+  const fromFilter = document.getElementById('approvalFromDateFilter');
+  if (fromFilter) fromFilter.value = '';
+  const toFilter = document.getElementById('approvalToDateFilter');
+  if (toFilter) toFilter.value = '';
+  const branchFilter = document.getElementById('approvalBranchFilter');
+  if (branchFilter) branchFilter.value = '';
+
+  updateApprovalVehicleSelectOptions();
   renderFilteredReviewedLogs();
 }
 
 async function loadVehicleApprovals() {
   try {
     setLoading('vehicleReviewedList', 'Loading reviewed vehicle logs...');
-    await loadBranchesDropdowns();
     await loadVehicleList(); // Refresh datalists
+
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+
+    const branchFilter = document.getElementById('approvalBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
 
     const reviewed = await api('/api/vehicle-logs');
     currentReviewedLogs = reviewed;
@@ -2910,21 +1878,8 @@ async function loadVehicleApprovals() {
     // Sort ascending date-wise (ascending order: 1, 2, 3, 4)
     currentReviewedLogs.sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
 
-    updateApprovalVehicleDatalist();
+    updateApprovalVehicleSelectOptions();
     renderFilteredReviewedLogs();
-=======
-async function loadVehicleApprovals() {
-  try {
-    setLoading('vehiclePendingList', 'Loading pending vehicle logs...');
-    setLoading('vehicleReviewedList', 'Loading reviewed vehicle logs...');
-    const pending = await api('/api/vehicle-logs?status=pending');
-    const reviewed = await api('/api/vehicle-logs');
-    const pendingEl = document.getElementById('vehiclePendingList');
-    const reviewedEl = document.getElementById('vehicleReviewedList');
-    if (pendingEl) pendingEl.innerHTML = pending.length ? renderVehicleLogsTable(pending, true) : '<p class="text-muted small px-2">No pending vehicle logs.</p>';
-    const history = reviewed.filter((l) => l.status !== 'pending');
-    if (reviewedEl) reviewedEl.innerHTML = history.length ? renderVehicleLogsTable(history, false) : '<p class="text-muted small px-2">No reviewed logs.</p>';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
   }
@@ -2935,10 +1890,6 @@ async function reviewVehicleLog(id, action) {
   try {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', payload);
     loadVehicleApprovals();
-<<<<<<< HEAD
-=======
-    loadDashboard();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
   }
@@ -2956,7 +1907,6 @@ function updateVehicleRejectDraft(id, value) {
 async function submitVehicleReject(id) {
   const reason = String(vehicleRejectDrafts.get(id) || '').trim();
   if (!reason) {
-<<<<<<< HEAD
     showAlert('vehicleApprovalAlert', 'Question/Reason is required.', 'warning');
     return;
   }
@@ -2969,23 +1919,11 @@ async function submitVehicleReject(id) {
     vehicleRejectDrafts.delete(id);
     openVehicleRejectId = null;
     loadVehicleApprovals();
-=======
-    showAlert('vehicleApprovalAlert', 'Reject reason is required.', 'warning');
-    return;
-  }
-  try {
-    await api(`/api/vehicle-logs/${id}/review`, 'POST', { action: 'reject', reason });
-    vehicleRejectDrafts.delete(id);
-    openVehicleRejectId = null;
-    loadVehicleApprovals();
-    loadDashboard();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
   }
 }
 
-<<<<<<< HEAD
 async function resolveVehicleQuery(id) {
   try {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', { action: 'resolve' });
@@ -3013,10 +1951,70 @@ async function submitVehicleQueryAnswer(id, btn) {
 
 let currentReportLogs = [];
 
+function updateReportVehicleSelectOptions() {
+  const branchSelect = document.getElementById('reportBranchSelect');
+  const selectEl = document.getElementById('reportVehicleSelect');
+  if (!selectEl) return;
+
+  const selectedBranch = branchSelect ? branchSelect.value : '';
+  const currentVal = selectEl.value;
+
+  let vehiclesForSelect = allVehicles.filter(v => v.status === 'active');
+  if (selectedBranch) {
+    vehiclesForSelect = vehiclesForSelect.filter(v => 
+      v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
+    );
+  }
+
+  selectEl.innerHTML = '<option value="">All Vehicles</option>' + vehiclesForSelect.map(v => {
+    const val = v.vehicleNumber;
+    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` : v.vehicleNumber;
+    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+  }).join('');
+
+  if (currentVal && vehiclesForSelect.some(v => v.vehicleNumber === currentVal)) {
+    selectEl.value = currentVal;
+  } else {
+    selectEl.value = '';
+  }
+}
+
+function updateReportBunkSelectOptions() {
+  const bunkSelect = document.getElementById('reportBunkSelect');
+  if (!bunkSelect) return;
+  const currentVal = bunkSelect.value;
+  
+  const bunks = new Set();
+  currentReportLogs.forEach(l => {
+    if (l.description) {
+      const match = l.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
+      if (match && match[3]) {
+        const bName = match[3].trim();
+        if (bName && bName !== 'N/A') bunks.add(bName);
+      }
+    }
+  });
+
+  const sortedBunks = Array.from(bunks).sort();
+  bunkSelect.innerHTML = '<option value="">All Bunks</option>' + sortedBunks.map(b => 
+    `<option value="${escHtml(b)}">${escHtml(b)}</option>`
+  ).join('');
+
+  if (currentVal && sortedBunks.includes(currentVal)) {
+    bunkSelect.value = currentVal;
+  } else {
+    bunkSelect.value = '';
+  }
+}
+
 function renderFilteredVehicleReports() {
-  const inputVal = document.getElementById('reportVehicleSearch')?.value?.trim() || '';
-  const dateVal = document.getElementById('vehicleReportDate')?.value || '';
+  updateReportVehicleSelectOptions();
+  updateReportBunkSelectOptions();
+  const vehicleVal = document.getElementById('reportVehicleSelect')?.value || '';
+  const fromDateVal = document.getElementById('reportFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('reportToDateFilter')?.value || '';
   const branchVal = document.getElementById('reportBranchSelect')?.value || '';
+  const bunkVal = document.getElementById('reportBunkSelect')?.value || '';
   const el = document.getElementById('vehicleReportList');
   if (!el) return;
 
@@ -3031,27 +2029,30 @@ function renderFilteredVehicleReports() {
     );
   }
 
-  // 1. Vehicle Filter
-  if (inputVal) {
-    const matched = allVehicles.find(v =>
-      String(v.shortName || '').toUpperCase() === inputVal.toUpperCase() ||
-      String(v.vehicleNumber || '').toUpperCase() === inputVal.toUpperCase()
-    );
-    const filterNum = matched ? matched.vehicleNumber.toUpperCase() : inputVal.toUpperCase();
-
-    logsToRender = logsToRender.filter(l =>
-      String(l.vehicleNumber || '').toUpperCase().includes(filterNum)
-    );
+  if (vehicleVal) {
+    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
   }
 
-  // 2. Date Filter (if chosen, show that date, else show all)
-  if (dateVal) {
-    const [yr, mo, dy] = dateVal.split('-').map(Number);
+  if (bunkVal) {
     logsToRender = logsToRender.filter(l => {
-      const d = new Date(l.startDateTime);
-      return d.getFullYear() === yr && (d.getMonth() + 1) === mo && d.getDate() === dy;
+      if (!l.description) return false;
+      const match = l.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
+      return match && match[3] && match[3].trim().toLowerCase() === bunkVal.toLowerCase();
     });
   }
+
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0, 0, 0, 0);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) >= fromDate);
+  }
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23, 59, 59, 999);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) <= toDate);
+  }
+
+  logsToRender.sort((a, b) => new Date(a.startDateTime || a.createdAt || 0) - new Date(b.startDateTime || b.createdAt || 0));
 
   el.innerHTML = logsToRender.length
     ? renderVehicleLogsTable(logsToRender, false)
@@ -3059,12 +2060,18 @@ function renderFilteredVehicleReports() {
 }
 
 function clearReportFilters() {
-  const vSearch = document.getElementById('reportVehicleSearch');
-  if (vSearch) vSearch.value = '';
-  const dFilter = document.getElementById('vehicleReportDate');
-  if (dFilter) dFilter.value = '';
+  const vSelect = document.getElementById('reportVehicleSelect');
+  if (vSelect) vSelect.value = '';
+  const fDate = document.getElementById('reportFromDateFilter');
+  if (fDate) fDate.value = '';
+  const tDate = document.getElementById('reportToDateFilter');
+  if (tDate) tDate.value = '';
   const bFilter = document.getElementById('reportBranchSelect');
   if (bFilter) bFilter.value = '';
+  const bkSelect = document.getElementById('reportBunkSelect');
+  if (bkSelect) bkSelect.value = '';
+  updateReportVehicleSelectOptions();
+  updateReportBunkSelectOptions();
   renderFilteredVehicleReports();
 }
 
@@ -3072,24 +2079,12 @@ async function loadVehicleReports() {
   try {
     setLoading('vehicleReportList', 'Loading vehicle reports...');
     await loadBranchesDropdowns();
-    await loadVehicleList(); // Refresh datalists
+    await loadVehicleList();
 
     const logs = await api('/api/vehicle-logs?status=approved');
     currentReportLogs = logs;
-    currentReportLogs.sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
 
     renderFilteredVehicleReports();
-=======
-async function loadVehicleReports() {
-  try {
-    setLoading('vehicleReportList', 'Loading vehicle reports...');
-    const dateInput = document.getElementById('vehicleReportDate')?.value;
-    const url = dateInput ? `/api/vehicle-logs?status=approved&date=${dateInput}` : '/api/vehicle-logs?status=approved';
-    const logs = await api(url);
-    const el = document.getElementById('vehicleReportList');
-    if (!el) return;
-    el.innerHTML = logs.length ? renderVehicleLogsTable(logs, false) : '<p class="text-muted small px-2">No approved vehicle logs for selected date.</p>';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     showAlert('vehicleReportAlert', err.message);
   }
@@ -3101,8 +2096,16 @@ function printVehicleReport() {
     showAlert('vehicleReportAlert', 'No data to print.');
     return;
   }
-  const dateInput = document.getElementById('vehicleReportDate')?.value;
-  const title = dateInput ? `Vehicle Report - ${dateInput}` : 'Vehicle Report';
+  const fromDate = document.getElementById('reportFromDateFilter')?.value;
+  const toDate = document.getElementById('reportToDateFilter')?.value;
+  let title = 'Vehicle Report';
+  if (fromDate && toDate) {
+    title = `Vehicle Report (${fmtDate(fromDate)} to ${fmtDate(toDate)})`;
+  } else if (fromDate) {
+    title = `Vehicle Report (From ${fmtDate(fromDate)})`;
+  } else if (toDate) {
+    title = `Vehicle Report (Until ${fmtDate(toDate)})`;
+  }
   const printWindow = window.open('', '', 'height=600,width=800');
   printWindow.document.write('<html><head><title>' + title + '</title>');
   printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
@@ -3112,61 +2115,286 @@ function printVehicleReport() {
   printWindow.document.write(el.innerHTML);
   printWindow.document.write('</body></html>');
   printWindow.document.close();
-<<<<<<< HEAD
   printWindow.onload = function () {
-=======
-  printWindow.onload = function() {
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     printWindow.focus();
     printWindow.print();
     printWindow.close();
   };
 }
 
-<<<<<<< HEAD
+function printFuelLogs() {
+  const el = document.getElementById('fuelHistoryList');
+  if (!el || !el.innerHTML.includes('<table')) {
+    const alertId = document.getElementById('fuelHistoryAlert');
+    if (alertId) showAlert('fuelHistoryAlert', 'No fuel logs to print.');
+    else alert('No fuel logs to print.');
+    return;
+  }
+  const title = 'Fuel Log Report';
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write('<html><head><title>' + title + '</title>');
+  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
+  printWindow.document.write('<style>@page { size: landscape; } body { padding: 20px; font-family: sans-serif; } table { width: 100%; border-collapse: collapse; margin-top: 10px; } th, td { border: 1px solid #dee2e6; padding: 8px; font-size: 12px; } th { background-color: #f8f9fa; } .small { font-size: 0.875em; } .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; } .bg-warning { background-color: #ffc107; color: #000; } .bg-info { background-color: #0dcaf0; color: #000; }</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write('<h4>' + title + '</h4>');
+  printWindow.document.write(el.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.onload = function () {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+}
+
+function printExpenseLogs() {
+  const el = document.getElementById('vehicleExpensesListWrap');
+  if (!el || !el.innerHTML.includes('<table')) {
+    alert('No expense logs to print.');
+    return;
+  }
+  const title = 'Expense Log Report';
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write('<html><head><title>' + title + '</title>');
+  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
+  printWindow.document.write('<style>@page { size: landscape; } body { padding: 20px; font-family: sans-serif; } .cds-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; } .badge-approved { background: #d1fae5; color: #065f46; } .badge-rejected { background: #fee2e2; color: #991b1b; } .badge-pending { background: #fef3c7; color: #92400e; } table { width: 100%; border-collapse: collapse; margin-top: 10px; } th, td { border: 1px solid #dee2e6; padding: 8px; font-size: 12px; } th { background-color: #f8f9fa; } .small { font-size: 0.875em; } .text-muted { color: #6c757d; } .text-danger { color: #dc3545; } .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; }</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write('<h4>' + title + '</h4>');
+  printWindow.document.write(el.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.onload = function () {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+}
+
+function printScrapSlip() {
+  const companyName = document.getElementById('scrapCompany')?.value?.trim();
+  const vehicleNumber = document.getElementById('scrapVehicle')?.value?.trim()?.toUpperCase();
+  const dateTimeStr = document.getElementById('scrapDateTime')?.value;
+  const description = document.getElementById('scrapDescription')?.value?.trim();
+
+  const branchSelect = document.getElementById('scrapBranchSelect');
+  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].text : '';
+
+  if (!companyName || !vehicleNumber || currentScrapItems.length === 0) {
+    showAlert('scrapEntryAlert', 'Please enter Company Name, Vehicle Number, and add at least one item to print the slip.', 'warning');
+    return;
+  }
+
+  const title = 'Scrap Transaction Slip';
+  const printWindow = window.open('', '', 'height=600,width=800');
+  printWindow.document.write('<html><head><title>' + title + '</title>');
+  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
+  printWindow.document.write('<style>');
+  printWindow.document.write('body { padding: 40px; font-family: "Segoe UI", Roboto, sans-serif; color: #333; }');
+  printWindow.document.write('.receipt-header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #333; padding-bottom: 15px; }');
+  printWindow.document.write('.receipt-title { font-size: 22px; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }');
+  printWindow.document.write('.receipt-sub { font-size: 13px; color: #666; }');
+  printWindow.document.write('.info-table { width: 100%; margin-bottom: 25px; font-size: 14px; }');
+  printWindow.document.write('.info-table td { padding: 5px 0; border: none; }');
+  printWindow.document.write('.info-label { font-weight: bold; width: 150px; }');
+  printWindow.document.write('.items-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }');
+  printWindow.document.write('.items-table th, .items-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }');
+  printWindow.document.write('.items-table th { background-color: #f8f9fa; font-weight: bold; }');
+  printWindow.document.write('.total-row { font-weight: bold; font-size: 15px; background-color: #fafafa; }');
+  printWindow.document.write('.signature-section { margin-top: 60px; display: flex; justify-content: space-between; }');
+  printWindow.document.write('.sig-box { text-align: center; width: 220px; border-top: 1px dashed #333; padding-top: 8px; font-size: 13px; font-weight: bold; }');
+  printWindow.document.write('.remarks { margin-top: 25px; font-size: 13px; font-style: italic; color: #555; }');
+  printWindow.document.write('</style></head><body>');
+
+  // Header
+  printWindow.document.write('<div class="receipt-header">');
+  printWindow.document.write('<div class="receipt-title">TCS — SCRAP TRANSACTION SLIP</div>');
+  printWindow.document.write('<div class="receipt-sub">Branch: ' + (branchName || 'N/A') + ' &nbsp;|&nbsp; Date & Time: ' + (dateTimeStr || new Date().toLocaleString()) + '</div>');
+  printWindow.document.write('</div>');
+
+  // Meta info
+  printWindow.document.write('<table class="info-table">');
+  printWindow.document.write('<tr><td class="info-label">Company Name:</td><td>' + companyName + '</td></tr>');
+  printWindow.document.write('<tr><td class="info-label">Vehicle Number:</td><td>' + vehicleNumber + '</td></tr>');
+  printWindow.document.write('</table>');
+
+  // Table of items
+  printWindow.document.write('<table class="items-table">');
+  printWindow.document.write('<thead><tr><th>S.No</th><th>Product Name</th><th>Weight</th><th>Price/KG</th><th style="text-align: right;">Total (₹)</th></tr></thead>');
+  printWindow.document.write('<tbody>');
+  
+  let grandTotal = 0;
+  currentScrapItems.forEach((item, index) => {
+    const total = item.weight * item.pricePerKg;
+    grandTotal += total;
+    printWindow.document.write('<tr>');
+    printWindow.document.write('<td>' + (index + 1) + '</td>');
+    printWindow.document.write('<td>' + escHtml(item.productName) + '</td>');
+    printWindow.document.write('<td>' + item.weight + ' KG</td>');
+    printWindow.document.write('<td>₹' + item.pricePerKg.toFixed(2) + '</td>');
+    printWindow.document.write('<td style="text-align: right;">₹' + total.toFixed(2) + '</td>');
+    printWindow.document.write('</tr>');
+  });
+
+  printWindow.document.write('<tr class="total-row">');
+  printWindow.document.write('<td colspan="4" style="text-align: right;">Grand Total:</td>');
+  printWindow.document.write('<td style="text-align: right;">₹' + grandTotal.toFixed(2) + '</td>');
+  printWindow.document.write('</tr>');
+  printWindow.document.write('</tbody></table>');
+
+  // Description/Remarks if exists
+  if (description) {
+    printWindow.document.write('<div class="remarks"><strong>Remarks/Description:</strong> ' + escHtml(description) + '</div>');
+  }
+
+  // Signatures
+  printWindow.document.write('<div class="signature-section">');
+  printWindow.document.write('<div class="sig-box">Security Officer Signature</div>');
+  printWindow.document.write('<div class="sig-box">Driver/Representative Signature</div>');
+  printWindow.document.write('</div>');
+
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  
+  printWindow.onload = function () {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+}
+
 // ─── VEHICLE EXPENSES ────────────────────────────────────────────────────────
+async function loadVehicleExpenses() {
+  const el = document.getElementById('vehicleExpensesList');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Loading expenses...</td></tr>';
+  try {
+    if (allVehicles.length === 0) {
+      await loadVehicleList();
+    }
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+    cachedExpenses = await api('/api/vehicle-expenses');
+
+    // Populate branch filter if it exists and is empty
+    const branchFilter = document.getElementById('expenseBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
+
+    updateExpenseVehicleFilterOptions();
+    renderFilteredExpenses();
+  } catch (err) {
+    el.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${escHtml(err.message)}</td></tr>`;
+  }
+}
+
+function updateExpenseVehicleFilterOptions() {
+  const branchFilter = document.getElementById('expenseBranchFilter');
+  const vehicleFilter = document.getElementById('expenseVehicleFilter');
+  if (!vehicleFilter) return;
+
+  const selectedBranch = branchFilter ? branchFilter.value : '';
+  const currentVehicle = vehicleFilter.value;
+
+  // Filter allVehicles based on selectedBranch
+  let vehiclesForSelect = allVehicles;
+  if (selectedBranch) {
+    vehiclesForSelect = allVehicles.filter(v => 
+      v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
+    );
+  }
+
+  // Populate vehicleFilter dropdown
+  vehicleFilter.innerHTML = '<option value="">All Vehicles</option>' + vehiclesForSelect.map(v => {
+    const val = v.vehicleNumber;
+    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` : v.vehicleNumber;
+    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+  }).join('');
+
+  // Restore previous selection if still valid, else default to all
+  if (currentVehicle && vehiclesForSelect.some(v => v.vehicleNumber === currentVehicle)) {
+    vehicleFilter.value = currentVehicle;
+  } else {
+    vehicleFilter.value = '';
+  }
+}
+
+function filterExpenses() {
+  updateExpenseVehicleFilterOptions();
+  renderFilteredExpenses();
+}
+
+function clearExpenseFilters() {
+  const branchFilter = document.getElementById('expenseBranchFilter');
+  const vehicleFilter = document.getElementById('expenseVehicleFilter');
+  const fromFilter = document.getElementById('expenseFromDateFilter');
+  const toFilter = document.getElementById('expenseToDateFilter');
+  if (branchFilter) branchFilter.value = '';
+  if (vehicleFilter) vehicleFilter.value = '';
+  if (fromFilter) fromFilter.value = '';
+  if (toFilter) toFilter.value = '';
+  
+  updateExpenseVehicleFilterOptions();
+  renderFilteredExpenses();
+}
+
 function renderFilteredExpenses() {
   const el = document.getElementById('vehicleExpensesList');
   if (!el) return;
 
-  const branchFilter = document.getElementById('expenseBranchFilter')?.value || '';
-  const vehicleFilter = document.getElementById('expenseVehicleFilter')?.value || '';
-  const dateFilter = document.getElementById('expenseDateFilter')?.value || '';
+  let expensesToRender = cachedExpenses;
 
-  let expensesToRender = cachedVehicleExpenses;
-
-  if (currentUser && currentUser.branchName) {
+  // Filter by branch
+  const branchVal = document.getElementById('expenseBranchFilter')?.value || '';
+  if (branchVal) {
+    expensesToRender = expensesToRender.filter(e => {
+      const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
+      return v && v.branchName && v.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase();
+    });
+  } else if (currentUser && currentUser.branchName) {
     expensesToRender = expensesToRender.filter(e => {
       const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
       return v && v.branchName && v.branchName.toLowerCase() === currentUser.branchName.toLowerCase();
     });
   }
 
-  if (branchFilter) {
-    expensesToRender = expensesToRender.filter(e => {
-      const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
-      return v && v.branchName && v.branchName.toLowerCase() === branchFilter.toLowerCase();
-    });
+  // Filter by vehicle
+  const vehicleVal = document.getElementById('expenseVehicleFilter')?.value || '';
+  if (vehicleVal) {
+    expensesToRender = expensesToRender.filter(e => e.vehicleNumber === vehicleVal);
   }
 
-  if (vehicleFilter) {
-    expensesToRender = expensesToRender.filter(e => {
-      const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
-      const sName = v && v.shortName ? v.shortName : '';
-      return e.vehicleNumber === vehicleFilter || sName === vehicleFilter;
-    });
-  }
+  // Filter by From/To dates
+  const fromDateVal = document.getElementById('expenseFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('expenseToDateFilter')?.value || '';
 
-  if (dateFilter) {
-    const [yr, mo, dy] = dateFilter.split('-').map(Number);
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0,0,0,0);
     expensesToRender = expensesToRender.filter(e => {
       const d = new Date(e.date);
-      return d.getFullYear() === yr && (d.getMonth() + 1) === mo && d.getDate() === dy;
+      return d >= fromDate;
+    });
+  }
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23,59,59,999);
+    expensesToRender = expensesToRender.filter(e => {
+      const d = new Date(e.date);
+      return d <= toDate;
     });
   }
 
+  // Sort ascending chronologically (oldest first)
+  expensesToRender.sort((a, b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
+
   if (!expensesToRender.length) {
-    el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No expenses matching the filters.</td></tr>';
+    el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No expenses found matching the filters.</td></tr>';
     return;
   }
 
@@ -3223,110 +2451,6 @@ function renderFilteredExpenses() {
       </td>
     </tr>`;
   }).join('');
-}
-
-function updateExpenseVehicleSelect() {
-  const select = document.getElementById('expenseVehicleFilter');
-  if (!select) return;
-
-  const currentVal = select.value;
-  const branchFilter = document.getElementById('expenseBranchFilter')?.value || '';
-  
-  let vehicles = allVehicles.filter(v => v.status !== 'inactive');
-  if (branchFilter) {
-    vehicles = vehicles.filter(v => v.branchName && v.branchName.toLowerCase() === branchFilter.toLowerCase());
-  }
-
-  select.innerHTML = '<option value="">All Vehicles</option>' + vehicles.map((v) => {
-    const val = v.shortName || v.vehicleNumber;
-    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
-    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
-  }).join('');
-
-  const hasVal = Array.from(select.options).some(opt => opt.value === currentVal);
-  if (currentVal && hasVal) {
-    select.value = currentVal;
-  } else {
-    select.value = '';
-  }
-}
-
-function onExpenseBranchFilterChange() {
-  updateExpenseVehicleSelect();
-  renderFilteredExpenses();
-}
-
-function clearExpenseFilters() {
-  const branchEl = document.getElementById('expenseBranchFilter');
-  if (branchEl) branchEl.value = '';
-  const vehicleEl = document.getElementById('expenseVehicleFilter');
-  if (vehicleEl) vehicleEl.value = '';
-  const dateEl = document.getElementById('expenseDateFilter');
-  if (dateEl) dateEl.value = '';
-
-  updateExpenseVehicleSelect();
-  renderFilteredExpenses();
-}
-
-async function loadVehicleExpenses() {
-  const el = document.getElementById('vehicleExpensesList');
-  if (!el) return;
-  el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Loading expenses...</td></tr>';
-  try {
-    await loadBranchesDropdowns();
-    if (allVehicles.length === 0) {
-      await loadVehicleList();
-    }
-    const expenses = await api('/api/vehicle-expenses');
-    cachedVehicleExpenses = expenses;
-    cachedVehicleExpenses.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    updateExpenseVehicleSelect();
-    renderFilteredExpenses();
-  } catch (err) {
-    el.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${escHtml(err.message)}</td></tr>`;
-  }
-}
-
-function printExpenseReport() {
-  const el = document.getElementById('vehicleExpensesListWrap');
-  if (!el || !el.innerHTML.includes('<table')) {
-    alert('No expense data to print.');
-    return;
-  }
-  const dateInput = document.getElementById('expenseDateFilter')?.value;
-  const branchInput = document.getElementById('expenseBranchFilter')?.value;
-  const vehicleInput = document.getElementById('expenseVehicleFilter')?.value;
-  let subtitle = '';
-  if (branchInput) subtitle += `Branch: ${branchInput} | `;
-  if (vehicleInput) subtitle += `Vehicle: ${vehicleInput} | `;
-  if (dateInput) subtitle += `Date: ${dateInput}`;
-  subtitle = subtitle.replace(/\s*\|\s*$/, '');
-
-  const clone = el.cloneNode(true);
-  const headers = clone.querySelectorAll('th');
-  if (headers.length > 7) headers[7].style.display = 'none';
-  const rows = clone.querySelectorAll('tbody tr');
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    if (cells.length > 7) cells[7].style.display = 'none';
-  });
-
-  const printWindow = window.open('', '', 'height=600,width=800');
-  printWindow.document.write('<html><head><title>Expense Log Report</title>');
-  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
-  printWindow.document.write('<style>body { padding: 20px; font-family: sans-serif; } table { width: 100%; border-collapse: collapse; margin-top: 10px; } th, td { border: 1px solid #dee2e6; padding: 8px; font-size: 12px; } th { background-color: #f8f9fa; } .small { font-size: 0.875em; } .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; }</style>');
-  printWindow.document.write('</head><body>');
-  printWindow.document.write('<h4>Expense Log Report</h4>');
-  if (subtitle) printWindow.document.write('<p class="text-muted small">' + subtitle + '</p>');
-  printWindow.document.write(clone.innerHTML);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.onload = function () {
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  };
 }
 
 async function reviewVehicleExpense(id, action) {
@@ -3408,114 +2532,6 @@ async function deleteVehicleExpense(id) {
     await api(`/api/vehicle-expenses/${id}`, 'DELETE');
     showAlert('vehicleExpensesAlert', 'Expense deleted successfully.', 'success');
     loadVehicleExpenses();
-=======
-// ─── MANAGER PAGE ─────────────────────────────────────────────────────────────
-async function initManager() {
-  setTodayDate();
-  try {
-    const me = await api('/api/me');
-    if (me.role !== 'manager') { window.location.href = '/'; return; }
-    const u = document.getElementById('sidebarUsername');
-    const a = document.getElementById('sidebarAvatar');
-    if (u) u.textContent = me.username;
-    if (a) a.textContent = me.username[0].toUpperCase();
-  } catch {
-    window.location.href = '/';
-    return;
-  }
-  loadManagerData();
-}
-
-// ─── INCHARGE PAGE ────────────────────────────────────────────────────────────
-async function initIncharge() {
-  setTodayDate();
-  try {
-    const me = await api('/api/me');
-    if (me.role !== 'incharge') { window.location.href = '/'; return; }
-    currentUserRole = me.role;
-    const u = document.getElementById('sidebarUsername');
-    const a = document.getElementById('sidebarAvatar');
-    if (u) u.textContent = me.username;
-    if (a) a.textContent = me.username[0].toUpperCase();
-  } catch {
-    window.location.href = '/';
-    return;
-  }
-  showSection('inventoryRequests');
-}
-
-async function initSecurity() {
-  setTodayDate();
-  try {
-    const me = await api('/api/me');
-    if (me.role !== 'security') { window.location.href = '/'; return; }
-    currentUserRole = me.role;
-    const u = document.getElementById('sidebarUsername');
-    const a = document.getElementById('sidebarAvatar');
-    if (u) u.textContent = me.username;
-    if (a) a.textContent = me.username[0].toUpperCase();
-    setupSecurityMenu();
-  } catch {
-    window.location.href = '/';
-    return;
-  }
-  showSection('vehicleEntry');
-}
-
-async function loadManagerData() {
-  try {
-    const pending = await api('/api/transactions/pending');
-    const allTxs = await api('/api/transactions');
-    const me = (await api('/api/me')).username;
-
-    document.getElementById('pendingCount').textContent = pending.length;
-
-    const today = new Date().toDateString();
-    const myApproved = allTxs.filter(t => t.reviewedBy === me && t.status === 'approved' && new Date(t.reviewedAt).toDateString() === today);
-    const myRejected = allTxs.filter(t => t.reviewedBy === me && t.status === 'rejected' && new Date(t.reviewedAt).toDateString() === today);
-    document.getElementById('approvedCount').textContent = myApproved.length;
-    document.getElementById('rejectedCount').textContent = myRejected.length;
-
-    const el = document.getElementById('pendingList');
-    if (!pending.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>All caught up! No pending approvals.</p></div>';
-      return;
-    }
-    el.innerHTML = `<div class="table-responsive"><table class="table cds-table">
-      <thead><tr><th>Type</th><th>Description</th><th>Amount</th><th>Created By</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody>
-        ${pending.map(t => `<tr>
-          <td>${typeBadge(t.type)}</td>
-          <td>
-            <div>${escHtml(t.description)}</div>
-            ${t.workerName ? `<div class="text-muted small">Worker: ${escHtml(t.workerName)}</div>` : ''}
-          </td>
-          <td><strong>${fmt(t.amount)}</strong></td>
-          <td class="small">${escHtml(t.createdBy || '—')}</td>
-          <td class="small">${fmtDateTime(t.createdAt)}</td>
-          <td>
-            <button class="btn cds-btn-approve me-1" onclick="reviewTx('${t._id}', 'approve')">✓ Approve</button>
-            <button class="btn cds-btn-reject" onclick="reviewTx('${t._id}', 'reject')">✗ Reject</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table></div>`;
-  } catch (e) {
-    console.error(e);
-    showAlert('approvalAlert', 'Failed to load data.');
-  }
-}
-
-async function reviewTx(id, action) {
-  const label = action === 'approve' ? 'approve' : 'reject';
-  try {
-    await api(`/api/transactions/${id}/${action}`, 'POST');
-    // If there is an alert placeholder we can show the alert, or just refresh
-    // We'll call loadTransactions to update the pending and history views
-    loadTransactions();
-    // We also update dashboard balances if needed
-    loadDashboard();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     alert(err.message);
   }
@@ -3529,35 +2545,6 @@ function escHtml(str) {
 
 // ─── SCRAP MANAGEMENT ──────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-=======
-async function initScrapDashboard() {
-  try {
-    const data = await api('/api/scrap/dashboard');
-    document.getElementById('scrapTotalEntries').textContent = data.totalEntries;
-    document.getElementById('scrapPendingCount').textContent = data.pendingApprovals;
-    document.getElementById('scrapApprovedCount').textContent = data.approvedEntries;
-    document.getElementById('scrapTotalValue').textContent = fmt(data.totalScrapValue);
-    
-    const entries = await api('/api/scrap/entries?status=approved');
-    const tbody = entries.slice(0, 10).map(e => `<tr>
-      <td>${fmtDate(e.createdAt)}</td>
-      <td>${escHtml(e.companyName)}</td>
-      <td>${escHtml(e.productName)}</td>
-      <td>${e.weight} KG</td>
-      <td>${fmt(e.totalAmount)}</td>
-    </tr>`).join('');
-    
-    document.getElementById('scrapDashTable').innerHTML = `
-      <div class="table-responsive"><table class="table cds-table mb-0">
-        <thead><tr><th>Date</th><th>Company</th><th>Product</th><th>Weight</th><th>Amount</th></tr></thead>
-        <tbody>${tbody || '<tr><td colspan="5" class="text-center">No approved entries</td></tr>'}</tbody>
-      </table></div>`;
-  } catch (err) {
-    console.error(err);
-  }
-}
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 
 async function loadScrapProducts() {
   const el = document.getElementById('scrapProductList');
@@ -3587,11 +2574,7 @@ async function editScrapProductPrice(id, currentPrice) {
   if (newPrice === null) return;
   const priceNum = Number(newPrice);
   if (isNaN(priceNum) || priceNum < 0) return alert('Invalid price entered');
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   try {
     await api(`/api/scrap/products/${id}`, 'PUT', { pricePerKg: priceNum });
     loadScrapProducts();
@@ -3631,18 +2614,13 @@ async function loadScrapProductDropdown() {
   if (!sel) return;
   try {
     allScrapProducts = await api('/api/scrap/products');
-<<<<<<< HEAD
     sel.innerHTML = `<option value="">Select Product</option>` +
-=======
-    sel.innerHTML = `<option value="">Select Product</option>` + 
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
       allScrapProducts.map(p => `<option value="${p._id}">${escHtml(p.name)} (₹${p.pricePerKg}/kg)</option>`).join('');
   } catch (err) {
     console.error(err);
   }
 }
 
-<<<<<<< HEAD
 let currentScrapItems = [];
 
 function calcScrapTotal() {
@@ -3665,24 +2643,10 @@ function calcScrapTotal() {
       if (itemTotalText) itemTotalText.innerHTML = `₹${total.toFixed(2)}`;
     } else {
       if (itemTotalText) itemTotalText.innerHTML = '₹0.00';
-=======
-function calcScrapTotal() {
-  const sel = document.getElementById('scrapProductSelect');
-  const weight = document.getElementById('scrapWeight').value;
-  if (!sel || !sel.value) return;
-  const prod = allScrapProducts.find(p => p._id === sel.value);
-  if (prod) {
-    document.getElementById('scrapPriceKg').value = prod.pricePerKg;
-    if (weight) {
-      document.getElementById('scrapTotalAmount').value = (Number(weight) * prod.pricePerKg).toFixed(2);
-    } else {
-      document.getElementById('scrapTotalAmount').value = '';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     }
   }
 }
 
-<<<<<<< HEAD
 function renderDraftScrapItems() {
   const container = document.getElementById('scrapItemsListContainer');
   const grandTotalEl = document.getElementById('scrapGrandTotalText');
@@ -3835,308 +2799,12 @@ async function submitScrapEntry() {
     currentScrapItems = [];
     renderDraftScrapItems();
 
-=======
-async function submitScrapEntry() {
-  const companyName = document.getElementById('scrapCompany').value;
-  const vehicleNumber = document.getElementById('scrapVehicle').value;
-  const ownerName = document.getElementById('scrapOwner').value;
-  const productId = document.getElementById('scrapProductSelect').value;
-  const weight = document.getElementById('scrapWeight').value;
-  
-  if (!companyName || !vehicleNumber || !ownerName || !productId || !weight) {
-    return showAlert('scrapEntryAlert', 'All fields are required');
-  }
-  
-  try {
-    await api('/api/scrap/entries', 'POST', { companyName, vehicleNumber, ownerName, productId, weight });
-    showAlert('scrapEntryAlert', 'Entry submitted successfully', 'success');
-    document.getElementById('scrapCompany').value = '';
-    document.getElementById('scrapVehicle').value = '';
-    document.getElementById('scrapOwner').value = '';
-    document.getElementById('scrapProductSelect').value = '';
-    document.getElementById('scrapWeight').value = '';
-    document.getElementById('scrapPriceKg').value = '';
-    document.getElementById('scrapTotalAmount').value = '';
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     loadScrapMyEntries();
   } catch (err) {
     showAlert('scrapEntryAlert', err.message);
   }
 }
 
-<<<<<<< HEAD
-function printScrapSlip() {
-  const companyName = document.getElementById('scrapCompany')?.value || '';
-  const vehicleNumber = document.getElementById('scrapVehicle')?.value || '';
-  const dateTimeStr = document.getElementById('scrapDateTime')?.value || formatDateTime12h(new Date());
-  const description = document.getElementById('scrapDescription')?.value?.trim() || '';
-
-  const branchSelect = document.getElementById('scrapBranchSelect');
-  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].text : '';
-
-  if (currentScrapItems.length === 0) {
-    return showAlert('scrapEntryAlert', 'Please add at least one scrap product before printing', 'warning');
-  }
-
-  let itemsHtml = '';
-  let grandTotalCalculated = 0;
-  currentScrapItems.forEach((item, index) => {
-    const total = item.weight * item.pricePerKg;
-    grandTotalCalculated += total;
-    itemsHtml += `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${escHtml(item.productName)}</td>
-        <td class="text-end">${item.weight} KG</td>
-        <td class="text-end">₹${item.pricePerKg.toFixed(2)}</td>
-        <td class="text-end">₹${total.toFixed(2)}</td>
-      </tr>
-    `;
-  });
-
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Popup blocked! Please allow popups for this site to print.');
-    return;
-  }
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Scrap Entry Slip - ${escHtml(vehicleNumber)}</title>
-      <style>
-        body {
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          margin: 30px;
-          color: #1a2233;
-          background: #fff;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-        .slip-container {
-          max-width: 650px;
-          margin: 0 auto;
-          border: 1px solid #e5e8ef;
-          padding: 30px;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .header {
-          text-align: center;
-          border-bottom: 2px solid #1a6cff;
-          padding-bottom: 15px;
-          margin-bottom: 25px;
-        }
-        .header h2 {
-          margin: 0 0 5px 0;
-          color: #1a6cff;
-          font-size: 24px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-        }
-        .header p {
-          margin: 0;
-          font-size: 13px;
-          color: #6b7a99;
-          text-transform: uppercase;
-          font-weight: 600;
-          letter-spacing: 1px;
-        }
-        .meta-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          margin-bottom: 25px;
-          background: #f8fafc;
-          padding: 15px;
-          border-radius: 8px;
-          border: 1px solid #e2e8f0;
-        }
-        .meta-item {
-          font-size: 13.5px;
-        }
-        .meta-item strong {
-          color: #6b7a99;
-          text-transform: uppercase;
-          font-size: 11px;
-          letter-spacing: 0.5px;
-          display: block;
-          margin-bottom: 2px;
-        }
-        .meta-item span {
-          color: #1a2233;
-          font-weight: 600;
-          font-size: 14px;
-        }
-        .items-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 25px;
-        }
-        .items-table th, .items-table td {
-          border-bottom: 1px solid #e5e8ef;
-          padding: 10px 12px;
-          text-align: left;
-        }
-        .items-table th {
-          background-color: #f1f5f9;
-          font-weight: 600;
-          color: #475569;
-          font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .items-table td {
-          font-size: 13.5px;
-        }
-        .items-table td.text-end, .items-table th.text-end {
-          text-align: right;
-        }
-        .total-row {
-          font-size: 16px;
-          font-weight: 700;
-          border-top: 2px solid #1a6cff;
-          background: #f8fafc;
-        }
-        .total-row td {
-          padding: 12px;
-          color: #16a34a;
-        }
-        .description-box {
-          background: #fdfbf7;
-          border: 1px solid #f59e0b;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 30px;
-          font-size: 13px;
-        }
-        .description-box strong {
-          display: block;
-          margin-bottom: 5px;
-          color: #b45309;
-          text-transform: uppercase;
-          font-size: 11px;
-          letter-spacing: 0.5px;
-        }
-        .description-box p {
-          margin: 0;
-          color: #451a03;
-        }
-        .signatures {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 50px;
-          padding-top: 25px;
-          border-top: 1px dashed #cbd5e1;
-        }
-        .signature-line {
-          text-align: center;
-          width: 42%;
-        }
-        .signature-line div {
-          border-bottom: 1.5px solid #94a3b8;
-          height: 40px;
-          margin-bottom: 8px;
-        }
-        .signature-line span {
-          font-size: 12px;
-          font-weight: 600;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        @media print {
-          body {
-            margin: 0;
-            background: #fff;
-          }
-          .slip-container {
-            border: none;
-            padding: 0;
-            max-width: 100%;
-            box-shadow: none;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="slip-container">
-        <div class="header">
-          <h2>TCS — Scrap Entry Slip</h2>
-          <p>Security Checkpoint Copy</p>
-        </div>
-        
-        <div class="meta-grid">
-          <div class="meta-item">
-            <strong>Date & Time</strong>
-            <span>${escHtml(dateTimeStr)}</span>
-          </div>
-          <div class="meta-item">
-            <strong>Branch</strong>
-            <span>${escHtml(branchName) || '—'}</span>
-          </div>
-          <div class="meta-item">
-            <strong>Company Name</strong>
-            <span>${escHtml(companyName) || '—'}</span>
-          </div>
-          <div class="meta-item">
-            <strong>Vehicle Number</strong>
-            <span>${escHtml(vehicleNumber).toUpperCase() || '—'}</span>
-          </div>
-        </div>
-
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th style="width: 50px;">S.No</th>
-              <th>Product</th>
-              <th class="text-end" style="width: 120px;">Weight</th>
-              <th class="text-end" style="width: 120px;">Price/KG</th>
-              <th class="text-end" style="width: 120px;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-            <tr class="total-row">
-              <td colspan="3"></td>
-              <td class="text-end">Grand Total:</td>
-              <td class="text-end">₹${grandTotalCalculated.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        ${description ? `
-        <div class="description-box">
-          <strong>Description / Notes</strong>
-          <p>${escHtml(description)}</p>
-        </div>
-        ` : ''}
-
-        <div class="signatures">
-          <div class="signature-line">
-            <div></div>
-            <span>Security Signature</span>
-          </div>
-          <div class="signature-line">
-            <div></div>
-            <span>Receiver Signature</span>
-          </div>
-        </div>
-      </div>
-      <script>
-        window.onload = function() {
-          window.print();
-        };
-      </script>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-}
-
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 async function loadScrapMyEntries() {
   const el = document.getElementById('scrapMyEntryList');
   if (!el) return;
@@ -4159,15 +2827,34 @@ async function loadScrapMyHistory() {
   }
 }
 
+let cachedPendingScrapEntries = [];
+
 async function loadScrapApprovals() {
   const el = document.getElementById('scrapPendingList');
   if (!el) return;
   try {
+    await loadBranchesDropdowns();
     const entries = await api('/api/scrap/entries?status=pending');
-    el.innerHTML = _renderScrapTable(entries, true);
+    cachedPendingScrapEntries = entries;
+    renderFilteredScrapApprovals();
   } catch (err) {
     el.innerHTML = err.message;
   }
+}
+
+function renderFilteredScrapApprovals() {
+  const el = document.getElementById('scrapPendingList');
+  if (!el) return;
+  const branchVal = document.getElementById('scrapApprovalBranchSelect')?.value || '';
+  
+  let filtered = cachedPendingScrapEntries;
+  if (branchVal) {
+    filtered = cachedPendingScrapEntries.filter(e => e.branchName && e.branchName.toLowerCase() === branchVal.toLowerCase());
+  } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+    filtered = cachedPendingScrapEntries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
+  }
+  
+  el.innerHTML = _renderScrapTable(filtered, true);
 }
 
 async function reviewScrap(id, action) {
@@ -4189,12 +2876,9 @@ async function reviewScrap(id, action) {
 async function loadScrapReports() {
   const el = document.getElementById('scrapReportList');
   if (!el) return;
-  const d = document.getElementById('scrapReportDate').value;
   try {
-<<<<<<< HEAD
     await loadBranchesDropdowns();
-    const url = d ? `/api/scrap/entries?status=approved&date=${d}` : '/api/scrap/entries?status=approved';
-    const entries = await api(url);
+    const entries = await api('/api/scrap/entries?status=approved');
     
     let filtered = entries;
     const branchVal = document.getElementById('scrapReportBranchSelect')?.value || '';
@@ -4204,20 +2888,39 @@ async function loadScrapReports() {
       filtered = entries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
     }
     
+    const fromDateVal = document.getElementById('scrapReportFromDate')?.value || '';
+    const toDateVal = document.getElementById('scrapReportToDate')?.value || '';
+    
+    if (fromDateVal) {
+      const fromDate = new Date(fromDateVal);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(e => new Date(e.createdAt) >= fromDate);
+    }
+    if (toDateVal) {
+      const toDate = new Date(toDateVal);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(e => new Date(e.createdAt) <= toDate);
+    }
+    
     el.innerHTML = _renderScrapTable(filtered, false);
-=======
-    const url = d ? `/api/scrap/entries?status=approved&date=${d}` : '/api/scrap/entries?status=approved';
-    const entries = await api(url);
-    el.innerHTML = _renderScrapTable(entries, false);
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   } catch (err) {
     el.innerHTML = err.message;
   }
 }
 
 function printScrapReport() {
-  const d = document.getElementById('scrapReportDate').value;
-  const title = d ? `Scrap Report - ${d}` : 'Scrap Report - All Time';
+  const fromDate = document.getElementById('scrapReportFromDate')?.value;
+  const toDate = document.getElementById('scrapReportToDate')?.value;
+  let title = 'Scrap Report';
+  if (fromDate && toDate) {
+    title = `Scrap Report (${fmtDate(fromDate)} to ${fmtDate(toDate)})`;
+  } else if (fromDate) {
+    title = `Scrap Report (From ${fmtDate(fromDate)})`;
+  } else if (toDate) {
+    title = `Scrap Report (Until ${fmtDate(toDate)})`;
+  } else {
+    title = 'Scrap Report - All Time';
+  }
   const html = document.getElementById('scrapReportList').innerHTML;
   const w = window.open();
   w.document.write(`
@@ -4228,6 +2931,13 @@ function printScrapReport() {
       table { width: 100%; border-collapse: collapse; margin-top: 20px; }
       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
       th { background-color: #f2f2f2; }
+      .small { font-size: 0.875em; }
+      .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; }
+      .bg-secondary { background-color: #6c757d; color: #fff; }
+      .badge-approved { background: #d1fae5; color: #065f46; }
+      .badge-rejected { background: #fee2e2; color: #991b1b; }
+      .badge-pending { background: #fef3c7; color: #92400e; }
+      .cds-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
     </style>
     </head><body>
       <h2>${title}</h2>
@@ -4247,19 +2957,13 @@ function _renderScrapTable(entries, isApproval) {
         <th>Status</th>
         <th>Company</th>
         <th>Vehicle</th>
-<<<<<<< HEAD
         <th>Products Detail</th>
         <th>Grand Total (₹)</th>
-=======
-        <th>Product</th>
-        <th>Weight</th>
-        <th>Total (₹)</th>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
+        ${!isApproval ? '<th>Approved By</th>' : ''}
         ${isApproval ? '<th>Action</th>' : ''}
       </tr>
     </thead>
     <tbody>
-<<<<<<< HEAD
       ${entries.map(e => {
     const itemsHtml = (e.items && e.items.length ? e.items : [{ productName: e.productName, weight: e.weight, pricePerKg: e.pricePerKg, totalAmount: e.totalAmount }])
       .map(item => `
@@ -4281,6 +2985,9 @@ function _renderScrapTable(entries, isApproval) {
             <td>${escHtml(e.vehicleNumber)}</td>
             <td>${itemsHtml}</td>
             <td><strong>${fmt(e.totalAmount)}</strong></td>
+            ${!isApproval ? `<td>
+              ${e.reviewedBy ? `<strong>${escHtml(e.reviewedBy)}</strong><br><span class="cds-badge ${e.status === 'approved' ? 'badge-approved' : 'badge-rejected'}">${escHtml(e.reviewedByRole || 'reviewer').toUpperCase()}</span>` : '—'}
+            </td>` : ''}
             ${isApproval ? `<td>
               <button class="btn btn-sm btn-success mb-1 w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
               <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
@@ -4288,23 +2995,6 @@ function _renderScrapTable(entries, isApproval) {
           </tr>
         `;
   }).join('')}
-=======
-      ${entries.map(e => `
-        <tr>
-          <td>${fmtDateTime(e.createdAt)}</td>
-          <td>${statusBadge(e.status)}</td>
-          <td>${escHtml(e.companyName)}<br><small class="text-muted">${escHtml(e.ownerName)}</small></td>
-          <td>${escHtml(e.vehicleNumber)}</td>
-          <td>${escHtml(e.productName)}<br><small class="text-muted">₹${e.pricePerKg}/kg</small></td>
-          <td><strong>${e.weight} KG</strong></td>
-          <td><strong>${fmt(e.totalAmount)}</strong></td>
-          ${isApproval ? `<td>
-            <button class="btn btn-sm btn-success mb-1 w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
-            <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
-          </td>` : ''}
-        </tr>
-      `).join('')}
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
     </tbody>
   </table></div>`;
 }
@@ -4367,7 +3057,6 @@ async function submitChangePassword() {
   }
 }
 
-<<<<<<< HEAD
 // ─── Fuel Form Logic ─────────────────────────────────────────────────────────
 async function fetchFuelPrices() {
   try {
@@ -4397,7 +3086,7 @@ async function applyFuelVehicleBaseline() {
 
     calcFuelCostAndRemaining();
   } catch (err) {
-    showAlert('fuelAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
@@ -4444,20 +3133,20 @@ async function submitFuelForm() {
   const startDateTime = document.getElementById('fuelStartDateTime')?.value;
 
   if (!driverName || !vehicleNumber || fuelAdded <= 0 || pricePerLitre <= 0 || !bunk || !location || price <= 0 || !startDateTime) {
-    showAlert('fuelAlert', 'Please fill all required fields with positive values.');
+    showCenteredError('Please fill all required fields with positive values.');
     return;
   }
+
+  const matchedVehicle = allVehicles.find(v => v.vehicleNumber === vehicleNumber);
+  const branch = matchedVehicle ? matchedVehicle.branch : undefined;
+  const branchName = matchedVehicle ? matchedVehicle.branchName : undefined;
 
   const expense = {
     expenseType: 'oil',
     amount: price,
     date: new Date(),
-    description: `FUEL_ADDITION:qty=${fuelAdded};current=${(Number(document.getElementById('fuelTankCapacity')?.value || 0) - fuelAdded).toFixed(2)};bunk=${bunk}`
+    description: `FUEL_ADDITION:qty=${fuelAdded};current=${(Number(document.getElementById('fuelTankCapacity')?.value || 0) - fuelAdded).toFixed(2)};bunk=${bunk};location=${location}`
   };
-
-  const matchedV = allVehicles.find(v => v.vehicleNumber === vehicleNumber);
-  const branch = matchedV?.branch;
-  const branchName = matchedV?.branchName;
 
   const payload = {
     driverName: driverName,
@@ -4475,19 +3164,19 @@ async function submitFuelForm() {
     isFuelLog: true,
     fuelType: fuelType,
     pricePerLitre: pricePerLitre,
-    branch: branch || undefined,
-    branchName: branchName || undefined
+    branch: branch,
+    branchName: branchName
   };
 
   try {
     await api('/api/vehicle-logs', 'POST', payload);
-    showAlert('fuelAlert', 'Fuel log submitted successfully.', 'success');
+    showCenteredSuccess('Fuel log submitted successfully.');
     resetFuelForm();
     await applyFuelVehicleBaseline();
     loadFuelHistory();
     if (typeof loadVehicleHistory === 'function') loadVehicleHistory();
   } catch (err) {
-    showAlert('fuelAlert', err.message);
+    showCenteredError(err.message);
   }
 }
 
@@ -4522,66 +3211,139 @@ function resetFuelForm() {
   }
 }
 
-function parseFuelDetails(l) {
-  let bunkName = '';
-  let bunkLocation = '';
-  const fuelExpense = (l.expenses || []).find(e => e.expenseType === 'oil' && e.description && e.description.startsWith('FUEL_ADDITION:'));
-  if (fuelExpense) {
-    const desc = fuelExpense.description;
-    const bunkMatch = desc.match(/bunk=([^;]+)/);
-    const locMatch = desc.match(/loc=([^;]+)/);
-    if (bunkMatch) bunkName = bunkMatch[1];
-    if (locMatch) bunkLocation = locMatch[1];
+async function loadFuelHistory() {
+  const el = document.getElementById('fuelHistoryList');
+  if (!el) return;
+  try {
+    setLoading('fuelHistoryList', 'Loading fuel history...');
+    const logs = await api('/api/vehicle-logs');
+    cachedFuelLogs = logs.filter(l => l.isFuelLog || l.fuelAdded > 0);
+
+    if (allVehicles.length === 0) {
+      allVehicles = await api('/api/vehicles');
+    }
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+
+    // Populate branch filter if it exists and is empty
+    const branchFilter = document.getElementById('fuelBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
+
+    updateFuelVehicleFilterOptions();
+    renderFilteredFuelLogs();
+  } catch (err) {
+    const alertId = document.getElementById('fuelHistoryAlert');
+    if (alertId) showAlert('fuelHistoryAlert', err.message);
   }
-  if (!bunkName) {
-    bunkName = l.fromLocation || '';
+}
+
+function updateFuelVehicleFilterOptions() {
+  const branchFilter = document.getElementById('fuelBranchFilter');
+  const vehicleFilter = document.getElementById('fuelVehicleFilter');
+  if (!vehicleFilter) return;
+
+  const selectedBranch = branchFilter ? branchFilter.value : '';
+  const currentVehicle = vehicleFilter.value;
+
+  // Filter allVehicles based on selectedBranch
+  let vehiclesForSelect = allVehicles;
+  if (selectedBranch) {
+    vehiclesForSelect = allVehicles.filter(v => 
+      v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
+    );
   }
-  if (!bunkLocation && l.isFuelLog) {
-    bunkLocation = l.fromLocation || '';
+
+  // Populate vehicleFilter dropdown
+  vehicleFilter.innerHTML = '<option value="">All Vehicles</option>' + vehiclesForSelect.map(v => {
+    const val = v.vehicleNumber;
+    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` : v.vehicleNumber;
+    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+  }).join('');
+
+  // Restore previous selection if still valid, else default to all
+  if (currentVehicle && vehiclesForSelect.some(v => v.vehicleNumber === currentVehicle)) {
+    vehicleFilter.value = currentVehicle;
+  } else {
+    vehicleFilter.value = '';
   }
-  return { bunkName, bunkLocation };
+}
+
+function filterFuelLogs() {
+  updateFuelVehicleFilterOptions();
+  renderFilteredFuelLogs();
+}
+
+function clearFuelFilters() {
+  const branchFilter = document.getElementById('fuelBranchFilter');
+  const vehicleFilter = document.getElementById('fuelVehicleFilter');
+  const fromFilter = document.getElementById('fuelFromDateFilter');
+  const toFilter = document.getElementById('fuelToDateFilter');
+  if (branchFilter) branchFilter.value = '';
+  if (vehicleFilter) vehicleFilter.value = '';
+  if (fromFilter) fromFilter.value = '';
+  if (toFilter) toFilter.value = '';
+  
+  updateFuelVehicleFilterOptions();
+  renderFilteredFuelLogs();
 }
 
 function renderFilteredFuelLogs() {
   const el = document.getElementById('fuelHistoryList');
   if (!el) return;
 
-  const branchFilter = document.getElementById('fuelBranchFilter')?.value || '';
-  const vehicleSearch = document.getElementById('fuelVehicleSearch')?.value?.toLowerCase() || '';
-  const dateFilter = document.getElementById('fuelDateFilter')?.value || '';
+  let logsToRender = cachedFuelLogs;
 
-  let filtered = cachedFuelLogs;
+  const branchVal = document.getElementById('fuelBranchFilter')?.value || '';
+  const vehicleVal = document.getElementById('fuelVehicleFilter')?.value || '';
+  const fromDateVal = document.getElementById('fuelFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('fuelToDateFilter')?.value || '';
 
-  if (branchFilter) {
-    filtered = filtered.filter(l => {
-      let bName = l.branchName || '';
-      if (!bName) {
-        const vNum = (l.vehicleNumber || '').toLowerCase();
-        const profile = allVehicles.find(v => v.vehicleNumber.toLowerCase() === vNum);
-        bName = profile ? (profile.branchName || '') : '';
+  if (branchVal) {
+    logsToRender = logsToRender.filter(l => {
+      if (l.branchName && l.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()) {
+        return true;
       }
-      return bName.toLowerCase() === branchFilter.toLowerCase();
+      const matched = allVehicles.find(v => v.vehicleNumber === l.vehicleNumber);
+      if (matched && matched.branchName && matched.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()) {
+        return true;
+      }
+      return false;
     });
   }
 
-  if (vehicleSearch) {
-    filtered = filtered.filter(l => {
-      const vNum = (l.vehicleNumber || '').toLowerCase();
-      const profile = allVehicles.find(v => v.vehicleNumber.toLowerCase() === vNum);
-      const sName = profile && profile.shortName ? profile.shortName.toLowerCase() : '';
-      return vNum === vehicleSearch || sName === vehicleSearch;
-    });
+  if (vehicleVal) {
+    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
   }
 
-  if (dateFilter) {
-    const [yr, mo, dy] = dateFilter.split('-').map(Number);
-    filtered = filtered.filter(l => {
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0,0,0,0);
+    logsToRender = logsToRender.filter(l => {
       const d = new Date(l.startDateTime);
-      return d.getFullYear() === yr && (d.getMonth() + 1) === mo && d.getDate() === dy;
+      return d >= fromDate;
     });
   }
 
-  if (!filtered.length) {
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23,59,59,999);
+    logsToRender = logsToRender.filter(l => {
+      const d = new Date(l.startDateTime);
+      return d <= toDate;
+    });
+  }
+
+  // Sort ascending chronologically (oldest first)
+  logsToRender.sort((a, b) => new Date(a.startDateTime || a.createdAt || 0) - new Date(b.startDateTime || b.createdAt || 0));
+
+  if (!logsToRender.length) {
     el.innerHTML = '<p class="text-muted small px-2">No matching fuel entries found.</p>';
     return;
   }
@@ -4590,7 +3352,6 @@ function renderFilteredFuelLogs() {
     <thead>
       <tr>
         <th>Vehicle</th>
-        <th>Branch</th>
         <th>Fuel Type</th>
         <th>Bunk Name</th>
         <th>Bunk Location</th>
@@ -4600,120 +3361,44 @@ function renderFilteredFuelLogs() {
         <th>Date</th>
       </tr>
     </thead>
-    <tbody>${filtered.map((l) => {
-      const fuelTypeDisp = l.fuelType ? (l.fuelType.charAt(0).toUpperCase() + l.fuelType.slice(1)) : 'N/A';
-      const { bunkName, bunkLocation } = parseFuelDetails(l);
-      let bName = l.branchName || '';
-      if (!bName) {
-        const vNum = (l.vehicleNumber || '').toLowerCase();
-        const profile = allVehicles.find(v => v.vehicleNumber.toLowerCase() === vNum);
-        bName = profile ? (profile.branchName || '') : '';
-      }
-      return `<tr>
-        <td><strong>${escHtml(l.vehicleNumber)}</strong></td>
-        <td>${escHtml(bName || '-')}</td>
-        <td><span class="badge bg-secondary text-light small">${escHtml(fuelTypeDisp)}</span></td>
-        <td>${escHtml(bunkName)}</td>
-        <td>${escHtml(bunkLocation || '-')}</td>
-        <td>${l.fuelAdded} L</td>
-        <td>${l.remainingFuel} L</td>
-        <td>${fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}</td>
-        <td class="small">${formatDateTime12h(l.startDateTime)}</td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
-}
+    <tbody>
+      ${logsToRender.map((l) => {
+        const fuelType = l.fuelType || 'petrol';
+        const fuelBadge = fuelType.toLowerCase() === 'diesel' 
+          ? `<span class="badge bg-warning text-dark">Diesel</span>` 
+          : `<span class="badge bg-info text-dark">Petrol</span>`;
 
-function updateFuelVehicleSelect() {
-  const select = document.getElementById('fuelVehicleSearch');
-  if (!select) return;
+        let bunkName = '';
+        let bunkLoc = '';
+        if (l.expenses && l.expenses.length) {
+          const exp = l.expenses.find(e => e.description && e.description.startsWith('FUEL_ADDITION:'));
+          if (exp) {
+            const match = exp.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
+            if (match) {
+              bunkName = match[3] || '';
+              bunkLoc = match[4] || '';
+            }
+          }
+        }
+        if (!bunkLoc) bunkLoc = l.fromLocation || '';
+        if (!bunkName) bunkName = 'N/A';
+        if (!bunkLoc) bunkLoc = 'N/A';
 
-  const currentVal = select.value;
-  const branchFilter = document.getElementById('fuelBranchFilter')?.value || '';
-  
-  let vehicles = allVehicles.filter(v => v.status !== 'inactive');
-  if (branchFilter) {
-    vehicles = vehicles.filter(v => v.branchName && v.branchName.toLowerCase() === branchFilter.toLowerCase());
-  }
+        const cost = fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0));
 
-  select.innerHTML = '<option value="">All Vehicles</option>' + vehicles.map((v) => {
-    const val = v.shortName || v.vehicleNumber;
-    const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` + (v.vehicleName ? ` (${v.vehicleName})` : '') : v.vehicleNumber + (v.vehicleName ? ` (${v.vehicleName})` : '');
-    return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
-  }).join('');
-
-  const hasVal = Array.from(select.options).some(opt => opt.value === currentVal);
-  if (currentVal && hasVal) {
-    select.value = currentVal;
-  } else {
-    select.value = '';
-  }
-}
-
-function onFuelBranchFilterChange() {
-  updateFuelVehicleSelect();
-  renderFilteredFuelLogs();
-}
-
-function clearFuelFilters() {
-  const branchEl = document.getElementById('fuelBranchFilter');
-  if (branchEl) branchEl.value = '';
-  const vehicleEl = document.getElementById('fuelVehicleSearch');
-  if (vehicleEl) vehicleEl.value = '';
-  const dateEl = document.getElementById('fuelDateFilter');
-  if (dateEl) dateEl.value = '';
-
-  updateFuelVehicleSelect();
-  renderFilteredFuelLogs();
-}
-
-async function loadFuelHistory() {
-  const el = document.getElementById('fuelHistoryList');
-  if (!el) return;
-  try {
-    setLoading('fuelHistoryList', 'Loading fuel history...');
-    await loadBranchesDropdowns();
-    const logs = await api('/api/vehicle-logs');
-    cachedFuelLogs = logs.filter(l => l.isFuelLog || l.fuelAdded > 0);
-    cachedFuelLogs.sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
-
-    updateFuelVehicleSelect();
-    renderFilteredFuelLogs();
-  } catch (err) {
-    const alertId = document.getElementById('fuelHistoryAlert');
-    if (alertId) showAlert('fuelHistoryAlert', err.message);
-  }
-}
-
-function printFuelReport() {
-  const el = document.getElementById('fuelHistoryList');
-  if (!el || !el.innerHTML.includes('<table')) {
-    alert('No fuel data to print.');
-    return;
-  }
-  const dateInput = document.getElementById('fuelDateFilter')?.value;
-  const branchInput = document.getElementById('fuelBranchFilter')?.value;
-  const vehicleInput = document.getElementById('fuelVehicleSearch')?.value;
-  let subtitle = '';
-  if (branchInput) subtitle += `Branch: ${branchInput} | `;
-  if (vehicleInput) subtitle += `Vehicle: ${vehicleInput} | `;
-  if (dateInput) subtitle += `Date: ${dateInput}`;
-  subtitle = subtitle.replace(/\s*\|\s*$/, '');
-
-  const printWindow = window.open('', '', 'height=600,width=800');
-  printWindow.document.write('<html><head><title>Fuel Log Report</title>');
-  printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />');
-  printWindow.document.write('<style>body { padding: 20px; font-family: sans-serif; } table { width: 100%; border-collapse: collapse; margin-top: 10px; } th, td { border: 1px solid #dee2e6; padding: 8px; font-size: 12px; } th { background-color: #f8f9fa; } .small { font-size: 0.875em; } .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; border-radius: 0.25rem; }</style>');
-  printWindow.document.write('</head><body>');
-  printWindow.document.write('<h4>Fuel Log Report</h4>');
-  if (subtitle) printWindow.document.write('<p class="text-muted small">' + subtitle + '</p>');
-  printWindow.document.write(el.innerHTML);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.onload = function () {
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  };
+        return `<tr>
+          <td><strong>${escHtml(l.vehicleNumber)}</strong></td>
+          <td>${fuelBadge}</td>
+          <td>${escHtml(bunkName)}</td>
+          <td>${escHtml(bunkLoc)}</td>
+          <td>${l.fuelAdded} L</td>
+          <td>${l.remainingFuel} L</td>
+          <td>${cost}</td>
+          <td class="small">${formatDateTime12h(l.startDateTime)}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
 }
 
 async function loadFuelForm() {
@@ -4771,6 +3456,22 @@ async function saveFuelPricesAdmin() {
   }
 }
 
+function onToLocationChange() {
+  const toSelect = document.getElementById('toLocation');
+  const toCustom = document.getElementById('toLocationCustom');
+  if (toSelect && toCustom) {
+    if (toSelect.value === 'other') {
+      toCustom.classList.remove('d-none');
+      toCustom.required = true;
+      toCustom.focus();
+    } else {
+      toCustom.classList.add('d-none');
+      toCustom.required = false;
+      toCustom.value = '';
+    }
+  }
+}
+
 // ─── BRANCHES MASTER MANAGEMENT ──────────────────────────────────────────────
 async function loadBranchesDropdowns() {
   try {
@@ -4815,11 +3516,38 @@ async function loadBranchesDropdowns() {
 
     const toSelect = document.getElementById('toLocation');
     if (toSelect) {
-      const toList = document.getElementById('toLocationList');
-      if (toList) {
-        toList.innerHTML = allBranches.map(b => 
-          `<option value="${escHtml(b.name)}"></option>`
-        ).join('');
+      const currentVal = toSelect.value;
+      const toCustom = document.getElementById('toLocationCustom');
+      const customVal = toCustom ? toCustom.value.trim() : '';
+
+      toSelect.innerHTML = '<option value="">Select To Location...</option>' + 
+        allBranches.map(b => `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`).join('') +
+        '<option value="other">Other (Write location...)</option>';
+      
+      if (currentVal === 'other') {
+        toSelect.value = 'other';
+        if (toCustom) {
+          toCustom.classList.remove('d-none');
+          toCustom.value = customVal;
+        }
+      } else if (currentVal && allBranches.some(b => b.name === currentVal)) {
+        toSelect.value = currentVal;
+        if (toCustom) {
+          toCustom.classList.add('d-none');
+          toCustom.value = '';
+        }
+      } else if (customVal) {
+        toSelect.value = 'other';
+        if (toCustom) {
+          toCustom.classList.remove('d-none');
+          toCustom.value = customVal;
+        }
+      } else {
+        toSelect.value = '';
+        if (toCustom) {
+          toCustom.classList.add('d-none');
+          toCustom.value = '';
+        }
       }
     }
 
@@ -4859,31 +3587,13 @@ async function loadBranchesDropdowns() {
       if (currentVal) scrapReportBranchSelect.value = currentVal;
     }
 
-    const fuelBranchSelect = document.getElementById('fuelBranchFilter');
-    if (fuelBranchSelect) {
-      const currentVal = fuelBranchSelect.value;
-      fuelBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+    const scrapApprovalBranchSelect = document.getElementById('scrapApprovalBranchSelect');
+    if (scrapApprovalBranchSelect) {
+      const currentVal = scrapApprovalBranchSelect.value;
+      scrapApprovalBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
-      if (currentVal) fuelBranchSelect.value = currentVal;
-    }
-
-    const approvalBranchSelect = document.getElementById('approvalBranchFilter');
-    if (approvalBranchSelect) {
-      const currentVal = approvalBranchSelect.value;
-      approvalBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
-        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
-      ).join('');
-      if (currentVal) approvalBranchSelect.value = currentVal;
-    }
-
-    const expenseBranchSelect = document.getElementById('expenseBranchFilter');
-    if (expenseBranchSelect) {
-      const currentVal = expenseBranchSelect.value;
-      expenseBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
-        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
-      ).join('');
-      if (currentVal) expenseBranchSelect.value = currentVal;
+      if (currentVal) scrapApprovalBranchSelect.value = currentVal;
     }
   } catch (err) {
     console.error('Error loading branches:', err);
@@ -5002,21 +3712,12 @@ async function initScrapEntryForm() {
   }
 }
 
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 // ─── Page Init ───────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
   if (path === '/admin' || path === '/admin.html' || path === '/manager' || path === '/manager.html') initAdmin();
-<<<<<<< HEAD
   else if (path === '/security' || path === '/security.html') initSecurity();
 });
 
 
 //<div class="small">Used: ${(l.fuelUsed || 0).toFixed(2)} L</div> line no 969
-=======
-  else if (path === '/incharge' || path === '/incharge.html') initIncharge();
-  else if (path === '/security' || path === '/security.html') initSecurity();
-  // Login page has no init needed
-});
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c

@@ -10,11 +10,8 @@
     href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-<<<<<<< HEAD
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   <style>
     /* Module Title Base */
     .module-title {
@@ -55,52 +52,14 @@
 
 <body class="dashboard-page">
   <div class="cds-sidebar" id="sidebar">
-<<<<<<< HEAD
-    <div class="sidebar-brand d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center">
-        <span class="brand-rupee">₹</span><span class="brand-name">TCS</span>
-      </div>
-      <button class="btn border-0 text-white d-lg-none fs-4 p-0" onclick="toggleSidebar()" style="background:none; line-height: 1;">×</button>
+    <div class="sidebar-brand">
+      <span class="brand-rupee">₹</span>
+      <span class="brand-name">TCS</span>
+      <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
     </div>
     <nav class="sidebar-nav">
 
 
-=======
-    <div class="sidebar-brand"><span class="brand-rupee">₹</span><span class="brand-name">TCS</span></div>
-    <nav class="sidebar-nav">
-
-      <!-- CDB -->
-      <div class="sidebar-module">
-        <div class="module-title" onclick="toggleModule('cdbMenu')">
-          CDB
-        </div>
-
-        <div id="cdbMenu" class="module-items">
-          <a href="#" class="nav-link active" onclick="showSection('dashboard')">Dashboard</a>
-          <a href="#" class="nav-link" onclick="showSection('expense')">Expenses</a>
-          <a href="#" class="nav-link" onclick="showSection('credit')">Credit</a>
-          <a href="#" class="nav-link" onclick="showSection('suspense')">Suspense</a>
-          <a href="#" class="nav-link" onclick="showSection('transactions')">Approvals</a>
-          <a href="#" class="nav-link" onclick="showSection('daily')">Daily Closing</a>
-        </div>
-      </div>
-
-      <!-- Inventory -->
-      <div class="sidebar-module">
-        <div class="module-title" onclick="toggleModule('invMenu')">
-          Inventory
-        </div>
-
-        <div id="invMenu" class="module-items">
-          <a href="#" class="nav-link" onclick="showSection('inventoryDashboard')">Dashboard</a>
-          <a href="#" class="nav-link" onclick="showSection('inventoryAddProduct')">Add Product</a>
-          <a href="#" class="nav-link" onclick="showSection('inventoryRequests')">Requests</a>
-          <a href="#" class="nav-link" onclick="showSection('inventoryApprovals')">Approvals</a>
-          <a href="#" class="nav-link" onclick="showSection('inventoryIssue')">Issue</a>
-          <a href="#" class="nav-link" onclick="showSection('inventoryMovements')">Movements</a>
-        </div>
-      </div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 
       <div class="sidebar-module">
         <div class="module-title" onclick="toggleModule('vehicleMenu')">
@@ -108,14 +67,10 @@
         </div>
 
         <div id="vehicleMenu" class="module-items">
-<<<<<<< HEAD
           <a href="#" class="nav-link admin-only" onclick="showSection('vehicleProfiles')">Profile Setup</a>
           <a href="#" class="nav-link" onclick="showSection('vehicleEntry')">New Entry</a>
-          <a href="#" class="nav-link" onclick="showSection('vehicleFuel')">Add Fuel</a>
-          <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')">Expense</a>
-=======
-          <a href="#" class="nav-link" onclick="showSection('vehicleEntry')">New Entry</a>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
+          <a href="#" class="nav-link" onclick="showSection('vehicleFuel')" id="nav-vehicleFuel">Add Fuel</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')" id="nav-vehicleExpenses">Expense</a>
           <a href="#" class="nav-link" onclick="showSection('vehicleApprovals')">Approvals</a>
           <a href="#" class="nav-link" onclick="showSection('vehicleReports')">Reports</a>
         </div>
@@ -128,10 +83,6 @@
         </div>
 
         <div id="scrapMenu" class="module-items">
-<<<<<<< HEAD
-=======
-          <a href="#" class="nav-link" onclick="showSection('scrapDashboard')">Dashboard</a>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           <a href="#" class="nav-link" onclick="showSection('scrapProducts')">Products</a>
           <a href="#" class="nav-link" onclick="showSection('scrapApprovals')">Approvals</a>
           <a href="#" class="nav-link" onclick="showSection('scrapReports')">Reports</a>
@@ -146,11 +97,8 @@
 
         <div id="adminMenu" class="module-items">
           <a href="#" class="nav-link" onclick="showSection('users')">Users</a>
-<<<<<<< HEAD
           <a href="#" class="nav-link" onclick="showSection('fuelPrices')">Fuel Prices</a>
           <a href="#" class="nav-link" onclick="showSection('branches')">Branches</a>
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
         </div>
       </div>
 
@@ -173,85 +121,13 @@
       <div class="topbar-date" id="todayDate"></div>
     </div>
     <div class="cds-content" id="mainContent">
-<<<<<<< HEAD
 
 
       <div id="section-vehicleProfiles" class="d-none">
-=======
-      <div id="section-dashboard">
-        <div class="row g-4 mb-4">
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card opening">
-              <div class="stat-label">Opening Balance</div>
-              <div class="stat-value" id="openingBal">₹0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card current">
-              <div class="stat-label">Current Balance</div>
-              <div class="stat-value" id="currentBal">₹0</div>
-            </div>
-          </div>
-
-          <!-- <div class="col-sm-6 col-xl-3"><div class="stat-card credits"><div class="stat-label">Total Credits</div><div class="stat-value" id="totalCred">₹0</div></div></div> -->
-
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card expenses">
-              <div class="stat-label">Total Expenses</div>
-              <div class="stat-value" id="totalExp">₹0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card penalties">
-              <div class="stat-label">Penalties (ARS Outstanding)</div>
-              <div class="stat-value" id="totalPen">₹0</div>
-            </div>
-          </div>
-
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card credits">
-
-              <div class="stat-label">Suspense (ARS)</div>
-              <div class="stat-value" id="suspenseArsTotal">₹0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card expenses">
-              <div class="stat-label">Pending Settlements</div>
-              <div class="stat-value" id="pendingSettlementCount">0</div>
-            </div>
-          </div>
-        </div>
-        <div class="row g-4">
-          <div class="col-lg-6">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Recent Transactions</h5>
-              </div>
-              <div id="recentTxList">
-                <div class="text-muted small">Loading...</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-6">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Pending Approvals</h5>
-              </div>
-              <div id="dashPendingList">
-                <div class="text-muted small">Loading...</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-credit" class="d-none">
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
         <div class="row g-4">
           <div class="col-lg-5">
             <div class="cds-card form-structured">
               <div class="card-header-cds">
-<<<<<<< HEAD
                 <h5 id="profileFormTitle">Add Vehicle Profile</h5>
               </div>
               <div id="vehicleProfilesAlert"></div>
@@ -347,295 +223,10 @@
                   </table>
                 </div>
               </div>
-=======
-                <h5>Credit Entries</h5>
-              </div>
-              <div id="creditAlert"></div>
-              <div class="mb-3"><label class="form-label">Description</label><input type="text" id="credDesc"
-                  class="form-control cds-input" /></div>
-              <div class="mb-4"><label class="form-label">Amount (₹)</label><input type="number" id="credAmount"
-                  class="form-control cds-input" min="1" /></div><button class="btn cds-btn-primary w-100"
-                onclick="addCredit()">Add Credit</button>
-            </div>
-          </div>
-          <div class="col-lg-7">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Credit Entries</h5>
-              </div>
-              <div id="creditList"></div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
             </div>
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-=======
-      <div id="section-expense" class="d-none">
-        <div class="row g-4">
-          <div class="col-lg-5">
-            <div class="cds-card form-structured">
-              <div class="card-header-cds">
-                <h5>Expenses</h5>
-              </div>
-              <div id="expenseAlert"></div>
-              <div class="mb-3"><label class="form-label">Description</label><input type="text" id="expDesc"
-                  class="form-control cds-input" /></div>
-              <div class="mb-4"><label class="form-label">Amount (₹)</label><input type="number" id="expAmount"
-                  class="form-control cds-input" min="1" /></div><button class="btn cds-btn-primary w-100"
-                onclick="addExpense()">Submit Expense</button>
-            </div>
-          </div>
-          <div class="col-lg-7">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Expense Entries</h5>
-              </div>
-              <div id="expenseList"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-suspense" class="d-none">
-        <div class="row g-4">
-          <div class="col-lg-5">
-            <div class="cds-card form-structured">
-              <div class="card-header-cds">
-                <h5>Suspense</h5>
-              </div>
-              <div id="suspenseAlert"></div>
-              <div class="mb-3"><label class="form-label">Worker Name</label><input type="text" id="susWorker"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Amount (₹)</label><input type="number" id="susAmount"
-                  class="form-control cds-input" min="1" /></div>
-              <div class="mb-4"><label class="form-label">Reason</label><textarea id="susReason"
-                  class="form-control cds-input" rows="2"></textarea></div><button class="btn cds-btn-primary w-100"
-                onclick="addSuspense()">Add Suspense</button>
-            </div>
-          </div>
-          <div class="col-lg-7">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Suspense Entries</h5>
-              </div>
-              <div id="suspenseList"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-transactions" class="d-none">
-        <div class="cds-card mb-4">
-          <div class="card-header-cds">
-            <h5>Pending Approvals</h5><button class="btn cds-btn-sm" onclick="loadTransactions()">↻ Refresh</button>
-          </div>
-          <div id="pendingTxList"></div>
-        </div>
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Approval History</h5>
-            <div class="filter-group"><select id="historyFilterType" class="form-select cds-input sm"
-                onchange="loadTransactions()">
-                <option value="">All Types</option>
-                <option value="credit">Credit</option>
-                <option value="expense">Expense</option>
-                <option value="suspense">Suspense</option>
-              </select><select id="historyFilterStatus" class="form-select cds-input sm" onchange="loadTransactions()">
-                <option value="">All History Status</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="converted">Converted</option>
-                <option value="penalty">Penalty</option>
-              </select></div>
-          </div>
-          <div id="historyTxList"></div>
-        </div>
-      </div>
-      <div id="section-daily" class="d-none">
-        <div class="row g-4">
-          <div class="col-lg-5">
-            <div class="cds-card form-structured">
-              <div class="card-header-cds">
-                <h5>Daily Closing</h5>
-              </div>
-              <div id="dailyAlert"></div>
-              <div id="dailyStatusBadge" class="mb-3"></div>
-              <div class="denom-grid">
-                <div class="denom-row"><label>₹500 ×</label><input type="number" id="d500"
-                    class="form-control cds-input" value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹200 ×</label><input type="number" id="d200"
-                    class="form-control cds-input" value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹100 ×</label><input type="number" id="d100"
-                    class="form-control cds-input" value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹50 ×</label><input type="number" id="d50" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹20 ×</label><input type="number" id="d20" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹10 ×</label><input type="number" id="d10" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹5 ×</label><input type="number" id="d5" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹2 ×</label><input type="number" id="d2" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>₹1 ×</label><input type="number" id="d1" class="form-control cds-input"
-                    value="0" min="0" onchange="calcDenom()" /></div>
-                <div class="denom-row"><label>ARS Balance</label><input type="number" id="dArs"
-                    class="form-control cds-input" value="0" step="0.01" min="0" oninput="calcDenom()" /></div>
-              </div>
-              <div class="denom-total mt-3">Main Balance Total: <strong id="denomTotalDisplay">₹0</strong></div>
-              <div class="denom-total mt-1">Combined Total Balance (Main + ARS): <strong
-                  id="combinedTotalDisplay">₹0</strong></div><button class="btn cds-btn-primary w-100 mt-3"
-                onclick="closeDay()">Close Day</button>
-            </div>
-          </div>
-          <div class="col-lg-7">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Daily Records</h5>
-              </div>
-              <div id="dailyList"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-inventoryDashboard" class="d-none">
-        <div id="invDashAlert"></div>
-        <div class="row g-4 mb-4">
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card current">
-              <div class="stat-label">Total Products</div>
-              <div class="stat-value" id="invTotalProducts">0</div>
-            </div>
-          </div>
-
-          <!-- <div class="col-sm-6 col-xl-3"><div class="stat-card credits"><div class="stat-label">Total Stock</div><div class="stat-value" id="invTotalStock">0</div></div></div> -->
-
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card expenses">
-              <div class="stat-label">Pending Requests</div>
-              <div class="stat-value" id="invPendingRequests">0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card penalties">
-              <div class="stat-label">Low Stock Items</div>
-              <div class="stat-value" id="invLowStockCount">0</div>
-            </div>
-          </div>
-        </div>
-        <div class="cds-card mb-4">
-          <div class="card-header-cds">
-            <h5>Recent Movements</h5>
-          </div>
-          <div id="invRecentMovements"></div>
-        </div>
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Product Table</h5>
-            <div class="filter-group"><input id="invFilterQ" class="form-control cds-input sm"
-                placeholder="Search product/SKU" /><label class="small d-flex align-items-center"><input type="checkbox"
-                  id="invFilterLow" class="me-1" />Low stock</label><button class="btn cds-btn-sm"
-                onclick="loadInventoryProducts()">Filter</button></div>
-          </div>
-          <div id="invProductTable"></div>
-        </div>
-      </div>
-      <div id="section-inventoryAddProduct" class="d-none">
-        <div class="row g-4">
-          <div class="col-lg-5">
-            <div class="cds-card form-structured">
-              <div class="card-header-cds">
-                <h5>Add Product (Goods Inward)</h5>
-              </div>
-              <div id="invProductAlert"></div>
-              <div class="mb-3"><label class="form-label">Name</label><input id="invName"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Category</label><input id="invCategory"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">SKU</label><input id="invSku"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Quantity</label><input id="invQty" type="number" min="0"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Location</label><input id="invLocation"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Color (optional)</label><input id="invColor"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Size (optional)</label><input id="invSize"
-                  class="form-control cds-input" /></div>
-              <div class="mb-4"><label class="form-label">Minimum Stock</label><input id="invMinStock" type="number"
-                  value="30" min="0" class="form-control cds-input" /></div><button class="btn cds-btn-primary w-100"
-                onclick="addInventoryProduct()">Add Product</button>
-            </div>
-          </div>
-          <div class="col-lg-7">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Products</h5>
-              </div>
-              <div id="invProductTableAdd"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-inventoryRequests" class="d-none">
-        <div class="row g-4">
-          <div class="col-lg-4">
-            <div class="cds-card form-structured">
-              <div class="card-header-cds">
-                <h5>Stock Requests</h5>
-              </div>
-              <div id="invRequestAlert"></div>
-              <div class="mb-3"><label class="form-label">Product</label><select id="reqProduct"
-                  class="form-select cds-input"></select></div>
-              <div class="mb-3"><label class="form-label">Quantity</label><input id="reqQty" type="number" min="1"
-                  class="form-control cds-input" /></div>
-              <div class="mb-4"><label class="form-label">Section</label><select id="reqSection"
-                  class="form-select cds-input">
-                  <option value="">Select</option>
-                  <option>Mens</option>
-                  <option>Womens</option>
-                  <option>Kids</option>
-                </select></div><button class="btn cds-btn-primary w-100" onclick="createStockRequest()">Submit
-                Request</button>
-            </div>
-          </div>
-          <div class="col-lg-8">
-            <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Request List</h5>
-              </div>
-              <div id="invRequestTable"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="section-inventoryApprovals" class="d-none">
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Inventory Approvals</h5>
-          </div>
-          <div id="invApprovalAlert"></div>
-          <div id="invApprovalTable"></div>
-        </div>
-      </div>
-      <div id="section-inventoryIssue" class="d-none">
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Stock Issue</h5>
-          </div>
-          <div id="invIssueAlert"></div>
-          <div id="invIssueTable"></div>
-        </div>
-      </div>
-      <div id="section-inventoryMovements" class="d-none">
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Movement History</h5>
-          </div>
-          <div id="invMoveAlert"></div>
-          <div id="invMovementTable"></div>
-        </div>
-      </div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
       <div id="section-vehicleEntry" class="d-none">
         <div class="row g-4">
           <div class="col-lg-6">
@@ -644,8 +235,7 @@
                 <h5>Create Vehicle Log</h5>
               </div>
               <div id="vehicleAlert"></div>
-<<<<<<< HEAD
-              
+
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
                   <label class="form-label">From</label>
@@ -655,8 +245,11 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">To</label>
-                  <input type="text" id="toLocation" list="toLocationList" class="form-control cds-input" placeholder="Select or type to location..." />
-                  <datalist id="toLocationList"></datalist>
+                  <select id="toLocation" class="form-select cds-input" onchange="onToLocationChange()">
+                    <option value="">Select To Location...</option>
+                  </select>
+                  <input type="text" id="toLocationCustom" class="form-control cds-input mt-2 d-none"
+                    placeholder="Type custom to location..." />
                 </div>
               </div>
 
@@ -678,24 +271,49 @@
               </div>
 
               <div class="row g-3 mb-3">
-                <div class="col-12">
+                <div class="col-md-6">
                   <label class="form-label">Vehicle (Short Name)</label>
                   <select id="vehicleShortName" class="form-select cds-input vehicle-select-shortname"
                     onchange="onVehicleShortNameInput('vehicleShortName', 'vehicleNumber')">
                     <option value="">Select Vehicle...</option>
                   </select>
-
-                  <!-- Hidden inputs for JS compatibility -->
+                </div>
+                <div class="col-md-6">
                   <input type="hidden" id="vehicleNumber" />
                   <input type="hidden" id="tankCapacity" value="0" />
                   <input type="hidden" id="expectedMileage" value="0" />
                   <input type="hidden" id="availableFuel" value="0" />
+                </div>
+              </div>
 
-                  <!-- Display Block in Normal Text with Emojis -->
-                  <div id="vehicleDetailsDisplay" class="mt-2 p-2 rounded border bg-light d-none" style="font-size: 13.5px; display: flex; flex-wrap: wrap; gap: 15px;">
-                    <span id="displayVehicleNumber">🚗 <b>Vehicle No:</b> —</span>
-                    <span id="displayTankCapacity">⛽ <b>Tank Capacity:</b> —</span>
-                    <span id="displayExpectedMileage">📈 <b>Std Mileage:</b> —</span>
+              <!-- Vehicle Info Display with Emojis -->
+              <div id="vehicleDetailsDisplay" class="mb-3 p-3 rounded text-light border border-secondary-subtle d-none"
+                style="background: rgba(255, 255, 255, 0.05);">
+                <div class="row g-3">
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">🚗</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Vehicle
+                        Number</small>
+                      <strong id="vehicleNumberDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">⛽</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tank Capacity</small>
+                      <strong id="tankCapacityDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">📊</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Std Mileage</small>
+                      <strong id="expectedMileageDisplay" class="text-white">—</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -717,8 +335,10 @@
               </div>
 
               <div class="mb-3 d-grid gap-2">
-                <button type="button" id="btnToggleFuelInLog" class="btn btn-outline-success btn-sm" onclick="toggleFuelInLog()">⛽ Add Fuel at End of Trip</button>
-                <button type="button" id="btnToggleExpenseInLog" class="btn btn-outline-warning btn-sm" onclick="toggleExpenseInLog()">🔧 Add Expense (Emergency)</button>
+                <button type="button" id="btnToggleFuelInLog" class="btn btn-outline-success btn-sm"
+                  onclick="toggleFuelInLog()">⛽ Add Fuel at End of Trip</button>
+                <button type="button" id="btnToggleExpenseInLog" class="btn btn-outline-warning btn-sm"
+                  onclick="toggleExpenseInLog()">🔧 Add Expense (Emergency)</button>
               </div>
 
               <!-- Collapsible Expense Section -->
@@ -752,13 +372,17 @@
               </div>
 
               <!-- Collapsible Fuel Section -->
-              <div id="fuelSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3" style="background: rgba(25, 135, 84, 0.05); border-color: rgba(25, 135, 84, 0.2) !important;">
-                <div class="text-success small fw-semibold text-uppercase mb-2" style="font-size: 11px; letter-spacing: 0.5px;">Fuel Information</div>
-                
+              <div id="fuelSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3"
+                style="background: rgba(25, 135, 84, 0.05); border-color: rgba(25, 135, 84, 0.2) !important;">
+                <div class="text-success small fw-semibold text-uppercase mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Fuel Information</div>
+
                 <div id="fuelTripStatsInLog" class="mb-3 p-2 rounded bg-white border border-success-subtle">
-                  <div class="text-success small fw-semibold" style="font-size: 11px;">Trip Analytics (Since Last Full Tank)</div>
+                  <div class="text-success small fw-semibold" style="font-size: 11px;">Trip Analytics (Since Last Full
+                    Tank)</div>
                   <div class="text-success fw-bold mt-1" style="font-size: 13px;">
-                    Distance: <span id="fuelTripDistanceTextInLog">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span id="fuelApproxUsedTextInLog">0.00</span> L
+                    Distance: <span id="fuelTripDistanceTextInLog">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span
+                      id="fuelApproxUsedTextInLog">0.00</span> L
                   </div>
                 </div>
 
@@ -772,22 +396,26 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label small">Price per Litre (₹)</label>
-                    <input id="fuelPricePerLitreInLog" type="number" min="0" step="0.01" class="form-control cds-input" placeholder="Price" oninput="calcFuelInLog()" />
+                    <input id="fuelPricePerLitreInLog" type="number" min="0" step="0.01" class="form-control cds-input"
+                      placeholder="Price" oninput="calcFuelInLog()" />
                   </div>
                 </div>
 
                 <div class="row g-3 mb-3">
                   <div class="col-md-4">
                     <label class="form-label small">Fuel Added (L)</label>
-                    <input id="fuelAddedLitersInLog" type="number" min="0" step="0.1" class="form-control cds-input" placeholder="e.g. 30" oninput="calcFuelInLog()" />
+                    <input id="fuelAddedLitersInLog" type="number" min="0" step="0.1" class="form-control cds-input"
+                      placeholder="e.g. 30" oninput="calcFuelInLog()" />
                   </div>
                   <div class="col-md-4">
                     <label class="form-label small">Petrol Bunk Name</label>
-                    <input id="fuelBunkNameInLog" type="text" class="form-control cds-input" placeholder="e.g. HP Bunk" />
+                    <input id="fuelBunkNameInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. HP Bunk" />
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label small">Bunk Location</label>
-                    <input id="fuelLocationInLog" type="text" class="form-control cds-input" placeholder="e.g. Tuty Road" />
+                    <label class="form-label small">Location</label>
+                    <input id="fuelLocationInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. Bunk Location" />
                   </div>
                 </div>
 
@@ -797,101 +425,19 @@
                     <input id="fuelPriceInLog" class="form-control cds-input" readonly value="0.00" />
                   </div>
                 </div>
-                
-                <div id="fuelMileageDisplayInLog" class="mt-2 p-2 rounded bg-white border border-secondary-subtle small text-dark">
+
+                <div id="fuelMileageDisplayInLog"
+                  class="mt-2 p-2 rounded bg-white border border-secondary-subtle small text-dark">
                   <!-- Calculated mileage info goes here -->
                 </div>
               </div>
 
               <div class="row g-2 mt-4">
                 <div class="col-md-12">
-                  <button id="btnSubmitVehicleLog" class="btn cds-btn-primary w-100" onclick="submitVehicleLog()">Submit</button>
+                  <button id="btnSubmitVehicleLog" class="btn cds-btn-primary w-100"
+                    onclick="submitVehicleLog()">Submit</button>
                 </div>
               </div>
-=======
-              <div class="mb-3"><label class="form-label">Driver Name</label><input id="driverName"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Vehicle Number</label><input id="vehicleNumber"
-                  list="vehicleNumberList" class="form-control cds-input" onblur="applyVehicleBaseline()"
-                  placeholder="Enter or pick vehicle number" /><datalist id="vehicleNumberList"></datalist></div>
-              <div class="row g-3">
-                <div class="col-md-6"><label class="form-label">From</label><input id="fromLocation"
-                    class="form-control cds-input" /></div>
-                <div class="col-md-6"><label class="form-label">To</label><input id="toLocation"
-                    class="form-control cds-input" /></div>
-              </div>
-              <div class="row g-3 mt-1">
-
-                <!-- <div class="col-md-6"><label class="form-label">Start Date & Time</label><input id="startDateTime" type="datetime-local" class="form-control cds-input" /></div>
-         -->
-                <div class="col-md-6">
-                  <label class="form-label">Start Date & Time</label>
-                  <input id="startDateTime" type="datetime-local" class="form-control cds-input" readonly />
-                </div>
-                <div class="col-md-6"><label class="form-label">End Date & Time</label><input id="endDateTime"
-                    type="datetime-local" class="form-control cds-input" /></div>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-4"><label class="form-label">Start KM</label><input id="startKm" readonly
-                    class="form-control cds-input" value="0" /></div>
-                <div class="col-md-4"><label class="form-label">End KM</label><input id="endKm" type="number" min="0"
-                    class="form-control cds-input" oninput="calcVehicleDistance();calcVehicleFuelUsed();" /></div>
-                <div class="col-md-4"><label class="form-label">Distance</label><input id="distanceTravelled" readonly
-                    class="form-control cds-input" value="0.00" /></div>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-3"><label class="form-label">Available Fuel</label><input id="availableFuel" readonly
-                    class="form-control cds-input" value="0" /></div>
-                <div class="col-md-3"><label class="form-label">Fuel Added</label><input id="fuelAdded" type="number"
-                    min="0" step="0.1" value="0" class="form-control cds-input" oninput="calcVehicleFuelUsed()" /></div>
-                <div class="col-md-3"><label class="form-label">Remaining Fuel (optional)</label><input
-                    id="remainingFuel" type="number" min="0" step="0.1" class="form-control cds-input"
-                    oninput="calcVehicleFuelUsed()" /></div>
-                <div class="col-md-3"><label class="form-label">Fuel Fill Date</label><input id="fuelFillDate"
-                    type="date" class="form-control cds-input" /></div>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-4"><label class="form-label">Expected Mileage</label><input id="expectedMileage"
-                    readonly class="form-control cds-input" /></div>
-                <div class="col-md-4"><label class="form-label">Actual Mileage</label><input id="actualMileage" readonly
-                    class="form-control cds-input" /></div>
-                <div class="col-md-4 d-flex align-items-end">
-                  <div id="mileageDelta"></div>
-                </div>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-6"><label class="form-label">Fuel Used (optional)</label><input id="fuelUsedInput"
-                    type="number" min="0" step="0.1" class="form-control cds-input" oninput="calcVehicleFuelUsed()" />
-                </div>
-                <div class="col-md-6"><label class="form-label">Reason (optional)</label><input id="mileageReason"
-                    class="form-control cds-input" placeholder="If mileage differs, mention reason" /></div>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-6"><label class="form-label">Fuel Used (calculated)</label><input id="fuelUsed"
-                    readonly class="form-control cds-input" value="0.00" /></div>
-                <div class="col-md-6 d-flex align-items-end">
-                  <div id="lowFuelBadge"></div>
-                </div>
-              </div>
-              <div class="cds-card mt-3 p-3">
-                <h6 class="mb-3">Vehicle Profile Setup</h6>
-                <div class="row g-2">
-                  <div class="col-md-4"><input id="profileOpeningKm" type="number" min="0"
-                      class="form-control cds-input" placeholder="Opening KM" /></div>
-                  <div class="col-md-4"><input id="profileOpeningFuel" type="number" min="0" step="0.1"
-                      class="form-control cds-input" placeholder="Opening Fuel (L)" /></div>
-                  <div class="col-md-4"><input id="profileExpectedMileage" type="number" min="0" step="0.1"
-                      class="form-control cds-input" placeholder="Expected km/L" /></div>
-                </div><button class="btn cds-btn-sm mt-2" onclick="saveVehicleProfile()">Save Vehicle Profile</button>
-              </div>
-              <div class="mt-3">
-                <div class="d-flex justify-content-between align-items-center mb-2"><label
-                    class="form-label mb-0">Expenses</label><button class="btn cds-btn-sm"
-                    onclick="addVehicleExpenseRow()">+ Add Expense</button></div>
-                <div id="vehicleExpenseRows"></div>
-              </div><button class="btn cds-btn-primary w-100 mt-3" onclick="submitVehicleLog()">Submit for
-                Approval</button>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
             </div>
           </div>
           <div class="col-lg-6">
@@ -905,10 +451,9 @@
           </div>
         </div>
       </div>
-<<<<<<< HEAD
       <div id="section-vehicleFuel" class="d-none">
         <div class="row g-4">
-          <div class="col-lg-6">
+          <div class="col-lg-6 admin-only">
             <div class="cds-card form-structured">
               <div class="card-header-cds">
                 <h5>⛽ Record Fuel Entry</h5>
@@ -986,7 +531,8 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Location</label>
-                  <input id="fuelLocation" type="text" class="form-control cds-input" placeholder="e.g. Bunk Location" />
+                  <input id="fuelLocation" type="text" class="form-control cds-input"
+                    placeholder="e.g. Bunk Location" />
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Total Price/Cost (₹) (calculated)</label>
@@ -998,33 +544,44 @@
               <button class="btn cds-btn-primary w-100" onclick="submitFuelForm()">Submit Fuel Log</button>
             </div>
           </div>
-          <div class="col-lg-6">
+          <div class="col-lg-6" id="fuelHistoryCardCol">
             <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Recent Fuel Logs</h5>
-                <div>
-                  <button class="btn cds-btn-sm" onclick="printFuelReport()">🖨️ Print</button>
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Recent Fuel Logs</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printFuelLogs()">🖨️ Print</button>
                   <button class="btn cds-btn-sm" onclick="loadFuelHistory()">↻ Refresh</button>
                 </div>
               </div>
-              <div class="p-2 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
+              <!-- Filter Bar -->
+              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2"
+                style="font-size: 13px;">
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                  <select id="fuelBranchFilter" class="form-select cds-input sm" style="width: 130px;" onchange="onFuelBranchFilterChange()">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
+                  <select id="fuelBranchFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterFuelLogs()">
                     <option value="">All Branches</option>
                   </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-                  <select id="fuelVehicleSearch" class="form-select cds-input sm" style="width: 150px;" onchange="renderFilteredFuelLogs()">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
+                  <select id="fuelVehicleFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterFuelLogs()">
                     <option value="">All Vehicles</option>
                   </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Date:</label>
-                  <input type="date" id="fuelDateFilter" class="form-control cds-input sm" style="width: 140px;" onchange="renderFilteredFuelLogs()" />
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
+                  <input type="date" id="fuelFromDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterFuelLogs()" />
                 </div>
-                <button class="btn cds-btn-sm btn-secondary" onclick="clearFuelFilters()">Clear</button>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
+                  <input type="date" id="fuelToDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterFuelLogs()" />
+                </div>
+                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearFuelFilters()"
+                  style="font-size: 11px;">Clear</button>
               </div>
               <div id="fuelHistoryAlert"></div>
               <div id="fuelHistoryList"></div>
@@ -1039,45 +596,34 @@
             <h5 class="mb-0">Reviewed Vehicle Logs</h5>
             <div class="d-flex align-items-center flex-wrap gap-2">
               <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-              <select id="approvalBranchFilter" class="form-select cds-input sm" style="width: 130px;"
-                onchange="onApprovalBranchFilterChange()">
+              <select id="approvalBranchFilter" class="form-select cds-input sm" style="width: 140px;"
+                onchange="filterApprovalLogs()">
                 <option value="">All Branches</option>
               </select>
 
               <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-              <input id="approvalVehicleSearch" class="form-control cds-input vehicle-select-shortname sm"
-                list="approvalVehicleSearchList" placeholder="Search vehicle..." style="width: 180px;"
-                oninput="renderFilteredReviewedLogs()" />
-              <datalist id="approvalVehicleSearchList"></datalist>
+              <select id="approvalVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
+                onchange="renderFilteredReviewedLogs()">
+                <option value="">All Vehicles</option>
+              </select>
 
-              <label class="small text-muted mb-0" style="white-space: nowrap;">Date:</label>
-              <input type="date" id="approvalDateFilter" class="form-control cds-input sm" style="width: 150px;"
+              <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+              <input type="date" id="approvalFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                onchange="renderFilteredReviewedLogs()" />
+
+              <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+              <input type="date" id="approvalToDateFilter" class="form-control cds-input sm" style="width: 130px;"
                 onchange="renderFilteredReviewedLogs()" />
 
               <button class="btn cds-btn-sm" onclick="clearApprovalFilters()">Clear</button>
               <button class="btn cds-btn-sm" onclick="loadVehicleApprovals()">↻ Refresh</button>
             </div>
-=======
-      <div id="section-vehicleApprovals" class="d-none">
-        <div class="cds-card mb-4">
-          <div class="card-header-cds">
-            <h5>Pending Vehicle Logs</h5><button class="btn cds-btn-sm" onclick="loadVehicleApprovals()">↻
-              Refresh</button>
-          </div>
-          <div id="vehicleApprovalAlert"></div>
-          <div id="vehiclePendingList"></div>
-        </div>
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Reviewed Vehicle Logs</h5>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           </div>
           <div id="vehicleReviewedList"></div>
         </div>
       </div>
       <div id="section-vehicleReports" class="d-none">
         <div class="cds-card">
-<<<<<<< HEAD
           <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0">Vehicle Reports</h5>
             <div class="d-flex align-items-center flex-wrap gap-2">
@@ -1088,36 +634,37 @@
               </select>
 
               <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-              <input id="reportVehicleSearch" class="form-control cds-input vehicle-select-shortname sm"
-                list="reportVehicleSearchList" placeholder="Search vehicle..." style="width: 180px;"
-                oninput="renderFilteredVehicleReports()" />
-              <datalist id="reportVehicleSearchList"></datalist>
+              <select id="reportVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
+                onchange="renderFilteredVehicleReports()">
+                <option value="">All Vehicles</option>
+              </select>
 
-              <label class="small text-muted mb-0" style="white-space: nowrap;">Date:</label>
-              <input type="date" id="vehicleReportDate" class="form-control cds-input sm" style="width: 150px;"
-                onchange="loadVehicleReports()" />
+              <label class="small text-muted mb-0" style="white-space: nowrap;">Bunk:</label>
+              <select id="reportBunkSelect" class="form-select cds-input sm" style="width: 150px;"
+                onchange="renderFilteredVehicleReports()">
+                <option value="">All Bunks</option>
+              </select>
+
+              <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+              <input type="date" id="reportFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                onchange="renderFilteredVehicleReports()" />
+
+              <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+              <input type="date" id="reportToDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                onchange="renderFilteredVehicleReports()" />
 
               <button class="btn cds-btn-sm" onclick="clearReportFilters()">Clear</button>
               <button class="btn cds-btn-sm" onclick="printVehicleReport()">🖨️ Print</button>
               <button class="btn cds-btn-sm" onclick="loadVehicleReports()">↻ Refresh</button>
             </div>
-=======
-          <div class="card-header-cds">
-            <h5>Vehicle Reports</h5>
-            <div class="d-flex gap-2"><input type="date" id="vehicleReportDate" class="form-control cds-input sm"
-                style="width: auto;" onchange="loadVehicleReports()" /><button class="btn cds-btn-sm"
-                onclick="printVehicleReport()">🖨️ Print</button><button class="btn cds-btn-sm"
-                onclick="loadVehicleReports()">↻ Refresh</button></div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           </div>
           <div id="vehicleReportAlert"></div>
           <div id="vehicleReportList"></div>
         </div>
       </div>
-<<<<<<< HEAD
       <div id="section-vehicleExpenses" class="d-none">
         <div class="row g-4">
-          <div class="col-lg-5">
+          <div class="col-lg-5 admin-only">
             <div class="cds-card form-structured">
               <div class="card-header-cds">
                 <h5>Record Vehicle Expense</h5>
@@ -1169,33 +716,44 @@
             </div>
           </div>
 
-          <div class="col-lg-7">
+          <div class="col-lg-7" id="expenseLogCardCol">
             <div class="cds-card">
-              <div class="card-header-cds">
-                <h5>Expense Log</h5>
-                <div>
-                  <button class="btn cds-btn-sm" onclick="printExpenseReport()">🖨️ Print</button>
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Expense Log</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printExpenseLogs()">🖨️ Print</button>
                   <button class="btn cds-btn-sm" onclick="loadVehicleExpenses()">↻ Refresh</button>
                 </div>
               </div>
-              <div class="p-2 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
+              <!-- Filter Bar -->
+              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2"
+                style="font-size: 13px;">
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                  <select id="expenseBranchFilter" class="form-select cds-input sm" style="width: 130px;" onchange="onExpenseBranchFilterChange()">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
+                  <select id="expenseBranchFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterExpenses()">
                     <option value="">All Branches</option>
                   </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-                  <select id="expenseVehicleFilter" class="form-select cds-input sm" style="width: 150px;" onchange="renderFilteredExpenses()">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
+                  <select id="expenseVehicleFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterExpenses()">
                     <option value="">All Vehicles</option>
                   </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                  <label class="small text-muted mb-0" style="white-space: nowrap;">Date:</label>
-                  <input type="date" id="expenseDateFilter" class="form-control cds-input sm" style="width: 140px;" onchange="renderFilteredExpenses()" />
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
+                  <input type="date" id="expenseFromDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterExpenses()" />
                 </div>
-                <button class="btn cds-btn-sm btn-secondary" onclick="clearExpenseFilters()">Clear</button>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
+                  <input type="date" id="expenseToDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterExpenses()" />
+                </div>
+                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearExpenseFilters()"
+                  style="font-size: 11px;">Clear</button>
               </div>
               <div id="vehicleExpensesListWrap">
                 <div class="table-responsive">
@@ -1220,40 +778,6 @@
               </div>
             </div>
           </div>
-=======
-      <div id="section-scrapDashboard" class="d-none">
-        <div class="row g-4 mb-4">
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card current">
-              <div class="stat-label">Total Scrap Entries</div>
-              <div class="stat-value" id="scrapTotalEntries">0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card credits">
-              <div class="stat-label">Pending Approvals</div>
-              <div class="stat-value" id="scrapPendingCount">0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card expenses">
-              <div class="stat-label">Approved Entries</div>
-              <div class="stat-value" id="scrapApprovedCount">0</div>
-            </div>
-          </div>
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card credits">
-              <div class="stat-label">Total Scrap Value</div>
-              <div class="stat-value" id="scrapTotalValue">₹0</div>
-            </div>
-          </div>
-        </div>
-        <div class="cds-card">
-          <div class="card-header-cds">
-            <h5>Recent Approved Scrap</h5>
-          </div>
-          <div id="scrapDashTable"></div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
         </div>
       </div>
       <div id="section-scrapProducts" class="d-none">
@@ -1283,9 +807,16 @@
       </div>
       <div id="section-scrapApprovals" class="d-none">
         <div class="cds-card mb-4">
-          <div class="card-header-cds">
-            <h5>Pending Scrap Approvals</h5><button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻
-              Refresh</button>
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Pending Scrap Approvals</h5>
+            <div class="d-flex align-items-center gap-2">
+              <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+              <select id="scrapApprovalBranchSelect" class="form-select cds-input sm" style="width: 150px;"
+                onchange="renderFilteredScrapApprovals()">
+                <option value="">All Branches</option>
+              </select>
+              <button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻ Refresh</button>
+            </div>
           </div>
           <div id="scrapApprovalAlert"></div>
           <div id="scrapPendingList"></div>
@@ -1295,23 +826,20 @@
         <div class="cds-card">
           <div class="card-header-cds">
             <h5>Scrap Reports</h5>
-<<<<<<< HEAD
-            <div class="d-flex gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
               <select id="scrapReportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
                 onchange="loadScrapReports()">
                 <option value="">All Branches</option>
               </select>
-              <input type="date" id="scrapReportDate" class="form-control cds-input sm"
-                style="width: auto;" onchange="loadScrapReports()" />
+              <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+              <input type="date" id="scrapReportFromDate" class="form-control cds-input sm" style="width: 130px;"
+                onchange="loadScrapReports()" />
+              <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+              <input type="date" id="scrapReportToDate" class="form-control cds-input sm" style="width: 130px;"
+                onchange="loadScrapReports()" />
               <button class="btn cds-btn-sm" onclick="printScrapReport()">🖨️ Print</button>
               <button class="btn cds-btn-sm" onclick="loadScrapReports()">↻ Refresh</button>
             </div>
-=======
-            <div class="d-flex gap-2"><input type="date" id="scrapReportDate" class="form-control cds-input sm"
-                style="width: auto;" onchange="loadScrapReports()" /><button class="btn cds-btn-sm"
-                onclick="printScrapReport()">🖨️ Print</button><button class="btn cds-btn-sm"
-                onclick="loadScrapReports()">↻ Refresh</button></div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
           </div>
           <div id="scrapReportAlert"></div>
           <div id="scrapReportList"></div>
@@ -1322,46 +850,40 @@
           <div class="col-lg-4">
             <div class="cds-card form-structured">
               <div class="card-header-cds">
-<<<<<<< HEAD
                 <h5 id="userFormTitle">Add User</h5>
               </div>
               <div id="userAlert"></div>
               <input type="hidden" id="userEditId" />
               <div class="mb-3"><label class="form-label">Username</label><input type="text" id="newUsername"
                   class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label" id="newPasswordLabel">Password</label><input type="password" id="newPassword"
-                  class="form-control cds-input" /></div>
+              <div class="mb-3">
+                <label class="form-label" id="newPasswordLabel">Password</label>
+                <div class="input-group">
+                  <input type="password" id="newPassword" class="form-control cds-input"
+                    style="border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+                  <button class="btn btn-outline-secondary" type="button"
+                    onclick="togglePasswordVisibility('newPassword', this)"
+                    style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; border: 1.5px solid var(--border); border-left: none; background: #fafbfc; color: var(--text-muted); padding: 0 14px;">👁️</button>
+                </div>
+              </div>
               <div class="mb-3"><label class="form-label">EC.no</label><input type="text" id="newEcNo"
                   class="form-control cds-input" placeholder="e.g. EC1234" /></div>
               <div class="mb-3"><label class="form-label">Location (Branch)</label><select id="newUserBranch"
                   class="form-select cds-input">
                   <option value="">Select Location (Branch)...</option>
                 </select></div>
-=======
-                <h5>Add User</h5>
-              </div>
-              <div id="userAlert"></div>
-              <div class="mb-3"><label class="form-label">Username</label><input type="text" id="newUsername"
-                  class="form-control cds-input" /></div>
-              <div class="mb-3"><label class="form-label">Password</label><input type="password" id="newPassword"
-                  class="form-control cds-input" /></div>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
               <div class="mb-4"><label class="form-label">Role</label><select id="newRole"
                   class="form-select cds-input">
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
-<<<<<<< HEAD
                   <option value="security">Security</option>
                 </select></div>
               <div class="d-flex gap-2">
-                <button class="btn cds-btn-primary w-100" id="btnSaveUser" onclick="saveUserAdmin()">Create User</button>
-                <button class="btn btn-outline-secondary w-100 d-none" id="btnCancelUser" onclick="clearUserAdminForm()">Cancel</button>
+                <button class="btn cds-btn-primary w-100" id="btnSaveUser" onclick="saveUserAdmin()">Create
+                  User</button>
+                <button class="btn btn-outline-secondary w-100 d-none" id="btnCancelUser"
+                  onclick="clearUserAdminForm()">Cancel</button>
               </div>
-=======
-                  <option value="incharge">Incharge</option>
-                  <option value="security">Security</option>
-                </select></div><button class="btn cds-btn-primary w-100" onclick="addUser()">Create User</button>
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
             </div>
           </div>
           <div class="col-lg-8">
@@ -1374,7 +896,6 @@
           </div>
         </div>
       </div>
-<<<<<<< HEAD
       <div id="section-fuelPrices" class="d-none">
         <div class="row g-4">
           <div class="col-lg-6">
@@ -1410,14 +931,16 @@
               <input type="hidden" id="branchEditId" value="" />
               <div class="mb-4">
                 <label class="form-label">Branch Name</label>
-                <input type="text" id="branchNameInput" class="form-control cds-input" placeholder="e.g. Tuty, tnv, theni..." />
+                <input type="text" id="branchNameInput" class="form-control cds-input"
+                  placeholder="e.g. Tuty, tnv, theni..." />
               </div>
               <div class="row g-2">
                 <div class="col-6">
                   <button class="btn btn-secondary w-100" onclick="resetBranchFormAdmin()">Cancel</button>
                 </div>
                 <div class="col-6">
-                  <button class="btn cds-btn-primary w-100" id="btnSaveBranch" onclick="saveBranchAdmin()">Save Branch</button>
+                  <button class="btn cds-btn-primary w-100" id="btnSaveBranch" onclick="saveBranchAdmin()">Save
+                    Branch</button>
                 </div>
               </div>
             </div>
@@ -1452,14 +975,6 @@
   <script>
     function toggleModule(menuId) {
       const menus = ['vehicleMenu', 'scrapMenu', 'adminMenu'];
-=======
-    </div>
-  </div>
-  <script src="app.js"></script>
-  <script>
-    function toggleModule(menuId) {
-      const menus = ['cdbMenu', 'invMenu', 'vehicleMenu', 'scrapMenu', 'adminMenu'];
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 
       menus.forEach(id => {
         const el = document.getElementById(id);
@@ -1483,7 +998,6 @@
   </script>
 
   <script>
-<<<<<<< HEAD
     const inputStart = document.getElementById("startDateTime");
     if (inputStart && typeof formatDateTime12h === 'function') {
       inputStart.value = formatDateTime12h(new Date());
@@ -1492,26 +1006,6 @@
     if (inputEnd && typeof formatDateTime12h === 'function') {
       inputEnd.value = formatDateTime12h(new Date());
     }
-=======
-    const input = document.getElementById("startDateTime");
-
-    function setMinDateTime() {
-      const now = new Date();
-
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-
-      const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-      input.min = currentDateTime;   // ❌ blocks past
-      input.value = currentDateTime; // ✅ default = now
-    }
-
-    setMinDateTime();
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
   </script>
 </body>
 

@@ -285,11 +285,8 @@ body {
 .cds-table tbody td { padding: 11px 14px; vertical-align: middle; border-bottom: 1px solid var(--border); }
 .cds-table tbody tr:last-child td { border-bottom: none; }
 .cds-table tbody tr:hover td { background: #f8f9fc; }
-<<<<<<< HEAD
 .fuel-log-row td { background-color: #fffbeb !important; }
 .fuel-log-row:hover td { background-color: #fef3c7 !important; }
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 
 /* ─── Badges ────────────────────────────────────────────────────────────────── */
 .cds-badge {
@@ -304,11 +301,8 @@ body {
 .badge-pending { background: #fef3c7; color: #92400e; }
 .badge-approved { background: #d1fae5; color: #065f46; }
 .badge-rejected { background: #fee2e2; color: #991b1b; }
-<<<<<<< HEAD
 .badge-own { background: #dcfce7; color: #166534; }
 .badge-rental { background: #e0e7ff; color: #3730a3; }
-=======
->>>>>>> 1330d60a03ee2eb05d0a04d380cf246c54ceb98c
 .badge-converted { background: #e0e7ff; color: #3730a3; }
 .badge-penalty { background: #fce7f3; color: #9d174d; }
 .badge-type-credit { background: #dcfce7; color: #166534; }
@@ -460,6 +454,32 @@ body {
   font-size: 18px;
   cursor: pointer;
   color: var(--text-primary);
+}
+
+.sidebar-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--sidebar-text);
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--sidebar-active);
+  transform: rotate(90deg);
+}
+
+.sidebar-close-btn:active {
+  transform: scale(0.9);
 }
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
