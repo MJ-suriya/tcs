@@ -13,9 +13,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
   <style>
+    body {
+      font-size: 15.5px;
+    }
+
     .module-title {
       padding: 10px 14px;
-      font-size: 13px;
+      font-size: 14.5px;
       text-transform: uppercase;
       color: #aaa;
       cursor: pointer;
@@ -42,13 +46,69 @@
     .module-items.open {
       display: block;
     }
+
+    /* Font size boosts for Manager Login */
+    .nav-link {
+      font-size: 15px !important;
+    }
+
+    .cds-table {
+      font-size: 14.5px !important;
+    }
+
+    .cds-table thead th {
+      font-size: 12.5px !important;
+    }
+
+    .cds-input,
+    .form-select,
+    .form-control {
+      font-size: 14.5px !important;
+    }
+
+    .cds-input.sm {
+      font-size: 13.5px !important;
+      height: 36px !important;
+    }
+
+    .cds-badge {
+      font-size: 12px !important;
+    }
+
+    .topbar-title {
+      font-size: 24px !important;
+    }
+
+    .card-header-cds h5 {
+      font-size: 16.5px !important;
+    }
+
+    .user-name {
+      font-size: 14.5px !important;
+    }
+
+    .user-role {
+      font-size: 12.5px !important;
+    }
+
+    .btn {
+      font-size: 14px !important;
+    }
+
+    .btn-sm {
+      font-size: 12.5px !important;
+    }
+
+    .alert {
+      font-size: 14.5px !important;
+    }
   </style>
 </head>
 
 <body class="dashboard-page">
   <div class="cds-sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-rupee">₹</span>
+      <img src="/logo.png" class="brand-logo" alt="TCS Logo" />
       <span class="brand-name">TCS</span>
       <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
     </div>
@@ -96,257 +156,274 @@
     <div class="cds-content" id="mainContent">
 
       <div id="section-vehicleFuel" class="d-none">
-        <div class="row g-4">
-          <div class="col-12">
-            <div class="cds-card">
-              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="mb-0">Recent Fuel Logs</h5>
-                <div class="d-flex align-items-center gap-1">
-                  <button class="btn cds-btn-sm" onclick="printFuelLogs()">🖨️ Print</button>
-                  <button class="btn cds-btn-sm" onclick="loadFuelHistory()">↻ Refresh</button>
-                </div>
-              </div>
-              <!-- Filter Bar -->
-              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2" style="font-size: 13px;">
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
-                  <select id="fuelBranchFilter" class="form-select cds-input sm" style="width: 130px;" onchange="filterFuelLogs()">
-                    <option value="">All Branches</option>
-                  </select>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
-                  <select id="fuelVehicleFilter" class="form-select cds-input sm" style="width: 130px;" onchange="filterFuelLogs()">
-                    <option value="">All Vehicles</option>
-                  </select>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
-                  <input type="date" id="fuelFromDateFilter" class="form-control cds-input sm" style="width: 125px;" onchange="filterFuelLogs()" />
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
-                  <input type="date" id="fuelToDateFilter" class="form-control cds-input sm" style="width: 125px;" onchange="filterFuelLogs()" />
-                </div>
-                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearFuelFilters()" style="font-size: 11px;">Clear</button>
-              </div>
-              <div id="fuelHistoryAlert"></div>
-              <div id="fuelHistoryList"></div>
+        <div id="fuelHistoryAlert"></div>
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter Fuel Logs</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Branch</label>
+              <select id="fuelBranchFilter" class="form-select cds-input" onchange="updateFuelVehicleFilterOptions()">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Vehicle</label>
+              <select id="fuelVehicleFilter" class="form-select cds-input">
+                <option value="">All Vehicles</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">From</label>
+              <input type="date" id="fuelFromDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">To</label>
+              <input type="date" id="fuelToDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary w-100" onclick="loadFuelHistory()">Show</button>
+              <button class="btn btn-outline-secondary" onclick="clearFuelFilters()">Clear</button>
             </div>
           </div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Recent Fuel Logs</h5>
+            <button class="btn cds-btn-sm" onclick="printFuelLogs()">🖨️ Print</button>
+          </div>
+          <div id="fuelHistoryList" class="p-3"></div>
         </div>
       </div>
       <div id="section-vehicleApprovals" class="d-none">
         <div id="vehicleApprovalAlert"></div>
-        <div class="cds-card">
-          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Reviewed Vehicle Logs</h5>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                <select id="approvalBranchFilter" class="form-select cds-input sm" style="width: 140px;" onchange="filterApprovalLogs()">
-                  <option value="">All Branches</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-                <select id="approvalVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
-                  onchange="renderFilteredReviewedLogs()">
-                  <option value="">All Vehicles</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
-                <input type="date" id="approvalFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
-                  onchange="renderFilteredReviewedLogs()" />
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
-                <input type="date" id="approvalToDateFilter" class="form-control cds-input sm" style="width: 130px;"
-                  onchange="renderFilteredReviewedLogs()" />
-              </div>
-
-              <div class="d-flex gap-1">
-                <button class="btn cds-btn-sm" onclick="clearApprovalFilters()">Clear</button>
-                <button class="btn cds-btn-sm" onclick="loadVehicleApprovals()">↻ Refresh</button>
-              </div>
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter Reviewed Vehicle Logs</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Branch</label>
+              <select id="approvalBranchFilter" class="form-select cds-input"
+                onchange="updateApprovalVehicleSelectOptions()">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Vehicle</label>
+              <select id="approvalVehicleSelect" class="form-select cds-input">
+                <option value="">All Vehicles</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">From</label>
+              <input type="date" id="approvalFromDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">To</label>
+              <input type="date" id="approvalToDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary w-100" onclick="loadVehicleApprovals()">Show</button>
+              <button class="btn btn-outline-secondary" onclick="clearApprovalFilters()">Clear</button>
             </div>
           </div>
-          <div id="vehicleReviewedList"></div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Reviewed Vehicle Logs</h5>
+          </div>
+          <div id="vehicleReviewedList" class="p-3"></div>
         </div>
       </div>
       <div id="section-vehicleReports" class="d-none">
-        <div class="cds-card">
-          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Vehicle Reports</h5>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                <select id="reportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
-                  onchange="renderFilteredVehicleReports()">
-                  <option value="">All Branches</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
-                <select id="reportVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
-                  onchange="renderFilteredVehicleReports()">
-                  <option value="">All Vehicles</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Bunk:</label>
-                <select id="reportBunkSelect" class="form-select cds-input sm" style="width: 150px;"
-                  onchange="renderFilteredVehicleReports()">
-                  <option value="">All Bunks</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
-                <input type="date" id="reportFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
-                  onchange="renderFilteredVehicleReports()" />
-              </div>
-
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
-                <input type="date" id="reportToDateFilter" class="form-control cds-input sm" style="width: 130px;"
-                  onchange="renderFilteredVehicleReports()" />
-              </div>
-
-              <div class="d-flex gap-1">
-                <button class="btn cds-btn-sm" onclick="clearReportFilters()">Clear</button>
-                <button class="btn cds-btn-sm" onclick="printVehicleReport()">🖨️ Print</button>
-                <button class="btn cds-btn-sm" onclick="loadVehicleReports()">↻ Refresh</button>
-              </div>
+        <div id="vehicleReportAlert"></div>
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter Vehicle Reports</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md">
+              <label class="form-label">Branch</label>
+              <select id="reportBranchSelect" class="form-select cds-input"
+                onchange="updateReportVehicleSelectOptions()">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">Vehicle</label>
+              <select id="reportVehicleSelect" class="form-select cds-input">
+                <option value="">All Vehicles</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">Bunk</label>
+              <select id="reportBunkSelect" class="form-select cds-input">
+                <option value="">All Bunks</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">From</label>
+              <input type="date" id="reportFromDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md">
+              <label class="form-label">To</label>
+              <input type="date" id="reportToDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-auto d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary px-4" onclick="loadVehicleReports()">Show</button>
+              <button class="btn btn-outline-secondary" onclick="clearReportFilters()">Clear</button>
+              <button class="btn btn-secondary px-3" onclick="printVehicleReport()">🖨️ Print</button>
             </div>
           </div>
-          <div id="vehicleReportAlert"></div>
-          <div id="vehicleReportList"></div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Vehicle Reports</h5>
+          </div>
+          <div id="vehicleReportList" class="p-3"></div>
         </div>
       </div>
       <div id="section-vehicleExpenses" class="d-none">
-        <div class="row g-4">
-          <div class="col-12">
-            <div class="cds-card">
-              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="mb-0">Expense Log</h5>
-                <div class="d-flex align-items-center gap-1">
-                  <button class="btn cds-btn-sm" onclick="printExpenseLogs()">🖨️ Print</button>
-                  <button class="btn cds-btn-sm" onclick="loadVehicleExpenses()">↻ Refresh</button>
-                </div>
-              </div>
-              <!-- Filter Bar -->
-              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2" style="font-size: 13px;">
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
-                  <select id="expenseBranchFilter" class="form-select cds-input sm" style="width: 130px;" onchange="filterExpenses()">
-                    <option value="">All Branches</option>
-                  </select>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
-                  <select id="expenseVehicleFilter" class="form-select cds-input sm" style="width: 130px;" onchange="filterExpenses()">
-                    <option value="">All Vehicles</option>
-                  </select>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
-                  <input type="date" id="expenseFromDateFilter" class="form-control cds-input sm" style="width: 125px;" onchange="filterExpenses()" />
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
-                  <input type="date" id="expenseToDateFilter" class="form-control cds-input sm" style="width: 125px;" onchange="filterExpenses()" />
-                </div>
-                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearExpenseFilters()" style="font-size: 11px;">Clear</button>
-              </div>
-              <div id="vehicleExpensesListWrap">
-                <div class="table-responsive">
-                  <table class="table cds-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Vehicle</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Description</th>
-                        <th>By</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="vehicleExpensesList">
-                      <!-- Rendered dynamically -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+        <div id="vehicleExpensesAlert"></div>
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter Expenses</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Branch</label>
+              <select id="expenseBranchFilter" class="form-select cds-input"
+                onchange="updateExpenseVehicleFilterOptions()">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Vehicle</label>
+              <select id="expenseVehicleFilter" class="form-select cds-input">
+                <option value="">All Vehicles</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">From</label>
+              <input type="date" id="expenseFromDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">To</label>
+              <input type="date" id="expenseToDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary w-100" onclick="loadVehicleExpenses()">Show</button>
+              <button class="btn btn-outline-secondary" onclick="clearExpenseFilters()">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Expense Log</h5>
+            <button class="btn cds-btn-sm" onclick="printExpenseLogs()">🖨️ Print</button>
+          </div>
+          <div id="vehicleExpensesListWrap" class="p-3">
+            <div class="table-responsive">
+              <table class="table cds-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vehicle</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>By</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="vehicleExpensesList">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
       <div id="section-scrapApprovals" class="d-none">
-        <div class="cds-card mb-4">
-          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Pending Scrap Approvals</h5>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                <select id="scrapApprovalBranchSelect" class="form-select cds-input sm" style="width: 150px;" onchange="renderFilteredScrapApprovals()">
-                  <option value="">All Branches</option>
-                </select>
-              </div>
-              <div class="d-flex gap-1">
-                <button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻ Refresh</button>
-              </div>
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter Pending Scrap Approvals</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md">
+              <label class="form-label">Branch</label>
+              <select id="scrapApprovalBranchSelect" class="form-select cds-input">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">Product</label>
+              <select id="scrapApprovalProductSelect" class="form-select cds-input">
+                <option value="">All Products</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">From</label>
+              <input type="date" id="scrapApprovalFromDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md">
+              <label class="form-label">To</label>
+              <input type="date" id="scrapApprovalToDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md-auto d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary px-4" onclick="loadScrapApprovals()">Show</button>
             </div>
           </div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Pending Scrap Approvals</h5>
+          </div>
           <div id="scrapApprovalAlert"></div>
-          <div id="scrapPendingList"></div>
+          <div id="scrapPendingList" class="p-3"></div>
         </div>
       </div>
       <div id="section-scrapReports" class="d-none">
-        <div class="cds-card">
+        <div class="cds-card form-structured mb-4">
           <div class="card-header-cds">
-            <h5>Scrap Reports</h5>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
-                <select id="scrapReportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
-                  onchange="loadScrapReports()">
-                  <option value="">All Branches</option>
-                </select>
-              </div>
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">Product:</label>
-                <select id="scrapReportProductSelect" class="form-select cds-input sm" style="width: 150px;"
-                  onchange="loadScrapReports()">
-                  <option value="">All Products</option>
-                </select>
-              </div>
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
-                <input type="date" id="scrapReportFromDate" class="form-control cds-input sm"
-                  style="width: 130px;" onchange="loadScrapReports()" />
-              </div>
-              <div class="filter-item">
-                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
-                <input type="date" id="scrapReportToDate" class="form-control cds-input sm"
-                  style="width: 130px;" onchange="loadScrapReports()" />
-              </div>
-              <div class="d-flex gap-1">
-                <button class="btn cds-btn-sm" onclick="printScrapReport()">🖨️ Print</button>
-                <button class="btn cds-btn-sm" onclick="loadScrapReports()">↻ Refresh</button>
-              </div>
+            <h5 class="mb-0">Filter Scrap Reports</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md">
+              <label class="form-label">Branch</label>
+              <select id="scrapReportBranchSelect" class="form-select cds-input">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">Product</label>
+              <select id="scrapReportProductSelect" class="form-select cds-input">
+                <option value="">All Products</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">From</label>
+              <input type="date" id="scrapReportFromDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md">
+              <label class="form-label">To</label>
+              <input type="date" id="scrapReportToDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md-auto d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary px-4" onclick="loadScrapReports()">Show</button>
+              <button class="btn btn-secondary px-3" onclick="printScrapReport()">🖨️ Print</button>
             </div>
           </div>
+        </div>
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Scrap Reports</h5>
+          </div>
           <div id="scrapReportAlert"></div>
-          <div id="scrapReportList"></div>
+          <div id="scrapReportList" class="p-3"></div>
         </div>
       </div>
       <div id="section-users" class="d-none">

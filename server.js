@@ -29,7 +29,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'cds_secret_key_2024',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 8 * 60 * 60 * 1000 } // 8 hours
+  cookie: { maxAge: 30 * 60 * 1000 } // 30 minutes
 }));
 
 // ─── Seed Default Admin ──────────────────────────────────────────────────────
@@ -98,20 +98,76 @@ const requireVehicleModuleAccess = (req, res, next) => {
 
 const DEFAULT_VEHICLES = ['TN01AB1234', 'TN02CD5678', 'TN03EF9012'];
 
+function matchVehicleNumbers(v1, v2) {
+  if (!v1 || !v2) return false;
+  const cleanV1 = String(v1).trim().toLowerCase();
+  const cleanV2 = String(v2).trim().toLowerCase();
+
+  if (cleanV1 === cleanV2) return true;
+
+  const stripped1 = cleanV1.replace(/\s+/g, '');
+  const stripped2 = cleanV2.replace(/\s+/g, '');
+  if (stripped1 === stripped2) return true;
+
+  const digits1 = cleanV1.replace(/\D/g, '');
+  const digits2 = cleanV2.replace(/\D/g, '');
+  if (digits1 === digits2 && digits1 !== '') {
+    const letters1 = cleanV1.replace(/[^a-z]/g, '');
+    const letters2 = cleanV2.replace(/[^a-z]/g, '');
+    if (letters1.length === 2 && letters2.length >= 2 && letters2.startsWith(letters1)) {
+      return true;
+    }
+    if (letters2.length === 2 && letters1.length >= 2 && letters1.startsWith(letters2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function findMatchedProfile(vehicleNumber) {
+  const normalized = String(vehicleNumber || '').trim().toUpperCase();
+  if (!normalized) return null;
+
+  let profile = await VehicleProfile.findOne({ vehicleNumber: normalized });
+  if (profile) return profile;
+
+  const allProfiles = await VehicleProfile.find({});
+  for (const p of allProfiles) {
+    if (matchVehicleNumbers(p.vehicleNumber, normalized)) {
+      return p;
+    }
+  }
+  return null;
+}
+
+async function getAlternativeVehicleNumbers(vehicleNumber) {
+  const normalized = String(vehicleNumber || '').trim().toUpperCase();
+  if (!normalized) return [normalized];
+
+  const profile = await findMatchedProfile(normalized);
+  if (profile && profile.vehicleNumber.toUpperCase() !== normalized) {
+    return [normalized, profile.vehicleNumber.toUpperCase()];
+  }
+  return [normalized];
+}
+
 async function getVehicleBaseline(vehicleNumber) {
   const normalizedVehicle = String(vehicleNumber || '').trim().toUpperCase();
   if (!normalizedVehicle) return { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0, previousFuelOdometer: 0, tripDistanceSum: 0, approxFuelUsed: 0 };
-  const lastApproved = await VehicleLog.findOne({ vehicleNumber: normalizedVehicle, status: 'approved' }).sort({ endDateTime: -1, createdAt: -1 });
-  const profile = await VehicleProfile.findOne({ vehicleNumber: normalizedVehicle });
-  
+
+  const profile = await findMatchedProfile(normalizedVehicle);
+  const vehicleList = await getAlternativeVehicleNumbers(normalizedVehicle);
+
+  const lastApproved = await VehicleLog.findOne({ vehicleNumber: { $in: vehicleList }, status: 'approved' }).sort({ endDateTime: -1, createdAt: -1 });
+
   // Find previous fuel log to get its odometer reading
-  const lastFuelLog = await VehicleLog.findOne({ vehicleNumber: normalizedVehicle, status: 'approved', fuelAdded: { $gt: 0 } }).sort({ startDateTime: -1, createdAt: -1 });
+  const lastFuelLog = await VehicleLog.findOne({ vehicleNumber: { $in: vehicleList }, status: 'approved', fuelAdded: { $gt: 0 } }).sort({ startDateTime: -1, createdAt: -1 });
   const previousFuelOdometer = lastFuelLog ? lastFuelLog.endKm : (profile?.openingKm || 0);
   const lastFuelLogDate = lastFuelLog ? lastFuelLog.startDateTime : new Date(0);
 
   // Find all approved trip logs (where fuelAdded is 0) after lastFuelLogDate
   const trips = await VehicleLog.find({
-    vehicleNumber: normalizedVehicle,
+    vehicleNumber: { $in: vehicleList },
     status: 'approved',
     fuelAdded: 0,
     startDateTime: { $gt: lastFuelLogDate }
@@ -167,7 +223,7 @@ async function buildVehicleLogData(payload) {
   }
 
   const baseline = await getVehicleBaseline(vehicleNumber);
-  const profile = await VehicleProfile.findOne({ vehicleNumber: String(vehicleNumber).trim().toUpperCase() });
+  const profile = await findMatchedProfile(vehicleNumber);
   const tankCapacity = profile?.tankCapacity || baseline.tankCapacity || 0;
 
   if (isFuelLog || String(driverName) === 'Fuel Log') {
@@ -389,7 +445,7 @@ app.post('/api/users', requireAdmin, async (req, res) => {
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
     const existing = await User.findOne({ username });
     if (existing) return res.status(400).json({ error: 'Username already exists' });
-    
+
     if (ecNo) {
       const existingEc = await User.findOne({ ecNo: String(ecNo).trim() });
       if (existingEc) return res.status(400).json({ error: 'EC Number already exists' });
@@ -712,7 +768,8 @@ app.get('/api/vehicle-expenses', requireVehicleModuleAccess, async (req, res) =>
     const { vehicleNumber } = req.query;
     const filter = {};
     if (vehicleNumber) {
-      filter.vehicleNumber = String(vehicleNumber).trim().toUpperCase();
+      const vehicleList = await getAlternativeVehicleNumbers(vehicleNumber);
+      filter.vehicleNumber = { $in: vehicleList };
     }
     const expenses = await VehicleExpense.find(filter).sort({ date: -1, createdAt: -1 });
     res.json(expenses);
@@ -738,7 +795,7 @@ app.post('/api/vehicle-expenses/:id/review', requireManagerOrAdmin, async (req, 
     if (!['approve', 'reject', 'query', 'resolve'].includes(action)) return res.status(400).json({ error: 'Invalid action' });
     const expense = await VehicleExpense.findById(req.params.id);
     if (!expense) return res.status(404).json({ error: 'Vehicle expense not found' });
-    
+
     if (action === 'reject') {
       if (!String(reason || '').trim()) return res.status(400).json({ error: 'Rejection reason is required' });
       expense.status = 'rejected';
@@ -776,7 +833,7 @@ app.post('/api/vehicle-expenses/:id/answer', requireVehicleModuleAccess, async (
     if (expense.status !== 'queried') {
       return res.status(400).json({ error: 'Expense is not in queried status' });
     }
-    
+
     expense.status = 'answered';
     expense.queryAnswer = String(answer).trim();
     await expense.save();
@@ -928,7 +985,7 @@ app.post('/api/vehicle-logs/waiting/:id/submit', requireSecurity, async (req, re
       );
     }
     await VehicleLogDraft.deleteOne({ _id: draft._id });
-    
+
     await copyEmergencyExpenses(log);
 
     res.json({ success: true, log });
@@ -943,7 +1000,10 @@ app.get('/api/vehicle-logs', requireVehicleModuleAccess, async (req, res) => {
     const { status, vehicleNumber, date } = req.query;
     const filter = {};
     if (status) filter.status = status;
-    if (vehicleNumber) filter.vehicleNumber = String(vehicleNumber).trim().toUpperCase();
+    if (vehicleNumber) {
+      const vehicleList = await getAlternativeVehicleNumbers(vehicleNumber);
+      filter.vehicleNumber = { $in: vehicleList };
+    }
     if (req.session.user.role === 'security') {
       const user = await User.findById(req.session.user.id);
       if (user && user.branch) {
@@ -971,7 +1031,7 @@ app.post('/api/vehicle-logs/:id/review', requireManagerOrAdmin, async (req, res)
     if (!['approve', 'reject', 'query', 'resolve'].includes(action)) return res.status(400).json({ error: 'Invalid action' });
     const log = await VehicleLog.findById(req.params.id);
     if (!log) return res.status(404).json({ error: 'Vehicle log not found' });
-    
+
     if (action === 'reject') {
       if (!String(reason || '').trim()) return res.status(400).json({ error: 'Query reason is required' });
       log.status = 'rejected';
@@ -991,6 +1051,40 @@ app.post('/api/vehicle-logs/:id/review', requireManagerOrAdmin, async (req, res)
     log.reviewedBy = req.session.user.username;
     log.reviewedAt = new Date();
     await log.save();
+
+    // Cascading approval for normal logs when approving a fuel log
+    if (['approve', 'resolve'].includes(action) && (log.fuelAdded > 0 || log.isFuelLog)) {
+      try {
+        const vehicleList = await getAlternativeVehicleNumbers(log.vehicleNumber);
+
+        // Find previous fuel log
+        const prevFuelLog = await VehicleLog.findOne({
+          vehicleNumber: { $in: vehicleList },
+          status: 'approved',
+          fuelAdded: { $gt: 0 },
+          startDateTime: { $lt: log.startDateTime }
+        }).sort({ startDateTime: -1, createdAt: -1 });
+
+        const normalLogsQuery = {
+          vehicleNumber: { $in: vehicleList },
+          fuelAdded: 0
+        };
+        if (prevFuelLog) {
+          normalLogsQuery.startDateTime = { $gt: prevFuelLog.startDateTime, $lte: log.startDateTime };
+        } else {
+          normalLogsQuery.startDateTime = { $lte: log.startDateTime };
+        }
+
+        await VehicleLog.updateMany(normalLogsQuery, {
+          status: 'approved',
+          reviewedBy: req.session.user.username,
+          reviewedAt: new Date()
+        });
+      } catch (cascadeErr) {
+        console.error('Failed to perform cascading approval:', cascadeErr);
+      }
+    }
+
     res.json({ success: true, log });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1009,7 +1103,7 @@ app.post('/api/vehicle-logs/:id/answer', requireVehicleModuleAccess, async (req,
     if (log.status !== 'queried') {
       return res.status(400).json({ error: 'Log is not in queried status' });
     }
-    
+
     log.status = 'answered';
     log.queryAnswer = String(answer).trim();
     await log.save();
@@ -1024,7 +1118,7 @@ app.get('/api/vehicle-logs/reports', requireManagerOrAdmin, async (req, res) => 
   try {
     const approved = await VehicleLog.find({ status: 'approved' }).sort({ createdAt: -1 });
     const standaloneExpenses = await VehicleExpense.find();
-    
+
     const grouped = {};
     for (const log of approved) {
       if (!grouped[log.vehicleNumber]) {
@@ -1129,7 +1223,7 @@ app.put('/api/scrap/products/:id', requireAdmin, async (req, res) => {
     if (pricePerKg == null) return res.status(400).json({ error: 'Price per KG is required' });
     const p = await ScrapProduct.findById(req.params.id);
     if (!p) return res.status(404).json({ error: 'Scrap product not found' });
-    
+
     p.pricePerKg = Number(pricePerKg);
     await p.save();
     res.json({ success: true, product: p });
@@ -1157,7 +1251,7 @@ app.post('/api/branches', requireAdmin, async (req, res) => {
     const normalized = name.trim();
     const existing = await Branch.findOne({ name: { $regex: new RegExp(`^${normalized}$`, 'i') } });
     if (existing) return res.status(400).json({ error: 'Branch already exists' });
-    
+
     const branch = await Branch.create({
       name: normalized,
       createdBy: req.session.user.username
@@ -1176,10 +1270,10 @@ app.put('/api/branches/:id', requireAdmin, async (req, res) => {
     const normalized = name.trim();
     const existing = await Branch.findOne({ name: { $regex: new RegExp(`^${normalized}$`, 'i') }, _id: { $ne: req.params.id } });
     if (existing) return res.status(400).json({ error: 'Branch already exists' });
-    
+
     const branch = await Branch.findById(req.params.id);
     if (!branch) return res.status(404).json({ error: 'Branch not found' });
-    
+
     branch.name = normalized;
     await branch.save();
     res.json({ success: true, branch });
@@ -1203,7 +1297,7 @@ app.delete('/api/branches/:id', requireAdmin, async (req, res) => {
 app.get('/api/scrap/entries', requireAuth, async (req, res) => {
   try {
     const { status, date } = req.query;
-    
+
     // Check if security is allowed to load scrap entries
     if (req.session.user.role === 'security') {
       const setting = await SystemSetting.findOne({ key: 'enableSecurityScrapEntry' });
@@ -1211,7 +1305,7 @@ app.get('/api/scrap/entries', requireAuth, async (req, res) => {
         return res.status(403).json({ error: 'Scrap module is currently disabled for security' });
       }
     }
-    
+
     const filter = {};
     if (status) {
       if (status === 'pending') {
@@ -1227,7 +1321,7 @@ app.get('/api/scrap/entries', requireAuth, async (req, res) => {
       } else {
         filter.status = status;
       }
-    }if (['security', 'pettycashier'].includes(req.session.user.role)) {
+    } if (['security', 'pettycashier'].includes(req.session.user.role)) {
       const user = await User.findById(req.session.user.id);
       if (user && user.branch) {
         filter.branch = user.branch;
@@ -1253,7 +1347,7 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
     const { companyName, vehicleNumber, productId, weight, description, proofDocument } = req.body;
     const ownerName = req.body.ownerName || '—';
     let items = req.body.items;
-    
+
     // Check if security is allowed to create scrap entries
     if (req.session.user.role === 'security') {
       const setting = await SystemSetting.findOne({ key: 'enableSecurityScrapEntry' });
@@ -1261,38 +1355,38 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
         return res.status(403).json({ error: 'Scrap entry is currently disabled for security' });
       }
     }
-    
+
     // Fallback for single product submission
     if (!items && productId && weight) {
       items = [{ productId, weight }];
     }
-    
+
     if (!companyName || !vehicleNumber || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Company Name, Vehicle Number, and at least one Product are required' });
     }
-    
+
     const resolvedItems = [];
     let grandTotal = 0;
-    
+
     for (const item of items) {
       const { productId: itemProductId, weight: itemWeight } = item;
       if (!itemProductId || itemWeight == null) {
         return res.status(400).json({ error: 'Each item must have a product and a weight' });
       }
-      
+
       const w = Number(itemWeight);
       if (isNaN(w) || w <= 0) {
         return res.status(400).json({ error: 'Weight must be a positive number' });
       }
-      
+
       const product = await ScrapProduct.findById(itemProductId);
       if (!product) {
         return res.status(404).json({ error: `Product not found: ${itemProductId}` });
       }
-      
+
       const itemTotal = Number((w * product.pricePerKg).toFixed(2));
       grandTotal += itemTotal;
-      
+
       resolvedItems.push({
         product: product._id,
         productName: product.name,
@@ -1301,9 +1395,9 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
         totalAmount: itemTotal
       });
     }
-    
+
     const firstItem = resolvedItems[0];
-    
+
     const isPetty = req.session.user.role === 'pettycashier';
     const entry = await ScrapEntry.create({
       companyName,
@@ -1337,24 +1431,24 @@ app.post('/api/scrap/entries/:id/verify', requirePettyCashierOrAdmin, async (req
     if (verifiedAmount == null) {
       return res.status(400).json({ error: 'Verified amount is required' });
     }
-    
+
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
     if (entry.status !== 'pending_pettycashier') {
       return res.status(400).json({ error: 'Entry is not pending petty cashier verification' });
     }
-    
+
     if (Number(verifiedAmount) !== entry.totalAmount) {
       return res.status(400).json({ error: 'Entered amount does not match the scrap entry total amount' });
     }
-    
+
     entry.pettyCashierVerifiedAmount = Number(verifiedAmount);
     if (proofDocument) {
       entry.proofDocument = proofDocument;
     }
     entry.status = 'pending_manager';
     await entry.save();
-    
+
     res.json({ success: true, entry });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1368,18 +1462,18 @@ app.post('/api/scrap/entries/:id/query', requireManagerOrAdmin, async (req, res)
     if (!question || !question.trim()) {
       return res.status(400).json({ error: 'Query question is required' });
     }
-    
+
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
     if (entry.status !== 'pending_manager') {
       return res.status(400).json({ error: 'Only pending manager entries can be queried' });
     }
-    
+
     entry.status = 'queried';
     entry.queryQuestion = question.trim();
     entry.queryAnswer = '';
     await entry.save();
-    
+
     res.json({ success: true, entry });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1393,17 +1487,17 @@ app.post('/api/scrap/entries/:id/answer', requirePettyCashierOrAdmin, async (req
     if (!answer || !answer.trim()) {
       return res.status(400).json({ error: 'Answer is required' });
     }
-    
+
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
     if (entry.status !== 'queried') {
       return res.status(400).json({ error: 'Entry is not in queried status' });
     }
-    
+
     entry.status = 'pending_manager';
     entry.queryAnswer = answer.trim();
     await entry.save();
-    
+
     res.json({ success: true, entry });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1416,13 +1510,13 @@ app.post('/api/scrap/entries/:id/approve', requireManagerOrAdmin, async (req, re
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
     if (entry.status !== 'pending_manager') return res.status(400).json({ error: 'Only pending manager entries can be approved' });
-    
+
     entry.status = 'approved';
     entry.reviewedBy = req.session.user.username;
     entry.reviewedByRole = req.session.user.role;
     entry.reviewedAt = new Date();
     await entry.save();
-    
+
     res.json({ success: true, entry });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1436,14 +1530,14 @@ app.post('/api/scrap/entries/:id/reject', requireManagerOrAdmin, async (req, res
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
     if (entry.status !== 'pending_manager') return res.status(400).json({ error: 'Only pending manager entries can be rejected' });
-    
+
     entry.status = 'rejected';
     entry.rejectReason = reason || '';
     entry.reviewedBy = req.session.user.username;
     entry.reviewedByRole = req.session.user.role;
     entry.reviewedAt = new Date();
     await entry.save();
-    
+
     res.json({ success: true, entry });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1455,7 +1549,7 @@ app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
   try {
     const role = req.session.user.role;
     const filter = {};
-    
+
     // Apply branch filter if user is not admin
     if (role !== 'admin') {
       const user = await User.findById(req.session.user.id);
@@ -1463,9 +1557,9 @@ app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
         filter.branch = user.branch;
       }
     }
-    
+
     const totalEntries = await ScrapEntry.countDocuments(filter);
-    
+
     let pendingFilter = { ...filter };
     if (role === 'pettycashier') {
       pendingFilter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
@@ -1474,15 +1568,15 @@ app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
     } else {
       pendingFilter.status = 'pending_pettycashier';
     }
-    
+
     const pendingApprovals = await ScrapEntry.countDocuments(pendingFilter);
-    
+
     const approvedFilter = { ...filter, status: 'approved' };
     const approvedEntriesCount = await ScrapEntry.countDocuments(approvedFilter);
-    
+
     const approvedEntries = await ScrapEntry.find(approvedFilter);
     const totalScrapValue = approvedEntries.reduce((sum, e) => sum + (Number(e.totalAmount) || 0), 0);
-    
+
     res.json({
       totalEntries,
       pendingApprovals,
@@ -1573,13 +1667,13 @@ async function migrateScrapEntries() {
         count++;
       }
     }
-    
+
     // Migrate status 'pending' to 'pending_pettycashier'
     const result = await ScrapEntry.updateMany({ status: 'pending' }, { $set: { status: 'pending_pettycashier' } });
     if (result.modifiedCount > 0) {
       console.log(`Migrated ${result.modifiedCount} scrap entries from 'pending' to 'pending_pettycashier'.`);
     }
-    
+
     return count;
   } catch (err) {
     console.error('Error during scrap entries migration:', err);
@@ -1594,12 +1688,12 @@ async function bootstrap() {
     await seedAdmin();
     await seedFuelPrices();
     await seedBranches();
-    
+
     const migrated = await migrateScrapEntries();
     if (migrated > 0) {
       console.log(`Migrated ${migrated} old scrap entries to the new multi-item schema.`);
     }
-    
+
     app.listen(PORT, () => console.log(`Credit Debit System running on http://localhost:${PORT}`));
   } catch (err) {
     console.error('Startup error:', err.message);

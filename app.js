@@ -21,6 +21,32 @@ function formatDateTime12h(dateInput) {
   return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
 }
 
+function matchVehicleNumbers(v1, v2) {
+  if (!v1 || !v2) return false;
+  const cleanV1 = String(v1).trim().toLowerCase();
+  const cleanV2 = String(v2).trim().toLowerCase();
+
+  if (cleanV1 === cleanV2) return true;
+
+  const stripped1 = cleanV1.replace(/\s+/g, '');
+  const stripped2 = cleanV2.replace(/\s+/g, '');
+  if (stripped1 === stripped2) return true;
+
+  const digits1 = cleanV1.replace(/\D/g, '');
+  const digits2 = cleanV2.replace(/\D/g, '');
+  if (digits1 === digits2 && digits1 !== '') {
+    const letters1 = cleanV1.replace(/[^a-z]/g, '');
+    const letters2 = cleanV2.replace(/[^a-z]/g, '');
+    if (letters1.length === 2 && letters2.length >= 2 && letters2.startsWith(letters1)) {
+      return true;
+    }
+    if (letters2.length === 2 && letters1.length >= 2 && letters1.startsWith(letters2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function showAlert(elId, msg, type = 'danger') {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -72,7 +98,7 @@ function showCenteredSuccess(message) {
   overlay.style.backdropFilter = 'blur(4px)';
   overlay.style.opacity = '0';
   overlay.style.transition = 'opacity 0.2s ease-out';
-  
+
   const card = document.createElement('div');
   card.style.background = '#ffffff';
   card.style.padding = '30px 40px';
@@ -83,21 +109,21 @@ function showCenteredSuccess(message) {
   card.style.width = '90%';
   card.style.transform = 'scale(0.85)';
   card.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
-  
+
   card.innerHTML = `
     <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
     <h5 style="margin-bottom: 6px; font-weight: 700; color: #1a2233; font-family: 'DM Sans', sans-serif;">Success!</h5>
     <p style="color: #6b7a99; margin-bottom: 0; font-size: 13.5px; line-height: 1.5; font-family: 'DM Sans', sans-serif;">${escHtml(message)}</p>
   `;
-  
+
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-  
+
   setTimeout(() => {
     overlay.style.opacity = '1';
     card.style.transform = 'scale(1)';
   }, 50);
-  
+
   setTimeout(() => {
     overlay.style.opacity = '0';
     card.style.transform = 'scale(0.85)';
@@ -123,7 +149,7 @@ function showCenteredError(message) {
   overlay.style.backdropFilter = 'blur(4px)';
   overlay.style.opacity = '0';
   overlay.style.transition = 'opacity 0.2s ease-out';
-  
+
   const card = document.createElement('div');
   card.style.background = '#ffffff';
   card.style.padding = '30px 40px';
@@ -134,17 +160,17 @@ function showCenteredError(message) {
   card.style.width = '90%';
   card.style.transform = 'scale(0.85)';
   card.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
-  
+
   card.innerHTML = `
     <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
     <h5 style="margin-bottom: 6px; font-weight: 700; color: #dc3545; font-family: 'DM Sans', sans-serif;">Error!</h5>
     <p style="color: #6b7a99; margin-bottom: 20px; font-size: 13.5px; line-height: 1.5; font-family: 'DM Sans', sans-serif;">${escHtml(message)}</p>
     <button id="closeCenteredErrorBtn" class="btn btn-danger w-100" style="padding: 10px; border-radius: 8px; font-weight: 600; font-family: 'DM Sans', sans-serif; background-color: #dc3545; border-color: #dc3545;">OK</button>
   `;
-  
+
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-  
+
   const dismiss = () => {
     overlay.style.opacity = '0';
     card.style.transform = 'scale(0.85)';
@@ -152,21 +178,21 @@ function showCenteredError(message) {
       overlay.remove();
     }, 200);
   };
-  
+
   setTimeout(() => {
     overlay.style.opacity = '1';
     card.style.transform = 'scale(1)';
   }, 50);
-  
+
   const closeBtn = card.querySelector('#closeCenteredErrorBtn');
   closeBtn.addEventListener('click', dismiss);
-  
+
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       dismiss();
     }
   });
-  
+
   setTimeout(() => {
     if (document.body.contains(overlay)) {
       dismiss();
@@ -236,14 +262,14 @@ async function doLogin() {
   const username = document.getElementById('username')?.value?.trim();
   const password = document.getElementById('password')?.value;
   if (!username || !password) { showAlert('loginAlert', 'Please enter username and password.'); return; }
-  
+
   const btn = document.querySelector('.cds-btn-primary');
   const originalHtml = btn ? btn.innerHTML : 'Sign In';
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing In...`;
   }
-  
+
   try {
     const data = await api('/api/login', 'POST', { username, password });
     if (data.role === 'security') window.location.href = '/security';
@@ -342,21 +368,32 @@ function loadSectionData(name) {
   else if (name === 'vehicleProfiles') loadVehicleProfilesAdmin();
   else if (name === 'branches') loadBranchesAdmin();
   else if (name === 'vehicleEntry') loadVehicleEntryForm();
-  else if (name === 'vehicleFuel') loadFuelForm();
-  else if (name === 'vehicleExpenses') {
-    loadVehicleList();
-    loadVehicleExpenses();
+  else if (name === 'vehicleFuel') {
+    if (currentUserRole === 'manager') {
+      initFuelLogsFilters();
+    } else {
+      loadFuelForm();
+      loadFuelHistory();
+    }
   }
-  else if (name === 'vehicleHistory') loadVehicleHistory();
-  else if (name === 'vehicleApprovals') loadVehicleApprovals();
-  else if (name === 'vehicleReports') loadVehicleReports();
+  else if (name === 'vehicleExpenses') {
+    if (currentUserRole === 'manager') {
+      initExpensesFilters();
+    } else {
+      loadVehicleList();
+      loadVehicleExpenses();
+    }
+  }
+  else if (name === 'vehicleHistory') initVehicleHistory();
+  else if (name === 'vehicleApprovals') initVehicleApprovals();
+  else if (name === 'vehicleReports') initVehicleReports();
   else if (name === 'scrapProducts') loadScrapProducts();
   else if (name === 'scrapEntry') {
     initScrapEntryForm();
   }
   else if (name === 'scrapHistory') loadScrapMyHistory();
-  else if (name === 'scrapApprovals') loadScrapApprovals();
-  else if (name === 'scrapReports') loadScrapReports();
+  else if (name === 'scrapApprovals') initScrapApprovals();
+  else if (name === 'scrapReports') initScrapReports();
 }
 
 async function initAdmin() {
@@ -448,12 +485,12 @@ async function loadUsers() {
       <thead><tr><th>EC.no</th><th>Username</th><th>Location</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
       <tbody>
         ${users.map(u => {
-          const uStr = encodeURIComponent(JSON.stringify(u));
-          const deleteBtn = u.username !== 'admin'
-            ? `<button class="btn cds-btn-sm danger" onclick="deleteUser('${u._id}', '${escHtml(u.username)}')">Delete</button>`
-            : '—';
-          const editBtn = `<button class="btn cds-btn-sm me-1" onclick="editUserAdmin('${uStr}')">Edit</button>`;
-          return `<tr>
+      const uStr = encodeURIComponent(JSON.stringify(u));
+      const deleteBtn = u.username !== 'admin'
+        ? `<button class="btn cds-btn-sm danger" onclick="deleteUser('${u._id}', '${escHtml(u.username)}')">Delete</button>`
+        : '—';
+      const editBtn = `<button class="btn cds-btn-sm me-1" onclick="editUserAdmin('${uStr}')">Edit</button>`;
+      return `<tr>
             <td><code>${escHtml(u.ecNo || '—')}</code></td>
             <td><strong>${escHtml(u.username)}</strong></td>
             <td><span class="badge bg-secondary">${escHtml(u.branchName || '—')}</span></td>
@@ -464,7 +501,7 @@ async function loadUsers() {
               ${deleteBtn}
             </td>
           </tr>`;
-        }).join('')}
+    }).join('')}
       </tbody>
     </table></div>`;
   } catch (e) { console.error(e); }
@@ -509,7 +546,7 @@ function editUserAdmin(uString) {
     document.getElementById('newUsername').readOnly = (u.username === 'admin');
     document.getElementById('newPassword').value = '';
     document.getElementById('newPasswordLabel').textContent = 'Password (leave blank to keep unchanged)';
-    
+
     if (document.getElementById('newEcNo')) {
       document.getElementById('newEcNo').value = u.ecNo || '';
     }
@@ -620,7 +657,7 @@ async function loadVehicleList() {
     allVehicles = await api('/api/vehicles');
     let activeVehicles = allVehicles.filter((v) => v.status === 'active');
     if (currentUser && currentUser.role === 'security' && currentUser.branchName) {
-      activeVehicles = activeVehicles.filter(v => 
+      activeVehicles = activeVehicles.filter(v =>
         v.branchName && v.branchName.trim().toLowerCase() === currentUser.branchName.trim().toLowerCase()
       );
     }
@@ -706,7 +743,7 @@ async function onVehicleShortNameInput(selectId, numId) {
 
   const v = allVehicles.find((x) =>
     (x.shortName && x.shortName.toLowerCase() === shortNameVal.toLowerCase()) ||
-    (x.vehicleNumber && x.vehicleNumber.toLowerCase() === shortNameVal.toLowerCase())
+    (x.vehicleNumber && matchVehicleNumbers(x.vehicleNumber, shortNameVal))
   );
 
   if (v) {
@@ -946,7 +983,7 @@ function toggleExpenseInLog() {
   const sec = document.getElementById('expenseSectionInLog');
   const btn = document.getElementById('btnToggleExpenseInLog');
   if (!sec || !btn) return;
-  
+
   expenseInLogActive = !expenseInLogActive;
   if (expenseInLogActive) {
     sec.classList.remove('d-none');
@@ -1052,19 +1089,33 @@ async function submitVehicleLog() {
     showCenteredError('Please fill all required fields.');
     return;
   }
+
+  const btn = document.getElementById('btnSubmitVehicleLog');
+  let originalBtnHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalBtnHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+  }
+
   try {
     await api('/api/vehicle-logs', 'POST', payload);
     showCenteredSuccess('Vehicle log submitted successfully.');
-    
+
     currentVehicleDraftId = null;
 
     resetVehicleForm();
-    
+
     await applyVehicleBaseline();
     loadVehicleHistory();
     loadVehicleWaitingList();
   } catch (err) {
     showCenteredError(err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
   }
 }
 
@@ -1086,7 +1137,7 @@ function collectVehicleFormPayload() {
   const fromLoc = fromLocation || '';
   const toLoc = toLocation || '';
   const matchedBranch = allBranches.find(b => b.name.toLowerCase() === fromLoc.toLowerCase()) ||
-                        allBranches.find(b => b.name.toLowerCase() === toLoc.toLowerCase());
+    allBranches.find(b => b.name.toLowerCase() === toLoc.toLowerCase());
   const branch = matchedBranch?._id || undefined;
   const branchName = matchedBranch?.name || undefined;
 
@@ -1261,7 +1312,7 @@ async function loadVehicleWaitingList() {
     setLoading('vehicleWaitingList', 'Loading waiting list...');
     let drafts = await api('/api/vehicle-logs/waiting');
     if (currentUser && currentUser.branchName) {
-      drafts = drafts.filter(d => 
+      drafts = drafts.filter(d =>
         d.branchName && d.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
       );
     }
@@ -1301,7 +1352,7 @@ async function editVehicleWaitingDraft(id) {
     document.getElementById('vehicleNumber').value = d.vehicleNumber || '';
 
 
-    const v = allVehicles.find((x) => x.vehicleNumber === d.vehicleNumber);
+    const v = allVehicles.find((x) => matchVehicleNumbers(x.vehicleNumber, d.vehicleNumber));
     if (v && document.getElementById('vehicleShortName')) {
       document.getElementById('vehicleShortName').value = v.shortName || v.vehicleNumber;
     }
@@ -1626,6 +1677,7 @@ async function loadVehicleEntryForm() {
   }
 
   loadVehicleWaitingList();
+  loadVehicleHistory();
 }
 
 function vehicleStatusBadge(status) {
@@ -1644,7 +1696,7 @@ function renderVehicleLogsTable(logs, includeActions = false) {
     <tbody>${logs.map((l) => {
     const rejectOpen = openVehicleRejectId === l._id;
     const isFuel = l.isFuelLog || l.fuelAdded > 0;
-    const matchedV = allVehicles.find(v => v.vehicleNumber === l.vehicleNumber);
+    const matchedV = allVehicles.find(v => matchVehicleNumbers(v.vehicleNumber, l.vehicleNumber));
     const stdMileage = matchedV && matchedV.expectedMileage != null ? matchedV.expectedMileage : '—';
 
     const hasStdMileage = matchedV && matchedV.expectedMileage != null;
@@ -1687,9 +1739,9 @@ function renderVehicleLogsTable(logs, includeActions = false) {
       </td>
       <td>
         ${isFuel
-        ? `<div class="small">Avail: ${l.availableFuel} L</div>
-             <div class="small">Added: ${l.fuelAdded} L</div>
-             <div class="small">Remain: ${l.remainingFuel} L ${l.isLowFuel ? '<span class="badge bg-warning text-dark">LOW</span>' : ''}</div>
+        ? `<div class="small">Avail: ${Number(l.availableFuel || 0).toFixed(1)} L</div>
+             <div class="small">Added: ${Number(l.fuelAdded || 0).toFixed(1)} L</div>
+             <div class="small">Remain: ${Number(l.remainingFuel || 0).toFixed(1)} L ${l.isLowFuel ? '<span class="badge bg-warning text-dark">LOW</span>' : ''}</div>
              
              <div class="small">Mileage: <span ${mileageStyle}>${l.mileage != null ? l.mileage : '—'} km/L</span></div>
              <div class="small text-muted">Std Mileage: ${stdMileage} ${stdMileage !== '—' ? 'km/L' : ''}</div>
@@ -1716,35 +1768,35 @@ function renderVehicleLogsTable(logs, includeActions = false) {
         <div class="small text-muted mt-1">By: ${escHtml(l.createdBy || '')}</div>
       </td>
       <td>
-        ${l.status === 'approved' 
-          ? `<strong>${escHtml(l.reviewedBy || '-')}</strong><div class="small text-muted">${l.reviewedAt ? fmtDateTime(l.reviewedAt) : ''}</div>` 
-          : (l.status === 'rejected' 
-            ? `<span class="text-danger">Rejected by ${escHtml(l.reviewedBy || '-')}</span>` 
-            : (['queried', 'answered'].includes(l.status)
-              ? `<span class="text-warning">Queried by ${escHtml(l.reviewedBy || '-')}</span>`
-              : '—'
-            )
+        ${l.status === 'approved'
+        ? `<strong>${escHtml(l.reviewedBy || '-')}</strong><div class="small text-muted">${l.reviewedAt ? fmtDateTime(l.reviewedAt) : ''}</div>`
+        : (l.status === 'rejected'
+          ? `<span class="text-danger">Rejected by ${escHtml(l.reviewedBy || '-')}</span>`
+          : (['queried', 'answered'].includes(l.status)
+            ? `<span class="text-warning">Queried by ${escHtml(l.reviewedBy || '-')}</span>`
+            : '—'
           )
-        }
+        )
+      }
       </td>
       ${includeActions ? `<td>
         ${l.status === 'pending' ? `
           ${isFuel ? `
-            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">OK</button>
+            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve', this)">OK</button>
             <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
           ` : `
-            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">Approve</button>
+            <button class="btn cds-btn-approve me-1" onclick="reviewVehicleLog('${l._id}', 'approve', this)">Approve</button>
             <button class="btn cds-btn-reject" onclick="toggleVehicleRejectForm('${l._id}')">Reject</button>
           `}
         ` : (isFuel ? `
-          ${l.status === 'approved' ? `
-            <button class="btn btn-success btn-sm me-1" onclick="reviewVehicleLog('${l._id}', 'approve')">OK</button>
+          ${l.status === 'approved' ? (l.reviewedBy ? '—' : `
+            <button class="btn btn-success btn-sm me-1" onclick="reviewVehicleLog('${l._id}', 'approve', this)">OK</button>
             <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
-          ` : (l.status === 'queried' ? `
-            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">OK</button>
+          `) : (l.status === 'queried' ? `
+            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}', this)">OK</button>
             <div class="small text-muted mt-1">Awaiting Answer</div>
           ` : (l.status === 'answered' ? `
-            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}')">OK</button>
+            <button class="btn btn-success btn-sm me-1" onclick="resolveVehicleQuery('${l._id}', this)">OK</button>
             <button class="btn btn-warning btn-sm" onclick="toggleVehicleRejectForm('${l._id}')">Raise Query</button>
           ` : '—'))}
         ` : '—')}
@@ -1762,7 +1814,7 @@ function renderVehicleLogsTable(logs, includeActions = false) {
                     oninput="updateVehicleRejectDraft('${l._id}', this.value)" placeholder="${isFuel ? 'Enter question for security (required)' : 'Enter reason (required)'}" />
                 </div>
                 <div class="col-md-3 d-grid">
-                  <button class="btn cds-btn-reject" onclick="submitVehicleReject('${l._id}')">${isFuel ? 'Submit Query' : 'Submit Rejection'}</button>
+                  <button class="btn cds-btn-reject" onclick="submitVehicleReject('${l._id}', this)">${isFuel ? 'Submit Query' : 'Submit Rejection'}</button>
                 </div>
               </div>
             </div>
@@ -1789,21 +1841,35 @@ function renderVehicleLogsTable(logs, includeActions = false) {
   }).join('')}</tbody></table></div>`;
 }
 
+let currentHistoryLogs = [];
+
 async function loadVehicleHistory() {
   try {
-    setLoading('vehicleHistoryList', 'Loading vehicle history...');
-    setLoading('vehicleHistoryListCompact', 'Loading vehicle history...');
+    const compactEl = document.getElementById('vehicleHistoryListCompact');
+    const el = document.getElementById('vehicleHistoryList');
+
+    if (el && currentSection === 'vehicleHistory') setLoading('vehicleHistoryList', 'Loading vehicle history...');
+    if (compactEl) setLoading('vehicleHistoryListCompact', 'Loading vehicle history...');
+
     let logs = await api('/api/vehicle-logs');
     if (currentUser && currentUser.branchName) {
-      logs = logs.filter(l => 
+      logs = logs.filter(l =>
         l.branchName && l.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
       );
     }
-    const html = logs.length ? renderVehicleLogsTable(logs, false) : '<p class="text-muted small px-2">No vehicle logs found.</p>';
-    const el = document.getElementById('vehicleHistoryList');
-    if (el) el.innerHTML = html;
-    const compactEl = document.getElementById('vehicleHistoryListCompact');
-    if (compactEl) compactEl.innerHTML = html;
+
+    currentHistoryLogs = logs;
+
+    if (compactEl) {
+      const compactLogs = logs.slice(0, 3);
+      compactEl.innerHTML = compactLogs.length
+        ? renderVehicleLogsTable(compactLogs, false)
+        : '<p class="text-muted small px-2">No vehicle logs found.</p>';
+    }
+
+    if (el && currentSection === 'vehicleHistory') {
+      renderFilteredHistoryLogs();
+    }
   } catch (err) {
     showAlert('vehicleHistoryAlert', err.message);
     showAlert('vehicleHistoryAlertCompact', err.message);
@@ -1824,29 +1890,29 @@ function renderFilteredReviewedLogs() {
 
   // Filter by branch
   if (branchVal) {
-    logsToRender = logsToRender.filter(l => 
+    logsToRender = logsToRender.filter(l =>
       l.branchName && l.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()
     );
   } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-    logsToRender = logsToRender.filter(l => 
+    logsToRender = logsToRender.filter(l =>
       l.branchName && l.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
     );
   }
 
   // 1. Vehicle Filter (Dropdown selection match)
   if (vehicleVal) {
-    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
+    logsToRender = logsToRender.filter(l => matchVehicleNumbers(l.vehicleNumber, vehicleVal));
   }
 
   // 2. Date Filter (From and To date range)
   if (fromDateVal) {
     const fromDate = new Date(fromDateVal);
-    fromDate.setHours(0,0,0,0);
+    fromDate.setHours(0, 0, 0, 0);
     logsToRender = logsToRender.filter(l => new Date(l.startDateTime) >= fromDate);
   }
   if (toDateVal) {
     const toDate = new Date(toDateVal);
-    toDate.setHours(23,59,59,999);
+    toDate.setHours(23, 59, 59, 999);
     logsToRender = logsToRender.filter(l => new Date(l.startDateTime) <= toDate);
   }
 
@@ -1865,7 +1931,7 @@ function updateApprovalVehicleSelectOptions() {
 
   let vehiclesForSelect = allVehicles.filter(v => v.status === 'active');
   if (selectedBranch) {
-    vehiclesForSelect = vehiclesForSelect.filter(v => 
+    vehiclesForSelect = vehiclesForSelect.filter(v =>
       v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
     );
   }
@@ -1899,12 +1965,17 @@ function clearApprovalFilters() {
   if (branchFilter) branchFilter.value = '';
 
   updateApprovalVehicleSelectOptions();
-  renderFilteredReviewedLogs();
+  const el = document.getElementById('vehicleReviewedList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
 }
 
-async function loadVehicleApprovals() {
+async function loadVehicleApprovals(silent = false) {
   try {
-    setLoading('vehicleReviewedList', 'Loading reviewed vehicle logs...');
+    if (!silent) {
+      setLoading('vehicleReviewedList', 'Loading reviewed vehicle logs...');
+    }
     await loadVehicleList(); // Refresh datalists
 
     if (allBranches.length === 0) {
@@ -1914,7 +1985,7 @@ async function loadVehicleApprovals() {
     const branchFilter = document.getElementById('approvalBranchFilter');
     if (branchFilter && branchFilter.options.length <= 1) {
       const currentVal = branchFilter.value;
-      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       branchFilter.value = currentVal || '';
@@ -1933,30 +2004,46 @@ async function loadVehicleApprovals() {
   }
 }
 
-async function reviewVehicleLog(id, action) {
+async function reviewVehicleLog(id, action, btn) {
   const payload = { action };
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', payload);
-    loadVehicleApprovals();
+    loadVehicleApprovals(true);
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
 function toggleVehicleRejectForm(id) {
   openVehicleRejectId = openVehicleRejectId === id ? null : id;
-  loadVehicleApprovals();
+  renderFilteredReviewedLogs();
 }
 
 function updateVehicleRejectDraft(id, value) {
   vehicleRejectDrafts.set(id, String(value || ''));
 }
 
-async function submitVehicleReject(id) {
+async function submitVehicleReject(id, btn) {
   const reason = String(vehicleRejectDrafts.get(id) || '').trim();
   if (!reason) {
     showAlert('vehicleApprovalAlert', 'Question/Reason is required.', 'warning');
     return;
+  }
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
   }
   try {
     const matchedLog = currentReviewedLogs.find(l => l._id === id);
@@ -1966,18 +2053,32 @@ async function submitVehicleReject(id) {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', { action, reason });
     vehicleRejectDrafts.delete(id);
     openVehicleRejectId = null;
-    loadVehicleApprovals();
+    loadVehicleApprovals(true);
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
-async function resolveVehicleQuery(id) {
+async function resolveVehicleQuery(id, btn) {
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/vehicle-logs/${id}/review`, 'POST', { action: 'resolve' });
-    loadVehicleApprovals();
+    loadVehicleApprovals(true);
   } catch (err) {
     showAlert('vehicleApprovalAlert', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
@@ -1989,11 +2090,21 @@ async function submitVehicleQueryAnswer(id, btn) {
     alert('Answer is required.');
     return;
   }
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/vehicle-logs/${id}/answer`, 'POST', { answer });
     loadVehicleHistory();
   } catch (err) {
     alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
@@ -2009,7 +2120,7 @@ function updateReportVehicleSelectOptions() {
 
   let vehiclesForSelect = allVehicles.filter(v => v.status === 'active');
   if (selectedBranch) {
-    vehiclesForSelect = vehiclesForSelect.filter(v => 
+    vehiclesForSelect = vehiclesForSelect.filter(v =>
       v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
     );
   }
@@ -2031,7 +2142,7 @@ function updateReportBunkSelectOptions() {
   const bunkSelect = document.getElementById('reportBunkSelect');
   if (!bunkSelect) return;
   const currentVal = bunkSelect.value;
-  
+
   const bunks = new Set();
   currentReportLogs.forEach(l => {
     if (l.description) {
@@ -2044,7 +2155,7 @@ function updateReportBunkSelectOptions() {
   });
 
   const sortedBunks = Array.from(bunks).sort();
-  bunkSelect.innerHTML = '<option value="">All Bunks</option>' + sortedBunks.map(b => 
+  bunkSelect.innerHTML = '<option value="">All Bunks</option>' + sortedBunks.map(b =>
     `<option value="${escHtml(b)}">${escHtml(b)}</option>`
   ).join('');
 
@@ -2068,17 +2179,17 @@ function renderFilteredVehicleReports() {
 
   let logsToRender = currentReportLogs;
   if (branchVal) {
-    logsToRender = logsToRender.filter(l => 
+    logsToRender = logsToRender.filter(l =>
       l.branchName && l.branchName.toLowerCase() === branchVal.toLowerCase()
     );
   } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-    logsToRender = logsToRender.filter(l => 
+    logsToRender = logsToRender.filter(l =>
       l.branchName && l.branchName.toLowerCase() === currentUser.branchName.toLowerCase()
     );
   }
 
   if (vehicleVal) {
-    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
+    logsToRender = logsToRender.filter(l => matchVehicleNumbers(l.vehicleNumber, vehicleVal));
   }
 
   if (bunkVal) {
@@ -2120,7 +2231,10 @@ function clearReportFilters() {
   if (bkSelect) bkSelect.value = '';
   updateReportVehicleSelectOptions();
   updateReportBunkSelectOptions();
-  renderFilteredVehicleReports();
+  const el = document.getElementById('vehicleReportList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
 }
 
 async function loadVehicleReports() {
@@ -2269,7 +2383,7 @@ function printScrapSlip() {
   printWindow.document.write('<table class="items-table">');
   printWindow.document.write('<thead><tr><th>S.No</th><th>Product Name</th><th>Weight</th><th>Price/KG</th><th style="text-align: right;">Total (₹)</th></tr></thead>');
   printWindow.document.write('<tbody>');
-  
+
   let grandTotal = 0;
   currentScrapItems.forEach((item, index) => {
     const total = item.weight * item.pricePerKg;
@@ -2302,7 +2416,7 @@ function printScrapSlip() {
 
   printWindow.document.write('</body></html>');
   printWindow.document.close();
-  
+
   printWindow.onload = function () {
     printWindow.focus();
     printWindow.print();
@@ -2311,6 +2425,33 @@ function printScrapSlip() {
 }
 
 // ─── VEHICLE EXPENSES ────────────────────────────────────────────────────────
+async function initExpensesFilters() {
+  const el = document.getElementById('vehicleExpensesList');
+  if (el) el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Select filters and click \'Show\' to display logs.</td></tr>';
+  try {
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+    if (allVehicles.length === 0) {
+      await loadVehicleList();
+    }
+
+    // Populate branch filter if it exists and is empty
+    const branchFilter = document.getElementById('expenseBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
+
+    updateExpenseVehicleFilterOptions();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 async function loadVehicleExpenses() {
   const el = document.getElementById('vehicleExpensesList');
   if (!el) return;
@@ -2328,7 +2469,7 @@ async function loadVehicleExpenses() {
     const branchFilter = document.getElementById('expenseBranchFilter');
     if (branchFilter && branchFilter.options.length <= 1) {
       const currentVal = branchFilter.value;
-      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       branchFilter.value = currentVal || '';
@@ -2352,7 +2493,7 @@ function updateExpenseVehicleFilterOptions() {
   // Filter allVehicles based on selectedBranch
   let vehiclesForSelect = allVehicles;
   if (selectedBranch) {
-    vehiclesForSelect = allVehicles.filter(v => 
+    vehiclesForSelect = allVehicles.filter(v =>
       v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
     );
   }
@@ -2386,44 +2527,57 @@ function clearExpenseFilters() {
   if (vehicleFilter) vehicleFilter.value = '';
   if (fromFilter) fromFilter.value = '';
   if (toFilter) toFilter.value = '';
-  
+
   updateExpenseVehicleFilterOptions();
-  renderFilteredExpenses();
+  if (currentUserRole === 'manager') {
+    const el = document.getElementById('vehicleExpensesList');
+    if (el) el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Select filters and click \'Show\' to display logs.</td></tr>';
+  } else {
+    renderFilteredExpenses();
+  }
 }
 
 function renderFilteredExpenses() {
   const el = document.getElementById('vehicleExpensesList');
   if (!el) return;
 
+  const branchVal = document.getElementById('expenseBranchFilter')?.value || '';
+  const vehicleVal = document.getElementById('expenseVehicleFilter')?.value || '';
+  const fromDateVal = document.getElementById('expenseFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('expenseToDateFilter')?.value || '';
+
+  if (currentUserRole === 'manager') {
+    if (!branchVal && !vehicleVal && !fromDateVal && !toDateVal) {
+      el.innerHTML = '<tr><td colspan="8" class="text-center text-warning">Please select at least one filter and click \'Show\'.</td></tr>';
+      return;
+    }
+  }
+
   let expensesToRender = cachedExpenses;
 
   // Filter by branch
-  const branchVal = document.getElementById('expenseBranchFilter')?.value || '';
   if (branchVal) {
     expensesToRender = expensesToRender.filter(e => {
-      const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
+      const v = allVehicles.find(x => matchVehicleNumbers(x.vehicleNumber, e.vehicleNumber));
       return v && v.branchName && v.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase();
     });
   } else if (currentUser && currentUser.branchName) {
     expensesToRender = expensesToRender.filter(e => {
-      const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
+      const v = allVehicles.find(x => matchVehicleNumbers(x.vehicleNumber, e.vehicleNumber));
       return v && v.branchName && v.branchName.toLowerCase() === currentUser.branchName.toLowerCase();
     });
   }
 
   // Filter by vehicle
-  const vehicleVal = document.getElementById('expenseVehicleFilter')?.value || '';
   if (vehicleVal) {
-    expensesToRender = expensesToRender.filter(e => e.vehicleNumber === vehicleVal);
+    expensesToRender = expensesToRender.filter(e => matchVehicleNumbers(e.vehicleNumber, vehicleVal));
   }
 
   // Filter by From/To dates
-  const fromDateVal = document.getElementById('expenseFromDateFilter')?.value || '';
-  const toDateVal = document.getElementById('expenseToDateFilter')?.value || '';
 
   if (fromDateVal) {
     const fromDate = new Date(fromDateVal);
-    fromDate.setHours(0,0,0,0);
+    fromDate.setHours(0, 0, 0, 0);
     expensesToRender = expensesToRender.filter(e => {
       const d = new Date(e.date);
       return d >= fromDate;
@@ -2431,7 +2585,7 @@ function renderFilteredExpenses() {
   }
   if (toDateVal) {
     const toDate = new Date(toDateVal);
-    toDate.setHours(23,59,59,999);
+    toDate.setHours(23, 59, 59, 999);
     expensesToRender = expensesToRender.filter(e => {
       const d = new Date(e.date);
       return d <= toDate;
@@ -2441,15 +2595,18 @@ function renderFilteredExpenses() {
   // Sort ascending chronologically (oldest first)
   expensesToRender.sort((a, b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
 
+  // Limit to the last 3 transactions
+  expensesToRender = expensesToRender.slice(-3);
+
   if (!expensesToRender.length) {
     el.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No expenses found matching the filters.</td></tr>';
     return;
   }
 
   el.innerHTML = expensesToRender.map(e => {
-    const v = allVehicles.find(x => x.vehicleNumber === e.vehicleNumber);
+    const v = allVehicles.find(x => matchVehicleNumbers(x.vehicleNumber, e.vehicleNumber));
     const vehicleDisplay = v && v.shortName ? `${v.shortName} (${e.vehicleNumber})` : e.vehicleNumber;
-    
+
     const status = e.status || 'pending';
     let statusDetails = '';
     if (status === 'rejected' && e.rejectReason) {
@@ -2465,7 +2622,7 @@ function renderFilteredExpenses() {
 
     let actionsHtml = '';
     const isManagerOrAdmin = currentUserRole === 'manager' || currentUserRole === 'admin';
-    
+
     if (isManagerOrAdmin) {
       if (status !== 'approved') {
         actionsHtml = `
@@ -2612,7 +2769,7 @@ async function loadScrapProducts() {
         </tr>`).join('') || '<tr><td colspan="3" class="text-center">No products found</td></tr>'}
       </tbody>
     </table></div>`;
-    
+
     // Load system settings for security scrap toggle
     try {
       const setting = await api('/api/system-settings/enableSecurityScrapEntry');
@@ -2684,7 +2841,7 @@ let allScrapProducts = [];
 async function loadScrapProductDropdown() {
   try {
     allScrapProducts = await api('/api/scrap/products');
-    
+
     const sel = document.getElementById('scrapProductSelect');
     if (sel) {
       sel.innerHTML = `<option value="">Select Product</option>` +
@@ -2697,6 +2854,14 @@ async function loadScrapProductDropdown() {
       reportSel.innerHTML = `<option value="">All Products</option>` +
         allScrapProducts.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
       if (currentVal) reportSel.value = currentVal;
+    }
+
+    const approvalSel = document.getElementById('scrapApprovalProductSelect');
+    if (approvalSel) {
+      const currentVal = approvalSel.value;
+      approvalSel.innerHTML = `<option value="">All Products</option>` +
+        allScrapProducts.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
+      if (currentVal) approvalSel.value = currentVal;
     }
   } catch (err) {
     console.error(err);
@@ -2846,25 +3011,33 @@ async function submitScrapEntry() {
     return showAlert('scrapEntryAlert', 'Please add at least one scrap product');
   }
 
-  let proofDocument = '';
-  if (currentUserRole === 'pettycashier') {
-    const fileInput = document.getElementById('scrapProofFile');
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      try {
-        proofDocument = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = error => reject(error);
-        });
-      } catch (err) {
-        return showAlert('scrapEntryAlert', 'Failed to read the upload file.', 'danger');
-      }
-    }
+  const btn = document.getElementById('btnSubmitScrapEntry');
+  let originalBtnHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalBtnHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
   }
 
   try {
+    let proofDocument = '';
+    if (currentUserRole === 'pettycashier') {
+      const fileInput = document.getElementById('scrapProofFile');
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        try {
+          proofDocument = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+          });
+        } catch (err) {
+          throw new Error('Failed to read the upload file.');
+        }
+      }
+    }
+
     const payload = {
       companyName,
       vehicleNumber,
@@ -2889,22 +3062,27 @@ async function submitScrapEntry() {
     if (descEl) descEl.value = '';
     const fileInput = document.getElementById('scrapProofFile');
     if (fileInput) fileInput.value = '';
-    
+
     if (branchSelect && (!currentUser || !currentUser.branch)) branchSelect.value = '';
-    
+
     if (scrapDateTimePicker) {
       scrapDateTimePicker.setDate(new Date());
     } else {
       const scrapDateEl = document.getElementById('scrapDateTime');
       if (scrapDateEl) scrapDateEl.value = formatDateTime12h(new Date());
     }
-    
+
     currentScrapItems = [];
     renderDraftScrapItems();
 
     loadScrapMyEntries();
   } catch (err) {
     showAlert('scrapEntryAlert', err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
   }
 }
 
@@ -2937,6 +3115,7 @@ async function loadScrapApprovals() {
   if (!el) return;
   try {
     await loadBranchesDropdowns();
+    await loadScrapProductDropdown();
     const entries = await api('/api/scrap/entries?status=pending');
     cachedPendingScrapEntries = entries;
     renderFilteredScrapApprovals();
@@ -2948,19 +3127,45 @@ async function loadScrapApprovals() {
 function renderFilteredScrapApprovals() {
   const el = document.getElementById('scrapPendingList');
   if (!el) return;
-  const branchVal = document.getElementById('scrapApprovalBranchSelect')?.value || '';
-  
+
   let filtered = cachedPendingScrapEntries;
+
+  const branchVal = document.getElementById('scrapApprovalBranchSelect')?.value || '';
   if (branchVal) {
-    filtered = cachedPendingScrapEntries.filter(e => e.branchName && e.branchName.toLowerCase() === branchVal.toLowerCase());
+    filtered = filtered.filter(e => e.branchName && e.branchName.toLowerCase() === branchVal.toLowerCase());
   } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-    filtered = cachedPendingScrapEntries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
+    filtered = filtered.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
   }
-  
+
+  const prodVal = document.getElementById('scrapApprovalProductSelect')?.value || '';
+  if (prodVal) {
+    filtered = filtered.filter(e =>
+      (e.productName && e.productName === prodVal) ||
+      (e.items && e.items.some(item => item.productName === prodVal))
+    );
+  }
+
+  const fromDateVal = document.getElementById('scrapApprovalFromDate')?.value || '';
+  const toDateVal = document.getElementById('scrapApprovalToDate')?.value || '';
+
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0, 0, 0, 0);
+    filtered = filtered.filter(e => new Date(e.createdAt) >= fromDate);
+  }
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23, 59, 59, 999);
+    filtered = filtered.filter(e => new Date(e.createdAt) <= toDate);
+  }
+
+  // Sort ascending chronologically (oldest first: 2, 4, 8, 23, 30)
+  filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
   el.innerHTML = _renderScrapTable(filtered, true);
 }
 
-async function reviewScrap(id, action) {
+async function reviewScrap(id, action, btn) {
   try {
     let body = {};
     if (action === 'reject') {
@@ -2968,11 +3173,21 @@ async function reviewScrap(id, action) {
       if (r === null) return;
       body.reason = r;
     }
+    let originalHtml = '';
+    if (btn) {
+      btn.disabled = true;
+      originalHtml = btn.innerHTML;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+    }
     await api(`/api/scrap/entries/${id}/${action}`, 'POST', body);
     showAlert('scrapApprovalAlert', `Entry ${action}ed successfully`, 'success');
     loadScrapApprovals();
   } catch (err) {
     showAlert('scrapApprovalAlert', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
@@ -2983,7 +3198,7 @@ async function loadScrapReports() {
     await loadBranchesDropdowns();
     await loadScrapProductDropdown();
     const entries = await api('/api/scrap/entries?status=approved');
-    
+
     let filtered = entries;
     const branchVal = document.getElementById('scrapReportBranchSelect')?.value || '';
     if (branchVal) {
@@ -2991,18 +3206,18 @@ async function loadScrapReports() {
     } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
       filtered = entries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
     }
-    
+
     const prodVal = document.getElementById('scrapReportProductSelect')?.value || '';
     if (prodVal) {
-      filtered = filtered.filter(e => 
-        (e.productName && e.productName === prodVal) || 
+      filtered = filtered.filter(e =>
+        (e.productName && e.productName === prodVal) ||
         (e.items && e.items.some(item => item.productName === prodVal))
       );
     }
 
     const fromDateVal = document.getElementById('scrapReportFromDate')?.value || '';
     const toDateVal = document.getElementById('scrapReportToDate')?.value || '';
-    
+
     if (fromDateVal) {
       const fromDate = new Date(fromDateVal);
       fromDate.setHours(0, 0, 0, 0);
@@ -3013,7 +3228,9 @@ async function loadScrapReports() {
       toDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter(e => new Date(e.createdAt) <= toDate);
     }
-    
+    // Sort ascending chronologically (oldest first: 2, 4, 8, 23, 30)
+    filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
     el.innerHTML = _renderScrapTable(filtered, false);
   } catch (err) {
     el.innerHTML = err.message;
@@ -3122,7 +3339,7 @@ function _renderScrapTable(entries, isApproval) {
                   <div class="d-flex flex-column gap-1">
                     <input type="number" id="verifyAmount_${e._id}" class="form-control cds-input sm" style="font-size:12px; padding: 4px 8px;" placeholder="Verify Amount (₹)" />
                     <input type="file" id="verifyProof_${e._id}" class="form-control cds-input sm" style="font-size:11px; padding: 4px 8px;" accept="image/*,application/pdf" />
-                    <button class="btn btn-sm btn-success w-100 mt-1" onclick="verifyScrapEntry('${e._id}')">Verify & Approve</button>
+                    <button class="btn btn-sm btn-success w-100 mt-1" onclick="verifyScrapEntry('${e._id}', this)">Verify & Approve</button>
                   </div>
                 ` : ''}
                 ${e.status === 'pending_manager' ? `
@@ -3133,15 +3350,15 @@ function _renderScrapTable(entries, isApproval) {
                 ${e.status === 'queried' ? `
                   <div class="d-flex flex-column gap-1">
                     <input type="text" id="queryAnswer_${e._id}" class="form-control cds-input sm" style="font-size:12px; padding: 4px 8px;" placeholder="Enter Answer..." />
-                    <button class="btn btn-sm btn-warning w-100 mt-1" onclick="submitScrapAnswer('${e._id}')">Submit Answer</button>
+                    <button class="btn btn-sm btn-warning w-100 mt-1" onclick="submitScrapAnswer('${e._id}', this)">Submit Answer</button>
                   </div>
                 ` : ''}
               ` : `
                 ${e.status === 'pending_manager' ? `
                   <div class="d-flex flex-column gap-1">
-                    <button class="btn btn-sm btn-success w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
-                    <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
-                    <button class="btn btn-sm btn-warning w-100" onclick="queryScrapEntry('${e._id}')">Query</button>
+                    <button class="btn btn-sm btn-success w-100" onclick="reviewScrap('${e._id}', 'approve', this)">Approve</button>
+                    <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject', this)">Reject</button>
+                    <button class="btn btn-sm btn-warning w-100" onclick="queryScrapEntry('${e._id}', this)">Query</button>
                   </div>
                 ` : `
                   ${e.status === 'pending_pettycashier' ? `
@@ -3164,17 +3381,17 @@ function _renderScrapTable(entries, isApproval) {
   </table></div>`;
 }
 
-async function verifyScrapEntry(id) {
+async function verifyScrapEntry(id, btn) {
   const amountInput = document.getElementById(`verifyAmount_${id}`);
   const proofInput = document.getElementById(`verifyProof_${id}`);
-  
+
   if (!amountInput) return;
   const verifiedAmount = amountInput.value.trim();
   if (!verifiedAmount) {
     alert('Please enter the amount to verify.');
     return;
   }
-  
+
   let proofDocument = '';
   if (proofInput && proofInput.files && proofInput.files[0]) {
     const file = proofInput.files[0];
@@ -3190,7 +3407,13 @@ async function verifyScrapEntry(id) {
       return;
     }
   }
-  
+
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/scrap/entries/${id}/verify`, 'POST', {
       verifiedAmount: Number(verifiedAmount),
@@ -3200,27 +3423,41 @@ async function verifyScrapEntry(id) {
     loadScrapApprovals();
   } catch (err) {
     alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
-async function queryScrapEntry(id) {
+async function queryScrapEntry(id, btn) {
   const question = prompt('Enter Query Question for Petty Cashier:');
   if (question === null) return;
   if (!question.trim()) {
     alert('Query question cannot be empty.');
     return;
   }
-  
+
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/scrap/entries/${id}/query`, 'POST', { question });
     alert('Query raised successfully.');
     loadScrapApprovals();
   } catch (err) {
     alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
-async function submitScrapAnswer(id) {
+async function submitScrapAnswer(id, btn) {
   const answerInput = document.getElementById(`queryAnswer_${id}`);
   if (!answerInput) return;
   const answer = answerInput.value.trim();
@@ -3228,13 +3465,23 @@ async function submitScrapAnswer(id) {
     alert('Please enter your answer.');
     return;
   }
-  
+
+  let originalHtml = '';
+  if (btn) {
+    btn.disabled = true;
+    originalHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+  }
   try {
     await api(`/api/scrap/entries/${id}/answer`, 'POST', { answer });
     alert('Answer submitted to manager successfully.');
     loadScrapApprovals();
   } catch (err) {
     alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
@@ -3376,7 +3623,7 @@ async function submitFuelForm() {
     return;
   }
 
-  const matchedVehicle = allVehicles.find(v => v.vehicleNumber === vehicleNumber);
+  const matchedVehicle = allVehicles.find(v => matchVehicleNumbers(v.vehicleNumber, vehicleNumber));
   const branch = matchedVehicle ? matchedVehicle.branch : undefined;
   const branchName = matchedVehicle ? matchedVehicle.branchName : undefined;
 
@@ -3450,6 +3697,33 @@ function resetFuelForm() {
   }
 }
 
+async function initFuelLogsFilters() {
+  const el = document.getElementById('fuelHistoryList');
+  if (el) el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  try {
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+    if (allVehicles.length === 0) {
+      allVehicles = await api('/api/vehicles');
+    }
+
+    // Populate branch filter if it exists and is empty
+    const branchFilter = document.getElementById('fuelBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
+
+    updateFuelVehicleFilterOptions();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 async function loadFuelHistory() {
   const el = document.getElementById('fuelHistoryList');
   if (!el) return;
@@ -3469,7 +3743,7 @@ async function loadFuelHistory() {
     const branchFilter = document.getElementById('fuelBranchFilter');
     if (branchFilter && branchFilter.options.length <= 1) {
       const currentVal = branchFilter.value;
-      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       branchFilter.value = currentVal || '';
@@ -3494,7 +3768,7 @@ function updateFuelVehicleFilterOptions() {
   // Filter allVehicles based on selectedBranch
   let vehiclesForSelect = allVehicles;
   if (selectedBranch) {
-    vehiclesForSelect = allVehicles.filter(v => 
+    vehiclesForSelect = allVehicles.filter(v =>
       v.branchName && v.branchName.trim().toLowerCase() === selectedBranch.trim().toLowerCase()
     );
   }
@@ -3528,28 +3802,40 @@ function clearFuelFilters() {
   if (vehicleFilter) vehicleFilter.value = '';
   if (fromFilter) fromFilter.value = '';
   if (toFilter) toFilter.value = '';
-  
+
   updateFuelVehicleFilterOptions();
-  renderFilteredFuelLogs();
+  if (currentUserRole === 'manager') {
+    const el = document.getElementById('fuelHistoryList');
+    if (el) el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  } else {
+    renderFilteredFuelLogs();
+  }
 }
 
 function renderFilteredFuelLogs() {
   const el = document.getElementById('fuelHistoryList');
   if (!el) return;
 
-  let logsToRender = cachedFuelLogs;
-
   const branchVal = document.getElementById('fuelBranchFilter')?.value || '';
   const vehicleVal = document.getElementById('fuelVehicleFilter')?.value || '';
   const fromDateVal = document.getElementById('fuelFromDateFilter')?.value || '';
   const toDateVal = document.getElementById('fuelToDateFilter')?.value || '';
+
+  if (currentUserRole === 'manager') {
+    if (!branchVal && !vehicleVal && !fromDateVal && !toDateVal) {
+      el.innerHTML = '<div class="alert alert-warning">Please select at least one filter and click \'Show\'.</div>';
+      return;
+    }
+  }
+
+  let logsToRender = cachedFuelLogs;
 
   if (branchVal) {
     logsToRender = logsToRender.filter(l => {
       if (l.branchName && l.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()) {
         return true;
       }
-      const matched = allVehicles.find(v => v.vehicleNumber === l.vehicleNumber);
+      const matched = allVehicles.find(v => matchVehicleNumbers(v.vehicleNumber, l.vehicleNumber));
       if (matched && matched.branchName && matched.branchName.trim().toLowerCase() === branchVal.trim().toLowerCase()) {
         return true;
       }
@@ -3558,12 +3844,12 @@ function renderFilteredFuelLogs() {
   }
 
   if (vehicleVal) {
-    logsToRender = logsToRender.filter(l => l.vehicleNumber === vehicleVal);
+    logsToRender = logsToRender.filter(l => matchVehicleNumbers(l.vehicleNumber, vehicleVal));
   }
 
   if (fromDateVal) {
     const fromDate = new Date(fromDateVal);
-    fromDate.setHours(0,0,0,0);
+    fromDate.setHours(0, 0, 0, 0);
     logsToRender = logsToRender.filter(l => {
       const d = new Date(l.startDateTime);
       return d >= fromDate;
@@ -3572,7 +3858,7 @@ function renderFilteredFuelLogs() {
 
   if (toDateVal) {
     const toDate = new Date(toDateVal);
-    toDate.setHours(23,59,59,999);
+    toDate.setHours(23, 59, 59, 999);
     logsToRender = logsToRender.filter(l => {
       const d = new Date(l.startDateTime);
       return d <= toDate;
@@ -3581,6 +3867,9 @@ function renderFilteredFuelLogs() {
 
   // Sort ascending chronologically (oldest first)
   logsToRender.sort((a, b) => new Date(a.startDateTime || a.createdAt || 0) - new Date(b.startDateTime || b.createdAt || 0));
+
+  // Limit to the last 3 transactions
+  logsToRender = logsToRender.slice(-3);
 
   if (!logsToRender.length) {
     el.innerHTML = '<p class="text-muted small px-2">No matching fuel entries found.</p>';
@@ -3602,30 +3891,30 @@ function renderFilteredFuelLogs() {
     </thead>
     <tbody>
       ${logsToRender.map((l) => {
-        const fuelType = l.fuelType || 'petrol';
-        const fuelBadge = fuelType.toLowerCase() === 'diesel' 
-          ? `<span class="badge bg-warning text-dark">Diesel</span>` 
-          : `<span class="badge bg-info text-dark">Petrol</span>`;
+    const fuelType = l.fuelType || 'petrol';
+    const fuelBadge = fuelType.toLowerCase() === 'diesel'
+      ? `<span class="badge bg-warning text-dark">Diesel</span>`
+      : `<span class="badge bg-info text-dark">Petrol</span>`;
 
-        let bunkName = '';
-        let bunkLoc = '';
-        if (l.expenses && l.expenses.length) {
-          const exp = l.expenses.find(e => e.description && e.description.startsWith('FUEL_ADDITION:'));
-          if (exp) {
-            const match = exp.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
-            if (match) {
-              bunkName = match[3] || '';
-              bunkLoc = match[4] || '';
-            }
-          }
+    let bunkName = '';
+    let bunkLoc = '';
+    if (l.expenses && l.expenses.length) {
+      const exp = l.expenses.find(e => e.description && e.description.startsWith('FUEL_ADDITION:'));
+      if (exp) {
+        const match = exp.description.match(/^FUEL_ADDITION:qty=([\d.]+);current=([\d.]+);bunk=([^;]+)(?:;location=(.*))?$/);
+        if (match) {
+          bunkName = match[3] || '';
+          bunkLoc = match[4] || '';
         }
-        if (!bunkLoc) bunkLoc = l.fromLocation || '';
-        if (!bunkName) bunkName = 'N/A';
-        if (!bunkLoc) bunkLoc = 'N/A';
+      }
+    }
+    if (!bunkLoc) bunkLoc = l.fromLocation || '';
+    if (!bunkName) bunkName = 'N/A';
+    if (!bunkLoc) bunkLoc = 'N/A';
 
-        const cost = fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0));
+    const cost = fmt((l.expenses || []).reduce((s, e) => s + (e.amount || 0), 0));
 
-        return `<tr>
+    return `<tr>
           <td><strong>${escHtml(l.vehicleNumber)}</strong></td>
           <td>${fuelBadge}</td>
           <td>${escHtml(bunkName)}</td>
@@ -3635,7 +3924,7 @@ function renderFilteredFuelLogs() {
           <td>${cost}</td>
           <td class="small">${formatDateTime12h(l.startDateTime)}</td>
         </tr>`;
-      }).join('')}
+  }).join('')}
     </tbody>
   </table></div>`;
 }
@@ -3715,14 +4004,14 @@ function onToLocationChange() {
 async function loadBranchesDropdowns() {
   try {
     allBranches = await api('/api/branches');
-    
+
     const scrapSelect = document.getElementById('scrapBranchSelect');
     if (scrapSelect) {
       const currentVal = scrapSelect.value;
-      scrapSelect.innerHTML = '<option value="">Select Branch</option>' + allBranches.map(b => 
+      scrapSelect.innerHTML = '<option value="">Select Branch</option>' + allBranches.map(b =>
         `<option value="${escHtml(b._id)}">${escHtml(b.name)}</option>`
       ).join('');
-      
+
       const container = document.getElementById('scrapBranchContainer');
       if (currentUser && currentUser.branch) {
         scrapSelect.value = currentUser.branch;
@@ -3738,7 +4027,7 @@ async function loadBranchesDropdowns() {
     const fromSelect = document.getElementById('fromLocation');
     if (fromSelect) {
       const currentVal = fromSelect.value;
-      fromSelect.innerHTML = '<option value="">Select From Location...</option>' + allBranches.map(b => 
+      fromSelect.innerHTML = '<option value="">Select From Location...</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) {
@@ -3759,10 +4048,10 @@ async function loadBranchesDropdowns() {
       const toCustom = document.getElementById('toLocationCustom');
       const customVal = toCustom ? toCustom.value.trim() : '';
 
-      toSelect.innerHTML = '<option value="">Select To Location...</option>' + 
+      toSelect.innerHTML = '<option value="">Select To Location...</option>' +
         allBranches.map(b => `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`).join('') +
         '<option value="other">Other (Write location...)</option>';
-      
+
       if (currentVal === 'other') {
         toSelect.value = 'other';
         if (toCustom) {
@@ -3793,7 +4082,7 @@ async function loadBranchesDropdowns() {
     const vpBranchSelect = document.getElementById('vehicleProfilesBranch');
     if (vpBranchSelect) {
       const currentVal = vpBranchSelect.value;
-      vpBranchSelect.innerHTML = '<option value="">Select Location...</option>' + allBranches.map(b => 
+      vpBranchSelect.innerHTML = '<option value="">Select Location...</option>' + allBranches.map(b =>
         `<option value="${escHtml(b._id)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) vpBranchSelect.value = currentVal;
@@ -3802,7 +4091,7 @@ async function loadBranchesDropdowns() {
     const newUserBranchSelect = document.getElementById('newUserBranch');
     if (newUserBranchSelect) {
       const currentVal = newUserBranchSelect.value;
-      newUserBranchSelect.innerHTML = '<option value="">Select Location (Branch)...</option>' + allBranches.map(b => 
+      newUserBranchSelect.innerHTML = '<option value="">Select Location (Branch)...</option>' + allBranches.map(b =>
         `<option value="${escHtml(b._id)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) newUserBranchSelect.value = currentVal;
@@ -3811,7 +4100,7 @@ async function loadBranchesDropdowns() {
     const reportBranchSelect = document.getElementById('reportBranchSelect');
     if (reportBranchSelect) {
       const currentVal = reportBranchSelect.value;
-      reportBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      reportBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) reportBranchSelect.value = currentVal;
@@ -3820,7 +4109,7 @@ async function loadBranchesDropdowns() {
     const scrapReportBranchSelect = document.getElementById('scrapReportBranchSelect');
     if (scrapReportBranchSelect) {
       const currentVal = scrapReportBranchSelect.value;
-      scrapReportBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      scrapReportBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) scrapReportBranchSelect.value = currentVal;
@@ -3829,7 +4118,7 @@ async function loadBranchesDropdowns() {
     const scrapApprovalBranchSelect = document.getElementById('scrapApprovalBranchSelect');
     if (scrapApprovalBranchSelect) {
       const currentVal = scrapApprovalBranchSelect.value;
-      scrapApprovalBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b => 
+      scrapApprovalBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) scrapApprovalBranchSelect.value = currentVal;
@@ -3958,6 +4247,147 @@ async function initScrapEntryForm() {
     } else {
       scrapDateEl.value = formatDateTime12h(new Date());
     }
+  }
+}
+
+async function initVehicleApprovals() {
+  const el = document.getElementById('vehicleReviewedList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
+  try {
+    await loadVehicleList();
+    if (allBranches.length === 0) {
+      allBranches = await api('/api/branches');
+    }
+    const branchFilter = document.getElementById('approvalBranchFilter');
+    if (branchFilter && branchFilter.options.length <= 1) {
+      const currentVal = branchFilter.value;
+      branchFilter.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      branchFilter.value = currentVal || '';
+    }
+    updateApprovalVehicleSelectOptions();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function initVehicleReports() {
+  const el = document.getElementById('vehicleReportList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
+  try {
+    await loadBranchesDropdowns();
+    await loadVehicleList();
+    updateReportVehicleSelectOptions();
+    updateReportBunkSelectOptions();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function initScrapApprovals() {
+  const el = document.getElementById('scrapPendingList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
+  try {
+    await loadBranchesDropdowns();
+    await loadScrapProductDropdown();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function initScrapReports() {
+  const el = document.getElementById('scrapReportList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
+  try {
+    await loadBranchesDropdowns();
+    await loadScrapProductDropdown();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function initVehicleHistory() {
+  const el = document.getElementById('vehicleHistoryList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
+  }
+  try {
+    await loadVehicleList();
+
+    const branchInput = document.getElementById('historyBranchFilter');
+    if (branchInput) {
+      branchInput.value = (currentUser && currentUser.branchName) ? currentUser.branchName.toUpperCase() : '';
+    }
+
+    const selectEl = document.getElementById('historyVehicleFilter');
+    if (selectEl) {
+      const userBranch = (currentUser && currentUser.branchName) ? currentUser.branchName.toLowerCase() : '';
+      let vehiclesForSelect = allVehicles.filter(v => v.status === 'active');
+      if (userBranch) {
+        vehiclesForSelect = vehiclesForSelect.filter(v =>
+          v.branchName && v.branchName.trim().toLowerCase() === userBranch.trim()
+        );
+      }
+      selectEl.innerHTML = '<option value="">All Vehicles</option>' + vehiclesForSelect.map(v => {
+        const val = v.vehicleNumber;
+        const disp = v.shortName ? `${v.shortName} - ${v.vehicleNumber}` : v.vehicleNumber;
+        return `<option value="${escHtml(val)}">${escHtml(disp)}</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderFilteredHistoryLogs() {
+  const vehicleVal = document.getElementById('historyVehicleFilter')?.value || '';
+  const fromDateVal = document.getElementById('historyFromDateFilter')?.value || '';
+  const toDateVal = document.getElementById('historyToDateFilter')?.value || '';
+  const el = document.getElementById('vehicleHistoryList');
+  if (!el) return;
+
+  let logsToRender = currentHistoryLogs;
+
+  if (vehicleVal) {
+    logsToRender = logsToRender.filter(l => matchVehicleNumbers(l.vehicleNumber, vehicleVal));
+  }
+
+  if (fromDateVal) {
+    const fromDate = new Date(fromDateVal);
+    fromDate.setHours(0, 0, 0, 0);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) >= fromDate);
+  }
+  if (toDateVal) {
+    const toDate = new Date(toDateVal);
+    toDate.setHours(23, 59, 59, 999);
+    logsToRender = logsToRender.filter(l => new Date(l.startDateTime) <= toDate);
+  }
+
+  el.innerHTML = logsToRender.length
+    ? renderVehicleLogsTable(logsToRender, false)
+    : '<p class="text-muted small px-2">No logs found matching the filters.</p>';
+}
+
+function clearHistoryFilters() {
+  const vSelect = document.getElementById('historyVehicleFilter');
+  if (vSelect) vSelect.value = '';
+  const fromFilter = document.getElementById('historyFromDateFilter');
+  if (fromFilter) fromFilter.value = '';
+  const toFilter = document.getElementById('historyToDateFilter');
+  if (toFilter) toFilter.value = '';
+
+  const el = document.getElementById('vehicleHistoryList');
+  if (el) {
+    el.innerHTML = '<div class="alert alert-info">Select filters and click \'Show\' to display logs.</div>';
   }
 }
 

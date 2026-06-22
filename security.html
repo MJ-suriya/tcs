@@ -17,7 +17,7 @@
 <body class="dashboard-page">
   <div class="cds-sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-rupee">₹</span>
+      <img src="/logo.png" class="brand-logo" alt="TCS Logo" />
       <span class="brand-name">TCS</span>
       <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
     </div>
@@ -27,7 +27,7 @@
       <a href="#" class="nav-link" onclick="showSection('vehicleFuel')">Add Fuel</a>
       <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')">Expense</a>
       <a href="#" class="nav-link" onclick="showSection('vehicleHistory')">My Entries</a>
-      
+
       <div id="scrapModuleSidebar" class="d-none">
         <div class="text-uppercase small px-2 pt-3 text-muted border-top border-secondary-subtle mt-2">Scrap</div>
         <a href="#" class="nav-link" onclick="showSection('scrapEntry')">New Entry</a>
@@ -129,7 +129,7 @@
                     <div>
                       <small class="text-muted d-block"
                         style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tank Capacity</small>
-                      <strong id="tankCapacityDisplay" class="text-white">—</strong>
+                      <strong id="tankCapacityDisplay" class="text-dark">—</strong>
                     </div>
                   </div>
                   <div class="col-md-4 d-flex align-items-center">
@@ -137,7 +137,7 @@
                     <div>
                       <small class="text-muted d-block"
                         style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Std Mileage</small>
-                      <strong id="expectedMileageDisplay" class="text-white">—</strong>
+                      <strong id="expectedMileageDisplay" class="text-dark">—</strong>
                     </div>
                   </div>
                 </div>
@@ -402,12 +402,41 @@
         </div>
       </div>
       <div id="section-vehicleHistory" class="d-none">
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter My Vehicle Logs</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Branch</label>
+              <input type="text" id="historyBranchFilter" class="form-control cds-input" readonly disabled />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Vehicle</label>
+              <select id="historyVehicleFilter" class="form-select cds-input">
+                <option value="">All Vehicles</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">From</label>
+              <input type="date" id="historyFromDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">To</label>
+              <input type="date" id="historyToDateFilter" class="form-control cds-input" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary w-100" onclick="loadVehicleHistory()">Show</button>
+              <button class="btn btn-outline-secondary" onclick="clearHistoryFilters()">Clear</button>
+            </div>
+          </div>
+        </div>
         <div class="cds-card">
           <div class="card-header-cds">
-            <h5>My Vehicle Logs</h5><button class="btn cds-btn-sm" onclick="loadVehicleHistory()">↻ Refresh</button>
+            <h5 class="mb-0">My Vehicle Logs</h5>
           </div>
           <div id="vehicleHistoryAlert"></div>
-          <div id="vehicleHistoryList"></div>
+          <div id="vehicleHistoryList" class="p-3"></div>
         </div>
       </div>
       <div id="section-vehicleExpenses" class="d-none">
@@ -498,7 +527,7 @@
           </div>
         </div>
       </div>
-      
+
       <div id="section-scrapEntry" class="d-none">
         <div class="row g-4">
           <div class="col-lg-5">
@@ -563,10 +592,12 @@
               </div>
               <div class="mb-3 d-none" id="scrapProofContainer">
                 <label class="form-label">Proof Document / Image (Optional)</label>
-                <input type="file" id="scrapProofFile" class="form-control cds-input" accept="image/*,application/pdf" />
+                <input type="file" id="scrapProofFile" class="form-control cds-input"
+                  accept="image/*,application/pdf" />
               </div>
               <button class="btn btn-outline-warning w-100 mb-2" onclick="printScrapSlip()">🖨️ Print Slip</button>
-              <button class="btn cds-btn-primary w-100" onclick="submitScrapEntry()">Submit Entry</button>
+              <button id="btnSubmitScrapEntry" class="btn cds-btn-primary w-100" onclick="submitScrapEntry()">Submit
+                Entry</button>
             </div>
           </div>
           <div class="col-lg-7">
@@ -580,7 +611,7 @@
           </div>
         </div>
       </div>
-      
+
       <div id="section-scrapHistory" class="d-none">
         <div class="cds-card">
           <div class="card-header-cds">
