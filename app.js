@@ -3284,6 +3284,7 @@ function _renderScrapTable(entries, isApproval) {
       <tr>
         <th>Date</th>
         <th>Status</th>
+        <th>Created By</th>
         <th>Company</th>
         <th>Vehicle</th>
         <th>Products Detail</th>
@@ -3306,6 +3307,7 @@ function _renderScrapTable(entries, isApproval) {
           <tr>
             <td>${fmtDateTime(e.createdAt)}</td>
             <td>${statusBadge(e.status)}</td>
+            <td><strong>${escHtml(e.createdBy || '—')}</strong></td>
             <td>
               ${e.branchName ? `<div><span class="badge bg-secondary mb-1">${escHtml(e.branchName)}</span></div>` : ''}
               ${escHtml(e.companyName)}${(e.ownerName && e.ownerName !== '—') ? `<br><small class="text-muted">${escHtml(e.ownerName)}</small>` : ''}
