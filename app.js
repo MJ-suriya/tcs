@@ -177,8 +177,11 @@ function showCenteredError(message) {
 function statusBadge(status) {
   const map = {
     pending: 'badge-pending',
+    pending_pettycashier: 'badge-pending',
+    pending_manager: 'badge-pending',
     approved: 'badge-approved',
     rejected: 'badge-rejected',
+    queried: 'badge-penalty',
     converted: 'badge-converted',
     penalty: 'badge-penalty',
     active: 'badge-approved',
@@ -233,14 +236,27 @@ async function doLogin() {
   const username = document.getElementById('username')?.value?.trim();
   const password = document.getElementById('password')?.value;
   if (!username || !password) { showAlert('loginAlert', 'Please enter username and password.'); return; }
+  
+  const btn = document.querySelector('.cds-btn-primary');
+  const originalHtml = btn ? btn.innerHTML : 'Sign In';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing In...`;
+  }
+  
   try {
     const data = await api('/api/login', 'POST', { username, password });
     if (data.role === 'security') window.location.href = '/security';
     else if (data.role === 'manager') window.location.href = '/manager';
     else if (data.role === 'admin') window.location.href = '/admin';
+    else if (data.role === 'pettycashier') window.location.href = '/petty';
     else window.location.href = '/';
   } catch (err) {
     showAlert('loginAlert', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 }
 
@@ -347,6 +363,7 @@ async function initAdmin() {
   setTodayDate();
   try {
     const me = await api('/api/me');
+    if (me.role === 'pettycashier') { window.location.href = '/petty'; return; }
     if (!['admin', 'manager'].includes(me.role)) { window.location.href = '/'; return; }
     currentUserRole = me.role;
     currentUser = me;
@@ -369,6 +386,24 @@ async function initAdmin() {
   }
 }
 
+async function initPettyCashier() {
+  setTodayDate();
+  try {
+    const me = await api('/api/me');
+    if (me.role !== 'pettycashier') { window.location.href = '/'; return; }
+    currentUserRole = me.role;
+    currentUser = me;
+    const u = document.getElementById('sidebarUsername');
+    const a = document.getElementById('sidebarAvatar');
+    if (u) u.textContent = me.username;
+    if (a) a.textContent = me.username[0].toUpperCase();
+  } catch {
+    window.location.href = '/';
+    return;
+  }
+  showSection('scrapEntry');
+}
+
 async function initSecurity() {
   setTodayDate();
   try {
@@ -381,6 +416,19 @@ async function initSecurity() {
     if (u) u.textContent = me.username;
     if (a) a.textContent = me.username[0].toUpperCase();
     setupSecurityMenu();
+
+    // Check if scrap module is enabled for security
+    try {
+      const setting = await api('/api/system-settings/enableSecurityScrapEntry');
+      const scrapSidebar = document.getElementById('scrapModuleSidebar');
+      if (setting && setting.value === true) {
+        if (scrapSidebar) scrapSidebar.classList.remove('d-none');
+      } else {
+        if (scrapSidebar) scrapSidebar.classList.add('d-none');
+      }
+    } catch (err) {
+      console.error('Failed to load system setting:', err);
+    }
   } catch {
     window.location.href = '/';
     return;
@@ -1569,7 +1617,7 @@ async function loadVehicleEntryForm() {
           dateFormat: "d-M-Y h:i K",
           defaultDate: new Date(),
           minuteIncrement: 1,
-          disableMobile: "true"
+          disableMobile: true
         });
       }
     } else {
@@ -2564,8 +2612,32 @@ async function loadScrapProducts() {
         </tr>`).join('') || '<tr><td colspan="3" class="text-center">No products found</td></tr>'}
       </tbody>
     </table></div>`;
+    
+    // Load system settings for security scrap toggle
+    try {
+      const setting = await api('/api/system-settings/enableSecurityScrapEntry');
+      const toggleInput = document.getElementById('toggleSecurityScrapEntry');
+      if (toggleInput) {
+        toggleInput.checked = setting.value === true;
+      }
+    } catch (err) {
+      console.error('Failed to load system setting:', err);
+    }
   } catch (err) {
     el.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+  }
+}
+
+async function toggleSecurityScrapEntrySetting(checked) {
+  try {
+    await api('/api/system-settings', 'POST', { key: 'enableSecurityScrapEntry', value: checked });
+    showAlert('securitySettingsAlert', `Security scrap entry ${checked ? 'enabled' : 'disabled'} successfully.`, 'success');
+  } catch (err) {
+    showAlert('securitySettingsAlert', err.message);
+    const toggleInput = document.getElementById('toggleSecurityScrapEntry');
+    if (toggleInput) {
+      toggleInput.checked = !checked;
+    }
   }
 }
 
@@ -2610,12 +2682,22 @@ async function deleteScrapProduct(id) {
 
 let allScrapProducts = [];
 async function loadScrapProductDropdown() {
-  const sel = document.getElementById('scrapProductSelect');
-  if (!sel) return;
   try {
     allScrapProducts = await api('/api/scrap/products');
-    sel.innerHTML = `<option value="">Select Product</option>` +
-      allScrapProducts.map(p => `<option value="${p._id}">${escHtml(p.name)} (₹${p.pricePerKg}/kg)</option>`).join('');
+    
+    const sel = document.getElementById('scrapProductSelect');
+    if (sel) {
+      sel.innerHTML = `<option value="">Select Product</option>` +
+        allScrapProducts.map(p => `<option value="${p._id}">${escHtml(p.name)} (₹${p.pricePerKg}/kg)</option>`).join('');
+    }
+
+    const reportSel = document.getElementById('scrapReportProductSelect');
+    if (reportSel) {
+      const currentVal = reportSel.value;
+      reportSel.innerHTML = `<option value="">All Products</option>` +
+        allScrapProducts.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
+      if (currentVal) reportSel.value = currentVal;
+    }
   } catch (err) {
     console.error(err);
   }
@@ -2764,6 +2846,24 @@ async function submitScrapEntry() {
     return showAlert('scrapEntryAlert', 'Please add at least one scrap product');
   }
 
+  let proofDocument = '';
+  if (currentUserRole === 'pettycashier') {
+    const fileInput = document.getElementById('scrapProofFile');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      try {
+        proofDocument = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      } catch (err) {
+        return showAlert('scrapEntryAlert', 'Failed to read the upload file.', 'danger');
+      }
+    }
+  }
+
   try {
     const payload = {
       companyName,
@@ -2773,6 +2873,7 @@ async function submitScrapEntry() {
       branchName,
       dateTime: dateTimeStr || undefined,
       description,
+      proofDocument: proofDocument || undefined,
       items: currentScrapItems.map(item => ({
         productId: item.productId,
         weight: item.weight
@@ -2780,12 +2881,14 @@ async function submitScrapEntry() {
     };
 
     await api('/api/scrap/entries', 'POST', payload);
-    showAlert('scrapEntryAlert', 'Entry submitted successfully', 'success');
+    showCenteredSuccess('Scrap entry submitted successfully.');
 
     document.getElementById('scrapCompany').value = '';
     document.getElementById('scrapVehicle').value = '';
     const descEl = document.getElementById('scrapDescription');
     if (descEl) descEl.value = '';
+    const fileInput = document.getElementById('scrapProofFile');
+    if (fileInput) fileInput.value = '';
     
     if (branchSelect && (!currentUser || !currentUser.branch)) branchSelect.value = '';
     
@@ -2878,6 +2981,7 @@ async function loadScrapReports() {
   if (!el) return;
   try {
     await loadBranchesDropdowns();
+    await loadScrapProductDropdown();
     const entries = await api('/api/scrap/entries?status=approved');
     
     let filtered = entries;
@@ -2888,6 +2992,14 @@ async function loadScrapReports() {
       filtered = entries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
     }
     
+    const prodVal = document.getElementById('scrapReportProductSelect')?.value || '';
+    if (prodVal) {
+      filtered = filtered.filter(e => 
+        (e.productName && e.productName === prodVal) || 
+        (e.items && e.items.some(item => item.productName === prodVal))
+      );
+    }
+
     const fromDateVal = document.getElementById('scrapReportFromDate')?.value || '';
     const toDateVal = document.getElementById('scrapReportToDate')?.value || '';
     
@@ -2981,22 +3093,149 @@ function _renderScrapTable(entries, isApproval) {
               ${e.branchName ? `<div><span class="badge bg-secondary mb-1">${escHtml(e.branchName)}</span></div>` : ''}
               ${escHtml(e.companyName)}${(e.ownerName && e.ownerName !== '—') ? `<br><small class="text-muted">${escHtml(e.ownerName)}</small>` : ''}
               ${e.description ? `<br><small class="text-muted" style="font-style: italic;">Note: ${escHtml(e.description)}</small>` : ''}
+              ${e.queryQuestion ? `
+                <div class="mt-2 p-2 rounded small text-warning border border-warning-subtle" style="background: rgba(255,193,7,0.05);">
+                  <strong>Query:</strong> ${escHtml(e.queryQuestion)}
+                  ${e.queryAnswer ? `<br><strong class="text-info">Answer:</strong> ${escHtml(e.queryAnswer)}` : ''}
+                </div>
+              ` : ''}
             </td>
             <td>${escHtml(e.vehicleNumber)}</td>
-            <td>${itemsHtml}</td>
-            <td><strong>${fmt(e.totalAmount)}</strong></td>
+            <td>
+              ${itemsHtml}
+              ${e.proofDocument ? `
+                <div class="mt-2">
+                  <a href="${e.proofDocument}" target="_blank" class="btn btn-outline-info btn-sm py-0 px-2" style="font-size: 11px;">View Proof Document</a>
+                </div>
+              ` : ''}
+            </td>
+            <td>
+              <strong>${fmt(e.totalAmount)}</strong>
+              ${e.pettyCashierVerifiedAmount ? `<br><small class="text-muted" style="font-size: 11px;">Verified: ${fmt(e.pettyCashierVerifiedAmount)}</small>` : ''}
+            </td>
             ${!isApproval ? `<td>
               ${e.reviewedBy ? `<strong>${escHtml(e.reviewedBy)}</strong><br><span class="cds-badge ${e.status === 'approved' ? 'badge-approved' : 'badge-rejected'}">${escHtml(e.reviewedByRole || 'reviewer').toUpperCase()}</span>` : '—'}
             </td>` : ''}
             ${isApproval ? `<td>
-              <button class="btn btn-sm btn-success mb-1 w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
-              <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
+              ${currentUserRole === 'pettycashier' ? `
+                ${e.status === 'pending_pettycashier' ? `
+                  <div class="d-flex flex-column gap-1">
+                    <input type="number" id="verifyAmount_${e._id}" class="form-control cds-input sm" style="font-size:12px; padding: 4px 8px;" placeholder="Verify Amount (₹)" />
+                    <input type="file" id="verifyProof_${e._id}" class="form-control cds-input sm" style="font-size:11px; padding: 4px 8px;" accept="image/*,application/pdf" />
+                    <button class="btn btn-sm btn-success w-100 mt-1" onclick="verifyScrapEntry('${e._id}')">Verify & Approve</button>
+                  </div>
+                ` : ''}
+                ${e.status === 'pending_manager' ? `
+                  <div style="font-size: 11px; text-align: center; color: #6b7a99; font-weight: 500; padding: 4px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; background: rgba(255,255,255,0.02);">
+                    Awaiting Manager Approval
+                  </div>
+                ` : ''}
+                ${e.status === 'queried' ? `
+                  <div class="d-flex flex-column gap-1">
+                    <input type="text" id="queryAnswer_${e._id}" class="form-control cds-input sm" style="font-size:12px; padding: 4px 8px;" placeholder="Enter Answer..." />
+                    <button class="btn btn-sm btn-warning w-100 mt-1" onclick="submitScrapAnswer('${e._id}')">Submit Answer</button>
+                  </div>
+                ` : ''}
+              ` : `
+                ${e.status === 'pending_manager' ? `
+                  <div class="d-flex flex-column gap-1">
+                    <button class="btn btn-sm btn-success w-100" onclick="reviewScrap('${e._id}', 'approve')">Approve</button>
+                    <button class="btn btn-sm btn-danger w-100" onclick="reviewScrap('${e._id}', 'reject')">Reject</button>
+                    <button class="btn btn-sm btn-warning w-100" onclick="queryScrapEntry('${e._id}')">Query</button>
+                  </div>
+                ` : `
+                  ${e.status === 'pending_pettycashier' ? `
+                    <div style="font-size: 11px; text-align: center; color: #6b7a99; font-weight: 500; padding: 4px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; background: rgba(255,255,255,0.02);">
+                      Awaiting Petty Cashier Verification
+                    </div>
+                  ` : ''}
+                  ${e.status === 'queried' ? `
+                    <div style="font-size: 11px; text-align: center; color: #ffc107; font-weight: 500; padding: 4px; border: 1px dashed rgba(255,193,7,0.2); border-radius: 4px; background: rgba(255,193,7,0.02);">
+                      Awaiting Petty Cashier Answer
+                    </div>
+                  ` : ''}
+                `}
+              `}
             </td>` : ''}
           </tr>
         `;
   }).join('')}
     </tbody>
   </table></div>`;
+}
+
+async function verifyScrapEntry(id) {
+  const amountInput = document.getElementById(`verifyAmount_${id}`);
+  const proofInput = document.getElementById(`verifyProof_${id}`);
+  
+  if (!amountInput) return;
+  const verifiedAmount = amountInput.value.trim();
+  if (!verifiedAmount) {
+    alert('Please enter the amount to verify.');
+    return;
+  }
+  
+  let proofDocument = '';
+  if (proofInput && proofInput.files && proofInput.files[0]) {
+    const file = proofInput.files[0];
+    try {
+      proofDocument = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    } catch (err) {
+      alert('Failed to read the upload file.');
+      return;
+    }
+  }
+  
+  try {
+    await api(`/api/scrap/entries/${id}/verify`, 'POST', {
+      verifiedAmount: Number(verifiedAmount),
+      proofDocument
+    });
+    alert('Entry verified and sent to manager.');
+    loadScrapApprovals();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function queryScrapEntry(id) {
+  const question = prompt('Enter Query Question for Petty Cashier:');
+  if (question === null) return;
+  if (!question.trim()) {
+    alert('Query question cannot be empty.');
+    return;
+  }
+  
+  try {
+    await api(`/api/scrap/entries/${id}/query`, 'POST', { question });
+    alert('Query raised successfully.');
+    loadScrapApprovals();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function submitScrapAnswer(id) {
+  const answerInput = document.getElementById(`queryAnswer_${id}`);
+  if (!answerInput) return;
+  const answer = answerInput.value.trim();
+  if (!answer) {
+    alert('Please enter your answer.');
+    return;
+  }
+  
+  try {
+    await api(`/api/scrap/entries/${id}/answer`, 'POST', { answer });
+    alert('Answer submitted to manager successfully.');
+    loadScrapApprovals();
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 // ─── CHANGE PASSWORD ─────────────────────────────────────────────────────────
@@ -3417,7 +3656,7 @@ async function loadFuelForm() {
           dateFormat: "d-M-Y h:i K",
           defaultDate: new Date(),
           minuteIncrement: 1,
-          disableMobile: "true"
+          disableMobile: true
         });
       }
     } else {
@@ -3692,6 +3931,16 @@ async function initScrapEntryForm() {
   await loadScrapMyEntries();
   await loadBranchesDropdowns();
 
+  // Show proof upload container only for Petty Cashier
+  const proofContainer = document.getElementById('scrapProofContainer');
+  if (proofContainer) {
+    if (currentUserRole === 'pettycashier') {
+      proofContainer.classList.remove('d-none');
+    } else {
+      proofContainer.classList.add('d-none');
+    }
+  }
+
   const scrapDateEl = document.getElementById('scrapDateTime');
   if (scrapDateEl) {
     if (typeof flatpickr !== 'undefined') {
@@ -3703,7 +3952,7 @@ async function initScrapEntryForm() {
           dateFormat: "d-M-Y h:i K",
           defaultDate: new Date(),
           minuteIncrement: 1,
-          disableMobile: "true"
+          disableMobile: true
         });
       }
     } else {
@@ -3717,6 +3966,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
   if (path === '/admin' || path === '/admin.html' || path === '/manager' || path === '/manager.html') initAdmin();
   else if (path === '/security' || path === '/security.html') initSecurity();
+  else if (path === '/petty' || path === '/petty.html') initPettyCashier();
 });
 
 

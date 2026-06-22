@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'manager', 'incharge', 'security'], default: 'manager' },
+  role: { type: String, enum: ['admin', 'manager', 'incharge', 'security', 'pettycashier'], default: 'manager' },
   ecNo: { type: String, unique: true, sparse: true, trim: true },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
   branchName: { type: String, trim: true },
@@ -153,7 +153,7 @@ const scrapEntrySchema = new mongoose.Schema({
   pricePerKg: { type: Number },
   items: { type: [scrapItemSchema], default: [] },
   totalAmount: { type: Number, required: true, min: 0 },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending_pettycashier', 'pending_manager', 'approved', 'rejected', 'queried'], default: 'pending_pettycashier' },
   rejectReason: { type: String, trim: true, default: '' },
   description: { type: String, trim: true, default: '' },
   createdBy: { type: String, required: true },
@@ -163,7 +163,11 @@ const scrapEntrySchema = new mongoose.Schema({
   reviewedByRole: { type: String, default: '' },
   reviewedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  pettyCashierVerifiedAmount: { type: Number },
+  proofDocument: { type: String },
+  queryQuestion: { type: String, trim: true, default: '' },
+  queryAnswer: { type: String, trim: true, default: '' }
 });
 
 scrapEntrySchema.pre('save', function updateScrapEntryModified(next) {
@@ -199,6 +203,12 @@ branchSchema.pre('save', function updateBranchModified(next) {
   next();
 });
 
+const systemSettingSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: mongoose.Schema.Types.Mixed, required: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model('User', userSchema);
 const VehicleProfile = mongoose.model('VehicleProfile', vehicleProfileSchema);
 const VehicleLog = mongoose.model('VehicleLog', vehicleLogSchema);
@@ -208,5 +218,7 @@ const ScrapEntry = mongoose.model('ScrapEntry', scrapEntrySchema);
 const VehicleExpense = mongoose.model('VehicleExpense', vehicleExpenseStandaloneSchema);
 const FuelPrice = mongoose.model('FuelPrice', fuelPriceSchema);
 const Branch = mongoose.model('Branch', branchSchema);
+const SystemSetting = mongoose.model('SystemSetting', systemSettingSchema);
 
-module.exports = { User, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry, VehicleExpense, FuelPrice, Branch };
+module.exports = { User, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry, VehicleExpense, FuelPrice, Branch, SystemSetting };
+

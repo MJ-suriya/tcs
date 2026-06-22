@@ -3,11 +3,27 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const connectDB = require('./db');
-const { User, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry, VehicleExpense, FuelPrice, Branch } = require('./models');
+const { User, VehicleProfile, VehicleLog, VehicleLogDraft, ScrapProduct, ScrapEntry, VehicleExpense, FuelPrice, Branch, SystemSetting } = require('./models');
+const crypto = require('crypto');
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedPassword) {
+  if (!storedPassword || !storedPassword.includes(':')) {
+    return password === storedPassword;
+  }
+  const [salt, hash] = storedPassword.split(':');
+  const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return hash === verifyHash;
+}
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'cds_secret_key_2024',
@@ -20,7 +36,7 @@ app.use(session({
 async function seedAdmin() {
   const existing = await User.findOne({ username: 'admin' });
   if (!existing) {
-    await User.create({ username: 'admin', password: '1234', role: 'admin' });
+    await User.create({ username: 'admin', password: hashPassword('1234'), role: 'admin' });
     console.log('Default admin created: admin / 1234');
   }
 }
@@ -67,6 +83,11 @@ const requireManagerOrAdmin = (req, res, next) => {
 const requireSecurity = (req, res, next) => {
   if (!req.session.user || req.session.user.role !== 'security')
     return res.status(403).json({ error: 'Security access required' });
+  next();
+};
+const requirePettyCashierOrAdmin = (req, res, next) => {
+  if (!req.session.user || !['pettycashier', 'admin'].includes(req.session.user.role))
+    return res.status(403).json({ error: 'Petty Cashier or admin access required' });
   next();
 };
 const requireVehicleModuleAccess = (req, res, next) => {
@@ -289,10 +310,16 @@ app.post('/api/login', async (req, res) => {
       $or: [
         { username: String(username).trim() },
         { ecNo: String(username).trim() }
-      ],
-      password
+      ]
     });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user || !verifyPassword(password, user.password)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    // Auto-upgrade plain-text passwords to hashed passwords on successful login
+    if (!user.password.includes(':')) {
+      user.password = hashPassword(password);
+      await user.save();
+    }
     req.session.user = { id: user._id, username: user.username, role: user.role };
     res.json({ success: true, role: user.role, username: user.username });
   } catch (err) {
@@ -313,8 +340,10 @@ app.post('/api/change-password', requireAuth, async (req, res) => {
     if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Both current and new password are required' });
     const user = await User.findById(req.session.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.password !== currentPassword) return res.status(401).json({ error: 'Incorrect current password' });
-    user.password = newPassword;
+    if (!verifyPassword(currentPassword, user.password)) {
+      return res.status(401).json({ error: 'Incorrect current password' });
+    }
+    user.password = hashPassword(newPassword);
     await user.save();
     res.json({ success: true });
   } catch (err) {
@@ -368,7 +397,7 @@ app.post('/api/users', requireAdmin, async (req, res) => {
 
     const user = await User.create({
       username,
-      password,
+      password: hashPassword(password),
       role: role || 'manager',
       ecNo: ecNo ? String(ecNo).trim() : undefined,
       branch: branch || undefined,
@@ -407,7 +436,7 @@ app.put('/api/users/:id', requireAdmin, async (req, res) => {
 
     // Update password if provided
     if (password && String(password).trim()) {
-      user.password = String(password).trim();
+      user.password = hashPassword(String(password).trim());
     }
 
     // Update role (prevent changing default admin role)
@@ -1174,9 +1203,31 @@ app.delete('/api/branches/:id', requireAdmin, async (req, res) => {
 app.get('/api/scrap/entries', requireAuth, async (req, res) => {
   try {
     const { status, date } = req.query;
-    let filter = {};
-    if (status) filter.status = status;
+    
+    // Check if security is allowed to load scrap entries
     if (req.session.user.role === 'security') {
+      const setting = await SystemSetting.findOne({ key: 'enableSecurityScrapEntry' });
+      if (!setting || setting.value !== true) {
+        return res.status(403).json({ error: 'Scrap module is currently disabled for security' });
+      }
+    }
+    
+    const filter = {};
+    if (status) {
+      if (status === 'pending') {
+        if (req.session.user.role === 'pettycashier') {
+          filter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
+        } else if (['manager', 'admin'].includes(req.session.user.role)) {
+          filter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
+        } else if (req.session.user.role === 'security') {
+          filter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
+        } else {
+          filter.status = 'pending_pettycashier';
+        }
+      } else {
+        filter.status = status;
+      }
+    }if (['security', 'pettycashier'].includes(req.session.user.role)) {
       const user = await User.findById(req.session.user.id);
       if (user && user.branch) {
         filter.branch = user.branch;
@@ -1196,12 +1247,20 @@ app.get('/api/scrap/entries', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/scrap/entries (Security primarily)
+// POST /api/scrap/entries (Security / Petty Cashier)
 app.post('/api/scrap/entries', requireAuth, async (req, res) => {
   try {
-    const { companyName, vehicleNumber, productId, weight, description } = req.body;
+    const { companyName, vehicleNumber, productId, weight, description, proofDocument } = req.body;
     const ownerName = req.body.ownerName || '—';
     let items = req.body.items;
+    
+    // Check if security is allowed to create scrap entries
+    if (req.session.user.role === 'security') {
+      const setting = await SystemSetting.findOne({ key: 'enableSecurityScrapEntry' });
+      if (!setting || setting.value !== true) {
+        return res.status(403).json({ error: 'Scrap entry is currently disabled for security' });
+      }
+    }
     
     // Fallback for single product submission
     if (!items && productId && weight) {
@@ -1245,6 +1304,7 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
     
     const firstItem = resolvedItems[0];
     
+    const isPetty = req.session.user.role === 'pettycashier';
     const entry = await ScrapEntry.create({
       companyName,
       vehicleNumber,
@@ -1255,6 +1315,9 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
       pricePerKg: firstItem.pricePerKg,
       items: resolvedItems,
       totalAmount: Number(grandTotal.toFixed(2)),
+      status: isPetty ? 'pending_manager' : 'pending_pettycashier',
+      pettyCashierVerifiedAmount: isPetty ? Number(grandTotal.toFixed(2)) : undefined,
+      proofDocument: isPetty ? proofDocument : undefined,
       description: String(description || '').trim(),
       createdBy: req.session.user.username,
       branch: req.body.branch || undefined,
@@ -1267,21 +1330,98 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/scrap/entries/:id/verify (Petty Cashier)
+app.post('/api/scrap/entries/:id/verify', requirePettyCashierOrAdmin, async (req, res) => {
+  try {
+    const { verifiedAmount, proofDocument } = req.body;
+    if (verifiedAmount == null) {
+      return res.status(400).json({ error: 'Verified amount is required' });
+    }
+    
+    const entry = await ScrapEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    if (entry.status !== 'pending_pettycashier') {
+      return res.status(400).json({ error: 'Entry is not pending petty cashier verification' });
+    }
+    
+    if (Number(verifiedAmount) !== entry.totalAmount) {
+      return res.status(400).json({ error: 'Entered amount does not match the scrap entry total amount' });
+    }
+    
+    entry.pettyCashierVerifiedAmount = Number(verifiedAmount);
+    if (proofDocument) {
+      entry.proofDocument = proofDocument;
+    }
+    entry.status = 'pending_manager';
+    await entry.save();
+    
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/entries/:id/query (Manager/Admin)
+app.post('/api/scrap/entries/:id/query', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const { question } = req.body;
+    if (!question || !question.trim()) {
+      return res.status(400).json({ error: 'Query question is required' });
+    }
+    
+    const entry = await ScrapEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    if (entry.status !== 'pending_manager') {
+      return res.status(400).json({ error: 'Only pending manager entries can be queried' });
+    }
+    
+    entry.status = 'queried';
+    entry.queryQuestion = question.trim();
+    entry.queryAnswer = '';
+    await entry.save();
+    
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/scrap/entries/:id/answer (Petty Cashier)
+app.post('/api/scrap/entries/:id/answer', requirePettyCashierOrAdmin, async (req, res) => {
+  try {
+    const { answer } = req.body;
+    if (!answer || !answer.trim()) {
+      return res.status(400).json({ error: 'Answer is required' });
+    }
+    
+    const entry = await ScrapEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    if (entry.status !== 'queried') {
+      return res.status(400).json({ error: 'Entry is not in queried status' });
+    }
+    
+    entry.status = 'pending_manager';
+    entry.queryAnswer = answer.trim();
+    await entry.save();
+    
+    res.json({ success: true, entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/scrap/entries/:id/approve (Manager/Admin)
 app.post('/api/scrap/entries/:id/approve', requireManagerOrAdmin, async (req, res) => {
   try {
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
-    if (entry.status !== 'pending') return res.status(400).json({ error: 'Only pending entries can be approved' });
+    if (entry.status !== 'pending_manager') return res.status(400).json({ error: 'Only pending manager entries can be approved' });
     
     entry.status = 'approved';
     entry.reviewedBy = req.session.user.username;
     entry.reviewedByRole = req.session.user.role;
     entry.reviewedAt = new Date();
     await entry.save();
-    
-    // Optional: Log it in main balance? User didn't request this specifically, but "Total Scrap Value" implies it's tracked.
-    // They said "Add summary cards ... Total Scrap Value". It may not directly affect CDB based on description, just scrap reporting.
     
     res.json({ success: true, entry });
   } catch (err) {
@@ -1295,7 +1435,7 @@ app.post('/api/scrap/entries/:id/reject', requireManagerOrAdmin, async (req, res
     const { reason } = req.body;
     const entry = await ScrapEntry.findById(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Entry not found' });
-    if (entry.status !== 'pending') return res.status(400).json({ error: 'Only pending entries can be rejected' });
+    if (entry.status !== 'pending_manager') return res.status(400).json({ error: 'Only pending manager entries can be rejected' });
     
     entry.status = 'rejected';
     entry.rejectReason = reason || '';
@@ -1313,11 +1453,34 @@ app.post('/api/scrap/entries/:id/reject', requireManagerOrAdmin, async (req, res
 // GET /api/scrap/dashboard
 app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
   try {
-    const totalEntries = await ScrapEntry.countDocuments();
-    const pendingApprovals = await ScrapEntry.countDocuments({ status: 'pending' });
-    const approvedEntriesCount = await ScrapEntry.countDocuments({ status: 'approved' });
+    const role = req.session.user.role;
+    const filter = {};
     
-    const approvedEntries = await ScrapEntry.find({ status: 'approved' });
+    // Apply branch filter if user is not admin
+    if (role !== 'admin') {
+      const user = await User.findById(req.session.user.id);
+      if (user && user.branch) {
+        filter.branch = user.branch;
+      }
+    }
+    
+    const totalEntries = await ScrapEntry.countDocuments(filter);
+    
+    let pendingFilter = { ...filter };
+    if (role === 'pettycashier') {
+      pendingFilter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
+    } else if (['manager', 'admin'].includes(role)) {
+      pendingFilter.status = { $in: ['pending_pettycashier', 'pending_manager', 'queried'] };
+    } else {
+      pendingFilter.status = 'pending_pettycashier';
+    }
+    
+    const pendingApprovals = await ScrapEntry.countDocuments(pendingFilter);
+    
+    const approvedFilter = { ...filter, status: 'approved' };
+    const approvedEntriesCount = await ScrapEntry.countDocuments(approvedFilter);
+    
+    const approvedEntries = await ScrapEntry.find(approvedFilter);
     const totalScrapValue = approvedEntries.reduce((sum, e) => sum + (Number(e.totalAmount) || 0), 0);
     
     res.json({
@@ -1331,6 +1494,41 @@ app.get('/api/scrap/dashboard', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/system-settings/:key
+app.get('/api/system-settings/:key', requireAuth, async (req, res) => {
+  try {
+    const { key } = req.params;
+    let setting = await SystemSetting.findOne({ key });
+    if (!setting) {
+      if (key === 'enableSecurityScrapEntry') {
+        return res.json({ key, value: false });
+      }
+      return res.status(404).json({ error: 'Setting not found' });
+    }
+    res.json(setting);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/system-settings (Admin only)
+app.post('/api/system-settings', requireAdmin, async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key) {
+      return res.status(400).json({ error: 'Key is required' });
+    }
+    const setting = await SystemSetting.findOneAndUpdate(
+      { key },
+      { value, updatedAt: new Date() },
+      { new: true, upsert: true }
+    );
+    res.json(setting);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // PAGES
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1338,6 +1536,7 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/manager', (req, res) => res.sendFile(path.join(__dirname, 'manager.html')));
 app.get('/security', (req, res) => res.sendFile(path.join(__dirname, 'security.html')));
+app.get('/petty', (req, res) => res.sendFile(path.join(__dirname, 'petty.html')));
 
 // Return JSON for unknown API routes (avoid HTML responses)
 app.use('/api/*', (req, res) => {
@@ -1374,6 +1573,13 @@ async function migrateScrapEntries() {
         count++;
       }
     }
+    
+    // Migrate status 'pending' to 'pending_pettycashier'
+    const result = await ScrapEntry.updateMany({ status: 'pending' }, { $set: { status: 'pending_pettycashier' } });
+    if (result.modifiedCount > 0) {
+      console.log(`Migrated ${result.modifiedCount} scrap entries from 'pending' to 'pending_pettycashier'.`);
+    }
+    
     return count;
   } catch (err) {
     console.error('Error during scrap entries migration:', err);

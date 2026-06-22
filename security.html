@@ -27,9 +27,12 @@
       <a href="#" class="nav-link" onclick="showSection('vehicleFuel')">Add Fuel</a>
       <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')">Expense</a>
       <a href="#" class="nav-link" onclick="showSection('vehicleHistory')">My Entries</a>
-      <div class="text-uppercase small px-2 pt-4 text-muted">Scrap</div>
-      <a href="#" class="nav-link" onclick="showSection('scrapEntry')">New Scrap Entry</a>
-      <a href="#" class="nav-link" onclick="showSection('scrapHistory')">My Scrap Entries</a>
+      
+      <div id="scrapModuleSidebar" class="d-none">
+        <div class="text-uppercase small px-2 pt-3 text-muted border-top border-secondary-subtle mt-2">Scrap</div>
+        <a href="#" class="nav-link" onclick="showSection('scrapEntry')">New Entry</a>
+        <a href="#" class="nav-link" onclick="showSection('scrapHistory')">My Entries</a>
+      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="user-badge"><span class="user-avatar manager-avatar" id="sidebarAvatar">S</span>
@@ -78,7 +81,7 @@
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Start Date & Time</label>
-                  <input id="startDateTime" type="text"  />
+                  <input id="startDateTime" type="text" readonly class="form-control cds-input" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">End Date & Time</label>
@@ -126,7 +129,7 @@
                     <div>
                       <small class="text-muted d-block"
                         style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tank Capacity</small>
-                      <strong id="tankCapacityDisplay" class="text-dark">—</strong>
+                      <strong id="tankCapacityDisplay" class="text-white">—</strong>
                     </div>
                   </div>
                   <div class="col-md-4 d-flex align-items-center">
@@ -134,7 +137,7 @@
                     <div>
                       <small class="text-muted d-block"
                         style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Std Mileage</small>
-                      <strong id="expectedMileageDisplay" class="text-dark">—</strong>
+                      <strong id="expectedMileageDisplay" class="text-white">—</strong>
                     </div>
                   </div>
                 </div>
@@ -495,6 +498,7 @@
           </div>
         </div>
       </div>
+      
       <div id="section-scrapEntry" class="d-none">
         <div class="row g-4">
           <div class="col-lg-5">
@@ -557,6 +561,10 @@
                 <textarea id="scrapDescription" class="form-control cds-input" rows="2"
                   placeholder="Enter optional description..."></textarea>
               </div>
+              <div class="mb-3 d-none" id="scrapProofContainer">
+                <label class="form-label">Proof Document / Image (Optional)</label>
+                <input type="file" id="scrapProofFile" class="form-control cds-input" accept="image/*,application/pdf" />
+              </div>
               <button class="btn btn-outline-warning w-100 mb-2" onclick="printScrapSlip()">🖨️ Print Slip</button>
               <button class="btn cds-btn-primary w-100" onclick="submitScrapEntry()">Submit Entry</button>
             </div>
@@ -572,6 +580,7 @@
           </div>
         </div>
       </div>
+      
       <div id="section-scrapHistory" class="d-none">
         <div class="cds-card">
           <div class="card-header-cds">
@@ -581,6 +590,7 @@
           <div id="scrapHistoryList"></div>
         </div>
       </div>
+
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
