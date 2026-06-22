@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCS — Security</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+</head>
+
+<body class="dashboard-page">
+  <div class="cds-sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-rupee">₹</span>
+      <span class="brand-name">TCS</span>
+      <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="text-uppercase small px-2 pt-2 text-muted">Vehicle Log</div>
+      <a href="#" class="nav-link active" onclick="showSection('vehicleEntry')">New Entry</a>
+      <a href="#" class="nav-link" onclick="showSection('vehicleFuel')">Add Fuel</a>
+      <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')">Expense</a>
+      <a href="#" class="nav-link" onclick="showSection('vehicleHistory')">My Entries</a>
+      
+      <div id="scrapModuleSidebar" class="d-none">
+        <div class="text-uppercase small px-2 pt-3 text-muted border-top border-secondary-subtle mt-2">Scrap</div>
+        <a href="#" class="nav-link" onclick="showSection('scrapEntry')">New Entry</a>
+        <a href="#" class="nav-link" onclick="showSection('scrapHistory')">My Entries</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge"><span class="user-avatar manager-avatar" id="sidebarAvatar">S</span>
+        <div>
+          <div class="user-name" id="sidebarUsername">Security</div>
+          <div class="user-role">Security</div>
+        </div>
+      </div>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()"
+        style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="cds-main">
+    <div class="cds-topbar"><button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">☰</button>
+      <h2 class="topbar-title" id="pageTitle">Vehicle Log - New Entry</h2>
+      <div class="topbar-date" id="todayDate"></div>
+    </div>
+    <div class="cds-content" id="mainContent">
+      <div id="section-vehicleEntry">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Create Vehicle Log</h5>
+              </div>
+              <div id="vehicleAlert"></div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">From</label>
+                  <select id="fromLocation" class="form-select cds-input">
+                    <option value="">Select From Location...</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">To</label>
+                  <select id="toLocation" class="form-select cds-input" onchange="onToLocationChange()">
+                    <option value="">Select To Location...</option>
+                  </select>
+                  <input type="text" id="toLocationCustom" class="form-control cds-input mt-2 d-none"
+                    placeholder="Type custom to location..." />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Start Date & Time</label>
+                  <input id="startDateTime" type="text" readonly class="form-control cds-input" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">End Date & Time</label>
+                  <input id="endDateTime" type="text" class="form-control cds-input"
+                    placeholder="Select End Date & Time..." />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Driver Name</label>
+                <input id="driverName" class="form-control cds-input" />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Vehicle (Short Name)</label>
+                  <select id="vehicleShortName" class="form-select cds-input vehicle-select-shortname"
+                    onchange="onVehicleShortNameInput('vehicleShortName', 'vehicleNumber')">
+                    <option value="">Select Vehicle...</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <input type="hidden" id="vehicleNumber" />
+                  <input type="hidden" id="tankCapacity" value="0" />
+                  <input type="hidden" id="expectedMileage" value="0" />
+                  <input type="hidden" id="availableFuel" value="0" />
+                </div>
+              </div>
+
+              <!-- Vehicle Info Display with Emojis -->
+              <div id="vehicleDetailsDisplay" class="mb-3 p-3 rounded text-light border border-secondary-subtle d-none"
+                style="background: rgba(255, 255, 255, 0.05);">
+                <div class="row g-3">
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">🚗</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Vehicle
+                        Number</small>
+                      <strong id="vehicleNumberDisplay" class="text-dark">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">⛽</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tank Capacity</small>
+                      <strong id="tankCapacityDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">📊</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Std Mileage</small>
+                      <strong id="expectedMileageDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Start KM</label>
+                  <input id="startKm" readonly class="form-control cds-input" value="0" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">End KM</label>
+                  <input id="endKm" type="number" min="0" class="form-control cds-input"
+                    oninput="calcVehicleDistance();" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Distance</label>
+                  <input id="distanceTravelled" readonly class="form-control cds-input" value="0.00" />
+                </div>
+              </div>
+
+              <div class="mb-3 d-grid gap-2">
+                <button type="button" id="btnToggleFuelInLog" class="btn btn-outline-success btn-sm"
+                  onclick="toggleFuelInLog()">⛽ Add Fuel </button>
+                <button type="button" id="btnToggleExpenseInLog" class="btn btn-outline-warning btn-sm"
+                  onclick="toggleExpenseInLog()">🔧 Add Expense (Emergency)</button>
+              </div>
+
+              <!-- Collapsible Expense Section -->
+              <div id="expenseSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3"
+                style="background: rgba(255, 193, 7, 0.05); border-color: rgba(255, 193, 7, 0.2) !important;">
+                <div class="text-warning small fw-semibold text-uppercase mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Emergency Expense Information</div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small">Expense Type</label>
+                    <select id="expenseTypeSelectInLog" class="form-select cds-input">
+                      <option value="other">Other</option>
+                      <option value="repair">Repair</option>
+                      <option value="service">Service</option>
+                      <option value="oil">Oil</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Amount (₹)</label>
+                    <input id="expenseAmountInLog" type="number" min="0" step="0.01" class="form-control cds-input"
+                      placeholder="e.g. 500" />
+                  </div>
+                </div>
+
+                <div class="mb-2">
+                  <label class="form-label small">Description</label>
+                  <input id="expenseDescInLog" type="text" class="form-control cds-input"
+                    placeholder="e.g. Tyre puncture repair" />
+                </div>
+              </div>
+
+              <!-- Collapsible Fuel Section -->
+              <div id="fuelSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3"
+                style="background: rgba(25, 135, 84, 0.05); border-color: rgba(25, 135, 84, 0.2) !important;">
+                <div class="text-success small fw-semibold text-uppercase mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Fuel Information</div>
+
+                <div id="fuelTripStatsInLog" class="mb-3 p-2 rounded bg-white border border-success-subtle">
+                  <div class="text-success small fw-semibold" style="font-size: 11px;">Trip Analytics (Since Last Full
+                    Tank)</div>
+                  <div class="text-success fw-bold mt-1" style="font-size: 13px;">
+                    Distance: <span id="fuelTripDistanceTextInLog">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span
+                      id="fuelApproxUsedTextInLog">0.00</span> L
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small">Fuel Type</label>
+                    <select id="fuelTypeSelectInLog" class="form-select cds-input" onchange="onFuelTypeChangeInLog()">
+                      <option value="petrol">Petrol</option>
+                      <option value="diesel">Diesel</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Price per Litre (₹)</label>
+                    <input id="fuelPricePerLitreInLog" type="number" min="0" step="0.01" class="form-control cds-input"
+                      placeholder="Price" oninput="calcFuelInLog()" />
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label small">Fuel Added (L)</label>
+                    <input id="fuelAddedLitersInLog" type="number" min="0" step="0.1" class="form-control cds-input"
+                      placeholder="e.g. 30" oninput="calcFuelInLog()" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">Petrol Bunk Name</label>
+                    <input id="fuelBunkNameInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. HP Bunk" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">Location</label>
+                    <input id="fuelLocationInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. Bunk Location" />
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-2">
+                  <div class="col-md-12">
+                    <label class="form-label small">Total Cost (₹) (calculated)</label>
+                    <input id="fuelPriceInLog" class="form-control cds-input" readonly value="0.00" />
+                  </div>
+                </div>
+
+                <div id="fuelMileageDisplayInLog"
+                  class="mt-2 p-2 rounded bg-white border border-secondary-subtle small text-dark">
+                  <!-- Calculated mileage info goes here -->
+                </div>
+              </div>
+
+              <div class="row g-2 mt-4">
+                <div class="col-md-6">
+                  <button class="btn cds-btn-sm w-100 h-100" onclick="saveVehicleWaitingDraft()">Save Waiting</button>
+                </div>
+                <div class="col-md-6">
+                  <button id="btnSubmitVehicleLog" class="btn cds-btn-primary w-100 h-100"
+                    onclick="submitVehicleLog()">Submit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="cds-card mb-4">
+              <div class="card-header-cds">
+                <h5>Waiting List</h5>
+                <button class="btn cds-btn-sm" onclick="loadVehicleWaitingList()">↻ Refresh</button>
+              </div>
+              <div id="vehicleWaitingAlert"></div>
+              <div id="vehicleWaitingList"></div>
+            </div>
+            <div class="cds-card">
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">My Vehicle Logs</h5>
+                <button class="btn cds-btn-sm" onclick="loadVehicleHistory()">↻ Refresh</button>
+              </div>
+              <div id="vehicleHistoryAlertCompact"></div>
+              <div id="vehicleHistoryListCompact"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-vehicleFuel" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>⛽ Record Fuel Entry</h5>
+              </div>
+              <div id="fuelAlert"></div>
+
+              <div class="mb-3">
+                <label class="form-label">Driver Name</label>
+                <input id="fuelDriverName" type="text" class="form-control cds-input" placeholder="Driver Name" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle (Short Name)</label>
+                <input id="fuelVehicleShortName" class="form-control cds-input vehicle-select-shortname"
+                  list="fuelVehicleShortNameList" placeholder="Search by short name or number..."
+                  oninput="onVehicleShortNameInput('fuelVehicleShortName', 'fuelVehicleNumber')"
+                  onchange="onVehicleShortNameInput('fuelVehicleShortName', 'fuelVehicleNumber')" />
+                <datalist id="fuelVehicleShortNameList"></datalist>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle Number</label>
+                <input id="fuelVehicleNumber" class="form-control cds-input" readonly />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Date & Time</label>
+                  <input id="fuelStartDateTime" type="text" class="form-control cds-input"
+                    placeholder="Select Date & Time..." />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tank Capacity (L)</label>
+                  <input id="fuelTankCapacity" class="form-control cds-input" readonly value="0" />
+                </div>
+              </div>
+
+              <div id="fuelTripStats" class="mb-3 p-3 rounded"
+                style="background: rgba(25, 135, 84, 0.1); border: 1px solid rgba(25, 135, 84, 0.2);">
+                <div class="text-success small fw-semibold text-uppercase"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Trip Analytics (Since Last Full Tank)</div>
+                <div class="text-success fw-bold fs-5 mt-1">
+                  Distance: <span id="fuelTripDistanceText">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span
+                    id="fuelApproxUsedText">0.00</span> L
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fuel Type</label>
+                  <select id="fuelTypeSelect" class="form-select cds-input" onchange="onFuelTypeChange()">
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Price per Litre (₹)</label>
+                  <input id="fuelPricePerLitre" type="number" min="0" step="0.01" class="form-control cds-input"
+                    placeholder="Price per Litre" oninput="calcFuelCostAndRemaining()" />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fuel Added (L)</label>
+                  <input id="fuelAddedLiters" type="number" min="0" step="0.1" class="form-control cds-input"
+                    placeholder="e.g. 30" oninput="calcFuelCostAndRemaining()" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Available Current Fuel (L) (calculated)</label>
+                  <input id="fuelAvailableFuel" class="form-control cds-input" readonly value="0.00" />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Petrol Bunk Name</label>
+                  <input id="fuelBunkName" type="text" class="form-control cds-input" placeholder="e.g. HP Bunk" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Location</label>
+                  <input id="fuelLocation" type="text" class="form-control cds-input"
+                    placeholder="e.g. Bunk Location" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Total Price/Cost (₹) (calculated)</label>
+                  <input id="fuelPrice" type="number" min="0" step="0.01" class="form-control cds-input" readonly
+                    value="0.00" />
+                </div>
+              </div>
+
+              <button class="btn cds-btn-primary w-100" onclick="submitFuelForm()">Submit Fuel Log</button>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="cds-card">
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Recent Fuel Logs</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printFuelLogs()">🖨️ Print</button>
+                  <button class="btn cds-btn-sm" onclick="loadFuelHistory()">↻ Refresh</button>
+                </div>
+              </div>
+              <div id="fuelHistoryAlert"></div>
+              <div id="fuelHistoryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-vehicleHistory" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>My Vehicle Logs</h5><button class="btn cds-btn-sm" onclick="loadVehicleHistory()">↻ Refresh</button>
+          </div>
+          <div id="vehicleHistoryAlert"></div>
+          <div id="vehicleHistoryList"></div>
+        </div>
+      </div>
+      <div id="section-vehicleExpenses" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Record Vehicle Expense</h5>
+              </div>
+              <div id="vehicleExpensesAlert"></div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle (Short Name)</label>
+                <input id="expenseVehicleShortName" class="form-control cds-input vehicle-select-shortname"
+                  list="expenseVehicleShortNameList" placeholder="Search by short name or number..."
+                  oninput="onVehicleShortNameInput('expenseVehicleShortName', 'expenseVehicleNumber')"
+                  onchange="onVehicleShortNameInput('expenseVehicleShortName', 'expenseVehicleNumber')" />
+                <datalist id="expenseVehicleShortNameList"></datalist>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle Number</label>
+                <input type="text" id="expenseVehicleNumber" class="form-control cds-input" readonly />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Expense Type</label>
+                <select id="expenseType" class="form-select cds-input">
+                  <option value="service">Service</option>
+                  <option value="repair">Repair</option>
+                  <option value="oil">Oil</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Amount (₹)</label>
+                <input type="number" id="expenseAmount" class="form-control cds-input" min="0" step="0.01"
+                  placeholder="Enter amount" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input type="date" id="expenseDate" class="form-control cds-input" />
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">Description</label>
+                <input type="text" id="expenseDescription" class="form-control cds-input"
+                  placeholder="e.g. Engine oil change" />
+              </div>
+
+              <button class="btn cds-btn-primary w-100" onclick="saveVehicleExpense()">Save Expense</button>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="cds-card">
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Expense Log</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printExpenseLogs()">🖨️ Print</button>
+                  <button class="btn cds-btn-sm" onclick="loadVehicleExpenses()">↻ Refresh</button>
+                </div>
+              </div>
+              <div id="vehicleExpensesListWrap">
+                <div class="table-responsive">
+                  <table class="table cds-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Vehicle</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>By</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehicleExpensesList">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="section-scrapEntry" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>New Scrap Entry</h5>
+              </div>
+              <div id="scrapEntryAlert"></div>
+              <div class="mb-3">
+                <label class="form-label">Date & Time</label>
+                <input type="text" id="scrapDateTime" class="form-control cds-input" readonly />
+              </div>
+              <div class="mb-3" id="scrapBranchContainer">
+                <label class="form-label">Branch</label>
+                <select id="scrapBranchSelect" class="form-select cds-input">
+                  <option value="">Select Branch</option>
+                </select>
+              </div>
+              <div class="mb-3"><label class="form-label">Company Name</label><input type="text" id="scrapCompany"
+                  class="form-control cds-input" /></div>
+              <div class="mb-3"><label class="form-label">Vehicle Number</label><input type="text" id="scrapVehicle"
+                  class="form-control cds-input text-uppercase" /></div>
+
+              <!-- Added Items Section -->
+              <div class="mb-3 p-3 rounded"
+                style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);">
+                <div class="fw-semibold text-uppercase small text-muted mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Scrap Items List</div>
+                <div id="scrapItemsListContainer" class="mb-3" style="max-height: 200px; overflow-y: auto;">
+                  <div class="text-muted small text-center py-3">No products added yet. Use the form below to add.</div>
+                </div>
+
+                <div class="p-3 rounded"
+                  style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);">
+                  <div class="mb-2"><label class="form-label small fw-semibold">Select Product</label><select
+                      id="scrapProductSelect" class="form-select cds-input" onchange="calcScrapTotal()">
+                      <option value="">Select Product</option>
+                    </select></div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label small">Weight (KG)</label><input type="number"
+                        id="scrapWeight" min="0" class="form-control cds-input" oninput="calcScrapTotal()" /></div>
+                    <div class="col-6"><label class="form-label small">Price/KG (₹)</label><input type="number"
+                        id="scrapPriceKg" class="form-control cds-input" readonly /></div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Item Total: <strong id="scrapItemTotalText"
+                        class="text-white">₹0.00</strong></span>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="addScrapItemToList()">+ Add to
+                      List</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Grand Total:</span>
+                <span class="fs-5 fw-bold text-success" id="scrapGrandTotalText">₹0.00</span>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description (Optional)</label>
+                <textarea id="scrapDescription" class="form-control cds-input" rows="2"
+                  placeholder="Enter optional description..."></textarea>
+              </div>
+              <div class="mb-3 d-none" id="scrapProofContainer">
+                <label class="form-label">Proof Document / Image (Optional)</label>
+                <input type="file" id="scrapProofFile" class="form-control cds-input" accept="image/*,application/pdf" />
+              </div>
+              <button class="btn btn-outline-warning w-100 mb-2" onclick="printScrapSlip()">🖨️ Print Slip</button>
+              <button class="btn cds-btn-primary w-100" onclick="submitScrapEntry()">Submit Entry</button>
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>My Pending Entries</h5><button class="btn cds-btn-sm" onclick="loadScrapMyEntries()">↻
+                  Refresh</button>
+              </div>
+              <div id="scrapMyEntryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="section-scrapHistory" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>My Scrap Entries</h5><button class="btn cds-btn-sm" onclick="loadScrapMyHistory()">↻ Refresh</button>
+          </div>
+          <div id="scrapHistoryAlert"></div>
+          <div id="scrapHistoryList"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="app.js"></script>
+  <script>
+    const inputStart = document.getElementById("startDateTime");
+    if (inputStart && typeof formatDateTime12h === 'function') {
+      inputStart.value = formatDateTime12h(new Date());
+    }
+    const inputEnd = document.getElementById("endDateTime");
+    if (inputEnd && typeof formatDateTime12h === 'function') {
+      inputEnd.value = formatDateTime12h(new Date());
+    }
+  </script>
+</body>
+
+</html>

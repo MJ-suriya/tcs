@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCS — Admin/Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+  <style>
+    /* Module Title Base */
+    .module-title {
+      padding: 10px 14px;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #aaa;
+      cursor: pointer;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    /* Hover effect */
+    .module-title:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* ACTIVE (Glow effect) */
+    .module-title.active-module {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+    }
+
+    /* Submenu */
+    .module-items {
+      display: none;
+      padding-left: 10px;
+    }
+
+    .module-items.open {
+      display: block;
+    }
+  </style>
+
+</head>
+
+<body class="dashboard-page">
+  <div class="cds-sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-rupee">₹</span>
+      <span class="brand-name">TCS</span>
+      <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
+    </div>
+    <nav class="sidebar-nav">
+
+
+
+      <div class="sidebar-module" id="vehicleModuleSidebar">
+        <div class="module-title" onclick="toggleModule('vehicleMenu')">
+          Vehicle Log
+        </div>
+
+        <div id="vehicleMenu" class="module-items">
+          <a href="#" class="nav-link admin-only" onclick="showSection('vehicleProfiles')">Profile Setup</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleEntry')">New Entry</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleFuel')" id="nav-vehicleFuel">Add Fuel</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleExpenses')" id="nav-vehicleExpenses">Expense</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleApprovals')">Approvals</a>
+          <a href="#" class="nav-link" onclick="showSection('vehicleReports')">Reports</a>
+        </div>
+      </div>
+
+      <!-- Scrap -->
+      <div class="sidebar-module" id="scrapModuleSidebar">
+        <div class="module-title" onclick="toggleModule('scrapMenu')">
+          Scrap
+        </div>
+
+        <div id="scrapMenu" class="module-items">
+          <a href="#" class="nav-link" onclick="showSection('scrapProducts')">Products</a>
+          <a href="#" class="nav-link" onclick="showSection('scrapApprovals')">Approvals</a>
+          <a href="#" class="nav-link" onclick="showSection('scrapReports')">Reports</a>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div class="sidebar-module admin-only">
+        <div class="module-title" onclick="toggleModule('adminMenu')">
+          Admin
+        </div>
+
+        <div id="adminMenu" class="module-items">
+          <a href="#" class="nav-link" onclick="showSection('users')">Users</a>
+          <a href="#" class="nav-link" onclick="showSection('fuelPrices')">Fuel Prices</a>
+          <a href="#" class="nav-link" onclick="showSection('branches')">Branches</a>
+        </div>
+      </div>
+
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge"><span class="user-avatar" id="sidebarAvatar">A</span>
+        <div>
+          <div class="user-name" id="sidebarUsername">Admin</div>
+          <div class="user-role">ERP User</div>
+        </div>
+      </div>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()"
+        style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="cds-main">
+    <div class="cds-topbar"><button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">☰</button>
+      <h2 class="topbar-title" id="pageTitle">Dashboard</h2>
+      <div class="topbar-date" id="todayDate"></div>
+    </div>
+    <div class="cds-content" id="mainContent">
+
+
+      <div id="section-vehicleProfiles" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5 id="profileFormTitle">Add Vehicle Profile</h5>
+              </div>
+              <div id="vehicleProfilesAlert"></div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle Number</label>
+                <input type="text" id="vehicleProfilesNumber" class="form-control cds-input text-uppercase"
+                  placeholder="e.g. TN01AB1234" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Short Name (suggestion shown)</label>
+                <input type="text" id="vehicleProfilesShortName" class="form-control cds-input" placeholder="e.g. v1" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle Name</label>
+                <input type="text" id="vehicleProfilesName" class="form-control cds-input" placeholder="e.g. Bolero" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Opening KM</label>
+                <input type="number" id="vehicleProfilesOpeningKm" class="form-control cds-input" min="0" value="0" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Tank Capacity (L)</label>
+                <input type="number" id="vehicleProfilesTankCapacity" class="form-control cds-input" min="0"
+                  value="0" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Standard Mileage (km/L)</label>
+                <input type="number" id="vehicleProfilesExpectedMileage" class="form-control cds-input" min="0"
+                  step="0.1" placeholder="e.g. 12" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Location (Branch)</label>
+                <select id="vehicleProfilesBranch" class="form-select cds-input">
+                  <option value="">Select Location...</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Ownership Type</label>
+                <select id="vehicleProfilesOwnership" class="form-select cds-input">
+                  <option value="own">Own</option>
+                  <option value="rental">Rental</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">Status</label>
+                <select id="vehicleProfilesStatus" class="form-select cds-input">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button class="btn cds-btn-primary w-100" onclick="saveVehicleProfileAdmin()">Save Profile</button>
+                <button class="btn btn-outline-secondary w-100" onclick="clearVehicleProfileAdminForm()">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>Vehicle Profiles</h5>
+              </div>
+              <div id="vehicleProfilesListWrap">
+                <div class="table-responsive">
+                  <table class="table cds-table">
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Vehicle No</th>
+                        <th>Name</th>
+                        <th>Opening KM</th>
+                        <th>Capacity</th>
+                        <th>Std Mileage</th>
+                        <th>Location</th>
+                        <th>Ownership</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehicleProfilesList">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-vehicleEntry" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Create Vehicle Log</h5>
+              </div>
+              <div id="vehicleAlert"></div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">From</label>
+                  <select id="fromLocation" class="form-select cds-input">
+                    <option value="">Select From Location...</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">To</label>
+                  <select id="toLocation" class="form-select cds-input" onchange="onToLocationChange()">
+                    <option value="">Select To Location...</option>
+                  </select>
+                  <input type="text" id="toLocationCustom" class="form-control cds-input mt-2 d-none"
+                    placeholder="Type custom to location..." />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Start Date & Time</label>
+                  <input id="startDateTime" type="text" readonly class="form-control cds-input" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">End Date & Time</label>
+                  <input id="endDateTime" type="text" class="form-control cds-input"
+                    placeholder="Select End Date & Time..." />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Driver Name</label>
+                <input id="driverName" class="form-control cds-input" />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Vehicle (Short Name)</label>
+                  <select id="vehicleShortName" class="form-select cds-input vehicle-select-shortname"
+                    onchange="onVehicleShortNameInput('vehicleShortName', 'vehicleNumber')">
+                    <option value="">Select Vehicle...</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <input type="hidden" id="vehicleNumber" />
+                  <input type="hidden" id="tankCapacity" value="0" />
+                  <input type="hidden" id="expectedMileage" value="0" />
+                  <input type="hidden" id="availableFuel" value="0" />
+                </div>
+              </div>
+
+              <!-- Vehicle Info Display with Emojis -->
+              <div id="vehicleDetailsDisplay" class="mb-3 p-3 rounded text-light border border-secondary-subtle d-none"
+                style="background: rgba(255, 255, 255, 0.05);">
+                <div class="row g-3">
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">🚗</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Vehicle
+                        Number</small>
+                      <strong id="vehicleNumberDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">⛽</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tank Capacity</small>
+                      <strong id="tankCapacityDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-center">
+                    <span style="font-size: 20px; margin-right: 8px;">📊</span>
+                    <div>
+                      <small class="text-muted d-block"
+                        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Std Mileage</small>
+                      <strong id="expectedMileageDisplay" class="text-white">—</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Start KM</label>
+                  <input id="startKm" readonly class="form-control cds-input" value="0" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">End KM</label>
+                  <input id="endKm" type="number" min="0" class="form-control cds-input"
+                    oninput="calcVehicleDistance();" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Distance</label>
+                  <input id="distanceTravelled" readonly class="form-control cds-input" value="0.00" />
+                </div>
+              </div>
+
+              <div class="mb-3 d-grid gap-2">
+                <button type="button" id="btnToggleFuelInLog" class="btn btn-outline-success btn-sm"
+                  onclick="toggleFuelInLog()">⛽ Add Fuel at End of Trip</button>
+                <button type="button" id="btnToggleExpenseInLog" class="btn btn-outline-warning btn-sm"
+                  onclick="toggleExpenseInLog()">🔧 Add Expense (Emergency)</button>
+              </div>
+
+              <!-- Collapsible Expense Section -->
+              <div id="expenseSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3"
+                style="background: rgba(255, 193, 7, 0.05); border-color: rgba(255, 193, 7, 0.2) !important;">
+                <div class="text-warning small fw-semibold text-uppercase mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Emergency Expense Information</div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small">Expense Type</label>
+                    <select id="expenseTypeSelectInLog" class="form-select cds-input">
+                      <option value="other">Other</option>
+                      <option value="repair">Repair</option>
+                      <option value="service">Service</option>
+                      <option value="oil">Oil</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Amount (₹)</label>
+                    <input id="expenseAmountInLog" type="number" min="0" step="0.01" class="form-control cds-input"
+                      placeholder="e.g. 500" />
+                  </div>
+                </div>
+
+                <div class="mb-2">
+                  <label class="form-label small">Description</label>
+                  <input id="expenseDescInLog" type="text" class="form-control cds-input"
+                    placeholder="e.g. Tyre puncture repair" />
+                </div>
+              </div>
+
+              <!-- Collapsible Fuel Section -->
+              <div id="fuelSectionInLog" class="d-none mt-3 p-3 border rounded bg-light mb-3"
+                style="background: rgba(25, 135, 84, 0.05); border-color: rgba(25, 135, 84, 0.2) !important;">
+                <div class="text-success small fw-semibold text-uppercase mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Fuel Information</div>
+
+                <div id="fuelTripStatsInLog" class="mb-3 p-2 rounded bg-white border border-success-subtle">
+                  <div class="text-success small fw-semibold" style="font-size: 11px;">Trip Analytics (Since Last Full
+                    Tank)</div>
+                  <div class="text-success fw-bold mt-1" style="font-size: 13px;">
+                    Distance: <span id="fuelTripDistanceTextInLog">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span
+                      id="fuelApproxUsedTextInLog">0.00</span> L
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small">Fuel Type</label>
+                    <select id="fuelTypeSelectInLog" class="form-select cds-input" onchange="onFuelTypeChangeInLog()">
+                      <option value="petrol">Petrol</option>
+                      <option value="diesel">Diesel</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Price per Litre (₹)</label>
+                    <input id="fuelPricePerLitreInLog" type="number" min="0" step="0.01" class="form-control cds-input"
+                      placeholder="Price" oninput="calcFuelInLog()" />
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label small">Fuel Added (L)</label>
+                    <input id="fuelAddedLitersInLog" type="number" min="0" step="0.1" class="form-control cds-input"
+                      placeholder="e.g. 30" oninput="calcFuelInLog()" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">Petrol Bunk Name</label>
+                    <input id="fuelBunkNameInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. HP Bunk" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">Location</label>
+                    <input id="fuelLocationInLog" type="text" class="form-control cds-input"
+                      placeholder="e.g. Bunk Location" />
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-2">
+                  <div class="col-md-12">
+                    <label class="form-label small">Total Cost (₹) (calculated)</label>
+                    <input id="fuelPriceInLog" class="form-control cds-input" readonly value="0.00" />
+                  </div>
+                </div>
+
+                <div id="fuelMileageDisplayInLog"
+                  class="mt-2 p-2 rounded bg-white border border-secondary-subtle small text-dark">
+                  <!-- Calculated mileage info goes here -->
+                </div>
+              </div>
+
+              <div class="row g-2 mt-4">
+                <div class="col-md-12">
+                  <button id="btnSubmitVehicleLog" class="btn cds-btn-primary w-100"
+                    onclick="submitVehicleLog()">Submit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>Vehicle Logs</h5>
+              </div>
+              <div id="vehicleHistoryAlert"></div>
+              <div id="vehicleHistoryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-vehicleFuel" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-6 admin-only">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>⛽ Record Fuel Entry</h5>
+              </div>
+              <div id="fuelAlert"></div>
+              <div class="mb-3">
+                <label class="form-label">Driver Name</label>
+                <input id="fuelDriverName" type="text" class="form-control cds-input" placeholder="Driver Name" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Vehicle (Short Name)</label>
+                <input id="fuelVehicleShortName" class="form-control cds-input vehicle-select-shortname"
+                  list="fuelVehicleShortNameList" placeholder="Search by short name or number..."
+                  oninput="onVehicleShortNameInput('fuelVehicleShortName', 'fuelVehicleNumber')"
+                  onchange="onVehicleShortNameInput('fuelVehicleShortName', 'fuelVehicleNumber')" />
+                <datalist id="fuelVehicleShortNameList"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Vehicle Number</label>
+                <input type="text" id="fuelVehicleNumber" class="form-control cds-input" readonly />
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Date & Time</label>
+                  <input id="fuelStartDateTime" type="text" class="form-control cds-input"
+                    placeholder="Select Date & Time..." />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tank Capacity (L)</label>
+                  <input id="fuelTankCapacity" class="form-control cds-input" readonly value="0" />
+                </div>
+              </div>
+
+              <div id="fuelTripStats" class="mb-3 p-3 rounded"
+                style="background: rgba(25, 135, 84, 0.1); border: 1px solid rgba(25, 135, 84, 0.2);">
+                <div class="text-success small fw-semibold text-uppercase"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Trip Analytics (Since Last Full Tank)</div>
+                <div class="text-success fw-bold fs-5 mt-1">
+                  Distance: <span id="fuelTripDistanceText">0.00</span> KM &nbsp;|&nbsp; Approx. Fuel Used: <span
+                    id="fuelApproxUsedText">0.00</span> L
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fuel Type</label>
+                  <select id="fuelTypeSelect" class="form-select cds-input" onchange="onFuelTypeChange()">
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Price per Litre (₹)</label>
+                  <input id="fuelPricePerLitre" type="number" min="0" step="0.01" class="form-control cds-input"
+                    placeholder="Price per Litre" oninput="calcFuelCostAndRemaining()" />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fuel Added (L)</label>
+                  <input id="fuelAddedLiters" type="number" min="0" step="0.1" class="form-control cds-input"
+                    placeholder="e.g. 30" oninput="calcFuelCostAndRemaining()" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Available Current Fuel (L) (calculated)</label>
+                  <input id="fuelAvailableFuel" class="form-control cds-input" readonly value="0.00" />
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Petrol Bunk Name</label>
+                  <input id="fuelBunkName" type="text" class="form-control cds-input" placeholder="e.g. HP Bunk" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Location</label>
+                  <input id="fuelLocation" type="text" class="form-control cds-input"
+                    placeholder="e.g. Bunk Location" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Total Price/Cost (₹) (calculated)</label>
+                  <input id="fuelPrice" type="number" min="0" step="0.01" class="form-control cds-input" readonly
+                    value="0.00" />
+                </div>
+              </div>
+
+              <button class="btn cds-btn-primary w-100" onclick="submitFuelForm()">Submit Fuel Log</button>
+            </div>
+          </div>
+          <div class="col-lg-6" id="fuelHistoryCardCol">
+            <div class="cds-card">
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Recent Fuel Logs</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printFuelLogs()">🖨️ Print</button>
+                  <button class="btn cds-btn-sm" onclick="loadFuelHistory()">↻ Refresh</button>
+                </div>
+              </div>
+              <!-- Filter Bar -->
+              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2"
+                style="font-size: 13px;">
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
+                  <select id="fuelBranchFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterFuelLogs()">
+                    <option value="">All Branches</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
+                  <select id="fuelVehicleFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterFuelLogs()">
+                    <option value="">All Vehicles</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
+                  <input type="date" id="fuelFromDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterFuelLogs()" />
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
+                  <input type="date" id="fuelToDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterFuelLogs()" />
+                </div>
+                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearFuelFilters()"
+                  style="font-size: 11px;">Clear</button>
+              </div>
+              <div id="fuelHistoryAlert"></div>
+              <div id="fuelHistoryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-vehicleApprovals" class="d-none">
+        <div id="vehicleApprovalAlert"></div>
+        <div class="cds-card">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Reviewed Vehicle Logs</h5>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="approvalBranchFilter" class="form-select cds-input sm" style="width: 140px;"
+                  onchange="filterApprovalLogs()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
+                <select id="approvalVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
+                  onchange="renderFilteredReviewedLogs()">
+                  <option value="">All Vehicles</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+                <input type="date" id="approvalFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="renderFilteredReviewedLogs()" />
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+                <input type="date" id="approvalToDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="renderFilteredReviewedLogs()" />
+              </div>
+
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="clearApprovalFilters()">Clear</button>
+                <button class="btn cds-btn-sm" onclick="loadVehicleApprovals()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="vehicleReviewedList"></div>
+        </div>
+      </div>
+      <div id="section-vehicleReports" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Vehicle Reports</h5>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="reportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="renderFilteredVehicleReports()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Vehicle:</label>
+                <select id="reportVehicleSelect" class="form-select cds-input sm" style="width: 180px;"
+                  onchange="renderFilteredVehicleReports()">
+                  <option value="">All Vehicles</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Bunk:</label>
+                <select id="reportBunkSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="renderFilteredVehicleReports()">
+                  <option value="">All Bunks</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+                <input type="date" id="reportFromDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="renderFilteredVehicleReports()" />
+              </div>
+
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+                <input type="date" id="reportToDateFilter" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="renderFilteredVehicleReports()" />
+              </div>
+
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="clearReportFilters()">Clear</button>
+                <button class="btn cds-btn-sm" onclick="printVehicleReport()">🖨️ Print</button>
+                <button class="btn cds-btn-sm" onclick="loadVehicleReports()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="vehicleReportAlert"></div>
+          <div id="vehicleReportList"></div>
+        </div>
+      </div>
+      <div id="section-vehicleExpenses" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5 admin-only">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Record Vehicle Expense</h5>
+              </div>
+              <div id="vehicleExpensesAlert"></div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle (Short Name)</label>
+                <input id="expenseVehicleShortName" class="form-control cds-input vehicle-select-shortname"
+                  list="expenseVehicleShortNameList" placeholder="Search by short name or number..."
+                  oninput="onVehicleShortNameInput('expenseVehicleShortName', 'expenseVehicleNumber')"
+                  onchange="onVehicleShortNameInput('expenseVehicleShortName', 'expenseVehicleNumber')" />
+                <datalist id="expenseVehicleShortNameList"></datalist>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Vehicle Number</label>
+                <input type="text" id="expenseVehicleNumber" class="form-control cds-input" readonly />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Expense Type</label>
+                <select id="expenseType" class="form-select cds-input">
+                  <option value="service">Service</option>
+                  <option value="repair">Repair</option>
+                  <option value="oil">Oil</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Amount (₹)</label>
+                <input type="number" id="expenseAmount" class="form-control cds-input" min="0" step="0.01"
+                  placeholder="Enter amount" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input type="date" id="expenseDate" class="form-control cds-input" />
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">Description</label>
+                <input type="text" id="expenseDescription" class="form-control cds-input"
+                  placeholder="e.g. Engine oil change" />
+              </div>
+
+              <button class="btn cds-btn-primary w-100" onclick="saveVehicleExpense()">Save Expense</button>
+            </div>
+          </div>
+
+          <div class="col-lg-7" id="expenseLogCardCol">
+            <div class="cds-card">
+              <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Expense Log</h5>
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn cds-btn-sm" onclick="printExpenseLogs()">🖨️ Print</button>
+                  <button class="btn cds-btn-sm" onclick="loadVehicleExpenses()">↻ Refresh</button>
+                </div>
+              </div>
+              <!-- Filter Bar -->
+              <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2"
+                style="font-size: 13px;">
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Branch:</label>
+                  <select id="expenseBranchFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterExpenses()">
+                    <option value="">All Branches</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">Vehicle:</label>
+                  <select id="expenseVehicleFilter" class="form-select cds-input sm" style="width: 130px;"
+                    onchange="filterExpenses()">
+                    <option value="">All Vehicles</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">From:</label>
+                  <input type="date" id="expenseFromDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterExpenses()" />
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="mb-0 text-muted" style="white-space: nowrap;">To:</label>
+                  <input type="date" id="expenseToDateFilter" class="form-control cds-input sm" style="width: 125px;"
+                    onchange="filterExpenses()" />
+                </div>
+                <button class="btn btn-secondary btn-sm px-2 py-1" onclick="clearExpenseFilters()"
+                  style="font-size: 11px;">Clear</button>
+              </div>
+              <div id="vehicleExpensesListWrap">
+                <div class="table-responsive">
+                  <table class="table cds-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Vehicle</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>By</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehicleExpensesList">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-scrapProducts" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Add Scrap Product</h5>
+              </div>
+              <div id="scrapProductAlert"></div>
+              <div class="mb-3"><label class="form-label">Product Name</label><input type="text" id="scrapProductName"
+                  class="form-control cds-input" /></div>
+              <div class="mb-4"><label class="form-label">Price per KG (₹)</label><input type="number"
+                  id="scrapProductPrice" min="0" class="form-control cds-input" /></div>
+              <button class="btn cds-btn-primary w-100" onclick="addScrapProduct()">Add Product</button>
+            </div>
+            
+            <div class="cds-card form-structured mt-4">
+              <div class="card-header-cds">
+                <h5>Security Settings</h5>
+              </div>
+              <div id="securitySettingsAlert"></div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="toggleSecurityScrapEntry" onchange="toggleSecurityScrapEntrySetting(this.checked)">
+                <label class="form-check-label text-light fw-500" for="toggleSecurityScrapEntry">Enable Security Scrap Entry</label>
+              </div>
+              <p class="text-muted small mb-0">When enabled, Security users can create and view Scrap Entries. When disabled, only Petty Cashiers can do so.</p>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>Scrap Products</h5>
+              </div>
+              <div id="scrapProductList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-scrapApprovals" class="d-none">
+        <div class="cds-card mb-4">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Pending Scrap Approvals</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="scrapApprovalBranchSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="renderFilteredScrapApprovals()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="scrapApprovalAlert"></div>
+          <div id="scrapPendingList"></div>
+        </div>
+      </div>
+      <div id="section-scrapReports" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>Scrap Reports</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="scrapReportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="loadScrapReports()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Product:</label>
+                <select id="scrapReportProductSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="loadScrapReports()">
+                  <option value="">All Products</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+                <input type="date" id="scrapReportFromDate" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="loadScrapReports()" />
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+                <input type="date" id="scrapReportToDate" class="form-control cds-input sm" style="width: 130px;"
+                  onchange="loadScrapReports()" />
+              </div>
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="printScrapReport()">🖨️ Print</button>
+                <button class="btn cds-btn-sm" onclick="loadScrapReports()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="scrapReportAlert"></div>
+          <div id="scrapReportList"></div>
+        </div>
+      </div>
+      <div id="section-users" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5 id="userFormTitle">Add User</h5>
+              </div>
+              <div id="userAlert"></div>
+              <input type="hidden" id="userEditId" />
+              <div class="mb-3"><label class="form-label">Username</label><input type="text" id="newUsername"
+                  class="form-control cds-input" /></div>
+              <div class="mb-3">
+                <label class="form-label" id="newPasswordLabel">Password</label>
+                <div class="input-group">
+                  <input type="password" id="newPassword" class="form-control cds-input"
+                    style="border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+                  <button class="btn btn-outline-secondary" type="button"
+                    onclick="togglePasswordVisibility('newPassword', this)"
+                    style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; border: 1.5px solid var(--border); border-left: none; background: #fafbfc; color: var(--text-muted); padding: 0 14px;">👁️</button>
+                </div>
+              </div>
+              <div class="mb-3"><label class="form-label">EC.no</label><input type="text" id="newEcNo"
+                  class="form-control cds-input" placeholder="e.g. EC1234" /></div>
+              <div class="mb-3"><label class="form-label">Location (Branch)</label><select id="newUserBranch"
+                  class="form-select cds-input">
+                  <option value="">Select Location (Branch)...</option>
+                </select></div>
+              <div class="mb-4"><label class="form-label">Role</label><select id="newRole"
+                  class="form-select cds-input">
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                  <option value="security">Security</option>
+                  <option value="pettycashier">Petty Cashier</option>
+                </select></div>
+              <div class="d-flex gap-2">
+                <button class="btn cds-btn-primary w-100" id="btnSaveUser" onclick="saveUserAdmin()">Create
+                  User</button>
+                <button class="btn btn-outline-secondary w-100 d-none" id="btnCancelUser"
+                  onclick="clearUserAdminForm()">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>All Users</h5>
+              </div>
+              <div id="userList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-fuelPrices" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>Update Fuel Prices</h5>
+              </div>
+              <div id="fuelPricesAlert"></div>
+              <div class="mb-3">
+                <label class="form-label">Petrol Price per Litre (₹)</label>
+                <input type="number" id="adminPetrolPrice" step="0.01" min="0" class="form-control cds-input"
+                  placeholder="e.g. 102.50" />
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Diesel Price per Litre (₹)</label>
+                <input type="number" id="adminDieselPrice" step="0.01" min="0" class="form-control cds-input"
+                  placeholder="e.g. 94.20" />
+              </div>
+              <button class="btn cds-btn-primary w-100" onclick="saveFuelPricesAdmin()">Save Prices</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-branches" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5 id="branchSetupTitle">Setup Branch</h5>
+              </div>
+              <div id="branchAlert"></div>
+              <input type="hidden" id="branchEditId" value="" />
+              <div class="mb-4">
+                <label class="form-label">Branch Name</label>
+                <input type="text" id="branchNameInput" class="form-control cds-input"
+                  placeholder="e.g. Tuty, tnv, theni..." />
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <button class="btn btn-secondary w-100" onclick="resetBranchFormAdmin()">Cancel</button>
+                </div>
+                <div class="col-6">
+                  <button class="btn cds-btn-primary w-100" id="btnSaveBranch" onclick="saveBranchAdmin()">Save
+                    Branch</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>All Branches</h5>
+              </div>
+              <div id="branchListAlert"></div>
+              <div class="table-responsive">
+                <table class="cds-table">
+                  <thead>
+                    <tr>
+                      <th>Branch Name</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="branchListTableBody">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="app.js"></script>
+  <script>
+    function toggleModule(menuId) {
+      const menus = ['vehicleMenu', 'scrapMenu', 'adminMenu'];
+
+      menus.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const title = el.previousElementSibling;
+
+        if (id === menuId) {
+          el.classList.toggle('open');
+
+          // toggle glow
+          title.classList.toggle('active-module');
+        } else {
+          el.classList.remove('open');
+
+          // remove glow from others
+          if (title) title.classList.remove('active-module');
+        }
+      });
+    }
+  </script>
+
+  <script>
+    const inputStart = document.getElementById("startDateTime");
+    if (inputStart && typeof formatDateTime12h === 'function') {
+      inputStart.value = formatDateTime12h(new Date());
+    }
+    const inputEnd = document.getElementById("endDateTime");
+    if (inputEnd && typeof formatDateTime12h === 'function') {
+      inputEnd.value = formatDateTime12h(new Date());
+    }
+  </script>
+</body>
+
+</html>

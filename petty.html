@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCS — Petty Cashier</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+  <style>
+    .module-title {
+      padding: 10px 14px;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #aaa;
+      cursor: pointer;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .module-title:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .module-title.active-module {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+    }
+
+    .module-items {
+      display: none;
+      padding-left: 10px;
+    }
+
+    .module-items.open {
+      display: block;
+    }
+  </style>
+</head>
+
+<body class="dashboard-page">
+  <div class="cds-sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-rupee">₹</span>
+      <span class="brand-name">TCS</span>
+      <button class="sidebar-close-btn d-lg-none" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-module" id="scrapModuleSidebar">
+        <div class="module-title active-module" onclick="toggleModule('scrapMenu')">Scrap</div>
+        <div id="scrapMenu" class="module-items open">
+          <a href="#" class="nav-link active" onclick="showSection('scrapEntry')">New Entry</a>
+          <a href="#" class="nav-link" onclick="showSection('scrapHistory')">My Entries</a>
+          <a href="#" class="nav-link" onclick="showSection('scrapApprovals')">Approvals</a>
+          <a href="#" class="nav-link" onclick="showSection('scrapReports')">Reports</a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge"><span class="user-avatar" id="sidebarAvatar">P</span>
+        <div>
+          <div class="user-name" id="sidebarUsername">Petty Cashier</div>
+          <div class="user-role">Petty Cashier</div>
+        </div>
+      </div>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="showChangePasswordModal()"
+        style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2);">Change Password</button>
+      <button class="btn cds-btn-logout mt-2 w-100" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="cds-main">
+    <div class="cds-topbar"><button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">☰</button>
+      <h2 class="topbar-title" id="pageTitle">Dashboard</h2>
+      <div class="topbar-date" id="todayDate"></div>
+    </div>
+    <div class="cds-content" id="mainContent">
+      <div id="section-scrapEntry" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="cds-card form-structured">
+              <div class="card-header-cds">
+                <h5>New Scrap Entry</h5>
+              </div>
+              <div id="scrapEntryAlert"></div>
+              <div class="mb-3">
+                <label class="form-label">Date & Time</label>
+                <input type="text" id="scrapDateTime" class="form-control cds-input" readonly />
+              </div>
+              <div class="mb-3" id="scrapBranchContainer">
+                <label class="form-label">Branch</label>
+                <select id="scrapBranchSelect" class="form-select cds-input">
+                  <option value="">Select Branch</option>
+                </select>
+              </div>
+              <div class="mb-3"><label class="form-label">Company Name</label><input type="text" id="scrapCompany"
+                  class="form-control cds-input" /></div>
+              <div class="mb-3"><label class="form-label">Vehicle Number</label><input type="text" id="scrapVehicle"
+                  class="form-control cds-input text-uppercase" /></div>
+
+              <!-- Added Items Section -->
+              <div class="mb-3 p-3 rounded"
+                style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);">
+                <div class="fw-semibold text-uppercase small text-muted mb-2"
+                  style="font-size: 11px; letter-spacing: 0.5px;">Scrap Items List</div>
+                <div id="scrapItemsListContainer" class="mb-3" style="max-height: 200px; overflow-y: auto;">
+                  <div class="text-muted small text-center py-3">No products added yet. Use the form below to add.</div>
+                </div>
+
+                <div class="p-3 rounded"
+                  style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);">
+                  <div class="mb-2"><label class="form-label small fw-semibold">Select Product</label><select
+                      id="scrapProductSelect" class="form-select cds-input" onchange="calcScrapTotal()">
+                      <option value="">Select Product</option>
+                    </select></div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label small">Weight (KG)</label><input type="number"
+                        id="scrapWeight" min="0" class="form-control cds-input" oninput="calcScrapTotal()" /></div>
+                    <div class="col-6"><label class="form-label small">Price/KG (₹)</label><input type="number"
+                        id="scrapPriceKg" class="form-control cds-input" readonly /></div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Item Total: <strong id="scrapItemTotalText"
+                        class="text-white">₹0.00</strong></span>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="addScrapItemToList()">+ Add to
+                      List</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Grand Total:</span>
+                <span class="fs-5 fw-bold text-success" id="scrapGrandTotalText">₹0.00</span>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description (Optional)</label>
+                <textarea id="scrapDescription" class="form-control cds-input" rows="2"
+                  placeholder="Enter optional description..."></textarea>
+              </div>
+              <div class="mb-3 d-none" id="scrapProofContainer">
+                <label class="form-label">Proof Document / Image (Optional)</label>
+                <input type="file" id="scrapProofFile" class="form-control cds-input" accept="image/*,application/pdf" />
+              </div>
+              <button class="btn btn-outline-warning w-100 mb-2" onclick="printScrapSlip()">🖨️ Print Slip</button>
+              <button class="btn cds-btn-primary w-100" onclick="submitScrapEntry()">Submit Entry</button>
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div class="cds-card">
+              <div class="card-header-cds">
+                <h5>My Pending Entries</h5><button class="btn cds-btn-sm" onclick="loadScrapMyEntries()">↻
+                  Refresh</button>
+              </div>
+              <div id="scrapMyEntryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="section-scrapHistory" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>My Scrap Entries</h5><button class="btn cds-btn-sm" onclick="loadScrapMyHistory()">↻ Refresh</button>
+          </div>
+          <div id="scrapHistoryAlert"></div>
+          <div id="scrapHistoryList"></div>
+        </div>
+      </div>
+      <div id="section-scrapApprovals" class="d-none">
+        <div class="cds-card mb-4">
+          <div class="card-header-cds d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Pending Scrap Approvals</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="scrapApprovalBranchSelect" class="form-select cds-input sm" style="width: 150px;" onchange="renderFilteredScrapApprovals()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="loadScrapApprovals()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="scrapApprovalAlert"></div>
+          <div id="scrapPendingList"></div>
+        </div>
+      </div>
+      <div id="section-scrapReports" class="d-none">
+        <div class="cds-card">
+          <div class="card-header-cds">
+            <h5>Scrap Reports</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Branch:</label>
+                <select id="scrapReportBranchSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="loadScrapReports()">
+                  <option value="">All Branches</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">Product:</label>
+                <select id="scrapReportProductSelect" class="form-select cds-input sm" style="width: 150px;"
+                  onchange="loadScrapReports()">
+                  <option value="">All Products</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">From:</label>
+                <input type="date" id="scrapReportFromDate" class="form-control cds-input sm"
+                  style="width: 130px;" onchange="loadScrapReports()" />
+              </div>
+              <div class="filter-item">
+                <label class="small text-muted mb-0" style="white-space: nowrap;">To:</label>
+                <input type="date" id="scrapReportToDate" class="form-control cds-input sm"
+                  style="width: 130px;" onchange="loadScrapReports()" />
+              </div>
+              <div class="d-flex gap-1">
+                <button class="btn cds-btn-sm" onclick="printScrapReport()">🖨️ Print</button>
+                <button class="btn cds-btn-sm" onclick="loadScrapReports()">↻ Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div id="scrapReportAlert"></div>
+          <div id="scrapReportList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="app.js"></script>
+  <script>
+    function toggleModule(menuId) {
+      const menus = ['scrapMenu'];
+      menus.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const title = el.previousElementSibling;
+        if (id === menuId) {
+          el.classList.toggle('open');
+          title.classList.toggle('active-module');
+        } else {
+          el.classList.remove('open');
+          if (title) title.classList.remove('active-module');
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
