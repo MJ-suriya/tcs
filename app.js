@@ -645,6 +645,7 @@ let allVehicles = [];
 let activeVehicleBaseline = { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0 };
 let currentFuelAdditions = [];
 let endDateTimePicker = null;
+let startDateTimePicker = null;
 let fuelStartDateTimePicker = null;
 let scrapDateTimePicker = null;
 let expenseInLogActive = false;
@@ -1244,7 +1245,13 @@ function resetVehicleForm() {
   }
 
   const startEl = document.getElementById('startDateTime');
-  if (startEl) startEl.value = formatDateTime12h(new Date());
+  if (startEl) {
+    if (startDateTimePicker) {
+      startDateTimePicker.setDate(new Date());
+    } else {
+      startEl.value = formatDateTime12h(new Date());
+    }
+  }
   const endEl = document.getElementById('endDateTime');
   if (endEl) {
     if (endDateTimePicker) {
@@ -1384,7 +1391,12 @@ async function editVehicleWaitingDraft(id) {
         }
       }
     }
-    document.getElementById('startDateTime').value = d.startDateTime ? formatDateTime12h(d.startDateTime) : formatDateTime12h(new Date());
+    const targetStartDate = d.startDateTime ? new Date(d.startDateTime) : new Date();
+    if (startDateTimePicker) {
+      startDateTimePicker.setDate(targetStartDate);
+    } else {
+      document.getElementById('startDateTime').value = formatDateTime12h(targetStartDate);
+    }
     const targetEndDate = d.endDateTime ? new Date(d.endDateTime) : new Date();
     if (endDateTimePicker) {
       endDateTimePicker.setDate(targetEndDate);
@@ -1655,8 +1667,61 @@ async function loadVehicleEntryForm() {
   await applyVehicleBaseline();
   currentVehicleDraftId = null;
 
+  // Load the settings for security start date change if the toggle exists (admin view)
+  const toggleStartDateInput = document.getElementById('toggleSecurityChangeStartDate');
+  if (toggleStartDateInput) {
+    try {
+      const setting = await api('/api/system-settings/allowSecurityChangeStartDate');
+      toggleStartDateInput.checked = setting.value === true;
+    } catch (err) {
+      console.error('Failed to load allowSecurityChangeStartDate setting:', err);
+    }
+  }
+
   const startEl = document.getElementById('startDateTime');
-  if (startEl) startEl.value = formatDateTime12h(new Date());
+  if (startEl) {
+    if (currentUserRole === 'security') {
+      try {
+        const setting = await api('/api/system-settings/allowSecurityChangeStartDate');
+        if (setting && setting.value === true) {
+          startEl.removeAttribute('readonly');
+          if (typeof flatpickr !== 'undefined') {
+            if (startDateTimePicker) {
+              startDateTimePicker.setDate(new Date());
+            } else {
+              startDateTimePicker = flatpickr(startEl, {
+                enableTime: true,
+                dateFormat: "d-M-Y h:i K",
+                defaultDate: new Date(),
+                minuteIncrement: 1,
+                disableMobile: true
+              });
+            }
+          } else {
+            startEl.value = formatDateTime12h(new Date());
+          }
+        } else {
+          if (startDateTimePicker) {
+            startDateTimePicker.destroy();
+            startDateTimePicker = null;
+          }
+          startEl.setAttribute('readonly', true);
+          startEl.value = formatDateTime12h(new Date());
+        }
+      } catch (err) {
+        console.error('Failed to load allowSecurityChangeStartDate setting for security:', err);
+        startEl.setAttribute('readonly', true);
+        startEl.value = formatDateTime12h(new Date());
+      }
+    } else {
+      if (startDateTimePicker) {
+        startDateTimePicker.destroy();
+        startDateTimePicker = null;
+      }
+      startEl.setAttribute('readonly', true);
+      startEl.value = formatDateTime12h(new Date());
+    }
+  }
   const endEl = document.getElementById('endDateTime');
   if (endEl) {
     if (typeof flatpickr !== 'undefined') {
@@ -2792,6 +2857,19 @@ async function toggleSecurityScrapEntrySetting(checked) {
   } catch (err) {
     showAlert('securitySettingsAlert', err.message);
     const toggleInput = document.getElementById('toggleSecurityScrapEntry');
+    if (toggleInput) {
+      toggleInput.checked = !checked;
+    }
+  }
+}
+
+async function toggleSecurityChangeStartDateSetting(checked) {
+  try {
+    await api('/api/system-settings', 'POST', { key: 'allowSecurityChangeStartDate', value: checked });
+    showAlert('securityStartDateSettingAlert', `Setting updated successfully: Security ${checked ? 'can' : 'cannot'} change start date.`, 'success');
+  } catch (err) {
+    showAlert('securityStartDateSettingAlert', err.message);
+    const toggleInput = document.getElementById('toggleSecurityChangeStartDate');
     if (toggleInput) {
       toggleInput.checked = !checked;
     }

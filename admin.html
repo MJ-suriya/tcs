@@ -439,6 +439,21 @@
                 </div>
               </div>
             </div>
+
+            <div class="cds-card form-structured mt-4">
+              <div class="card-header-cds">
+                <h5>Vehicle Entry Settings</h5>
+              </div>
+              <div id="securityStartDateSettingAlert"></div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="toggleSecurityChangeStartDate"
+                  onchange="toggleSecurityChangeStartDateSetting(this.checked)">
+                <label class="form-check-label text-light fw-500" for="toggleSecurityChangeStartDate">
+                  Allow Security to Change Start Date
+                </label>
+              </div>
+              <p class="text-muted small mb-0">When enabled, Security users can edit/change the start date and time when entering vehicle logs. When disabled, the start date is locked to the current system time.</p>
+            </div>
           </div>
           <div class="col-lg-6">
             <div class="cds-card">

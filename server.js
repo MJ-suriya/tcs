@@ -1594,7 +1594,7 @@ app.get('/api/system-settings/:key', requireAuth, async (req, res) => {
     const { key } = req.params;
     let setting = await SystemSetting.findOne({ key });
     if (!setting) {
-      if (key === 'enableSecurityScrapEntry') {
+      if (key === 'enableSecurityScrapEntry' || key === 'allowSecurityChangeStartDate') {
         return res.json({ key, value: false });
       }
       return res.status(404).json({ error: 'Setting not found' });
