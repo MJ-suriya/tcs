@@ -613,12 +613,51 @@
       </div>
 
       <div id="section-scrapHistory" class="d-none">
+        <div class="cds-card form-structured mb-4">
+          <div class="card-header-cds">
+            <h5 class="mb-0">Filter My Scrap Entries</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md">
+              <label class="form-label">Branch</label>
+              <select id="scrapHistoryBranchSelect" class="form-select cds-input">
+                <option value="">All Branches</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">Product</label>
+              <select id="scrapHistoryProductSelect" class="form-select cds-input">
+                <option value="">All Products</option>
+              </select>
+            </div>
+            <div class="col-md">
+              <label class="form-label">From</label>
+              <input type="date" id="scrapHistoryFromDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md">
+              <label class="form-label">To</label>
+              <input type="date" id="scrapHistoryToDate" class="form-control cds-input" />
+            </div>
+            <div class="col-md">
+              <label class="form-label">Status</label>
+              <select id="scrapHistoryStatusSelect" class="form-select cds-input">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="col-md-auto d-flex align-items-end gap-2">
+              <button class="btn cds-btn-primary px-4" onclick="loadScrapMyHistory()">Show</button>
+            </div>
+          </div>
+        </div>
         <div class="cds-card">
           <div class="card-header-cds">
-            <h5>My Scrap Entries</h5><button class="btn cds-btn-sm" onclick="loadScrapMyHistory()">↻ Refresh</button>
+            <h5 class="mb-0">My Scrap Entries</h5>
           </div>
           <div id="scrapHistoryAlert"></div>
-          <div id="scrapHistoryList"></div>
+          <div id="scrapHistoryList" class="p-3"></div>
         </div>
       </div>
 

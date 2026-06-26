@@ -151,9 +151,11 @@ async function getAlternativeVehicleNumbers(vehicleNumber) {
   return [normalized];
 }
 
+
+
 async function getVehicleBaseline(vehicleNumber) {
   const normalizedVehicle = String(vehicleNumber || '').trim().toUpperCase();
-  if (!normalizedVehicle) return { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0, previousFuelOdometer: 0, tripDistanceSum: 0, approxFuelUsed: 0 };
+  if (!normalizedVehicle) return { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0, previousFuelOdometer: 0, tripDistanceSum: 0, approxFuelUsed: 0, lastApprovedEndDateTime: null };
 
   const profile = await findMatchedProfile(normalizedVehicle);
   const vehicleList = await getAlternativeVehicleNumbers(normalizedVehicle);
@@ -185,7 +187,8 @@ async function getVehicleBaseline(vehicleNumber) {
       tankCapacity: capacity,
       previousFuelOdometer,
       tripDistanceSum,
-      approxFuelUsed
+      approxFuelUsed,
+      lastApprovedEndDateTime: null
     };
   }
   return {
@@ -195,8 +198,35 @@ async function getVehicleBaseline(vehicleNumber) {
     tankCapacity: profile?.tankCapacity || 0,
     previousFuelOdometer,
     tripDistanceSum,
-    approxFuelUsed
+    approxFuelUsed,
+    lastApprovedEndDateTime: lastApproved.endDateTime
   };
+}
+
+async function syncVehicleProfileOpeningKm(vehicleNumber) {
+  try {
+    const normalizedVehicle = String(vehicleNumber || '').trim().toUpperCase();
+    if (!normalizedVehicle) return;
+
+    const profile = await findMatchedProfile(normalizedVehicle);
+    if (!profile) return;
+
+    const vehicleList = await getAlternativeVehicleNumbers(normalizedVehicle);
+
+    // Find the latest approved log for this vehicle
+    const lastApproved = await VehicleLog.findOne({
+      vehicleNumber: { $in: vehicleList },
+      status: 'approved'
+    }).sort({ endDateTime: -1, createdAt: -1 });
+
+    if (lastApproved) {
+      profile.openingKm = Number(lastApproved.endKm) || 0;
+      await profile.save();
+      console.log(`Synced opening KM for vehicle ${profile.vehicleNumber} to ${profile.openingKm}`);
+    }
+  } catch (err) {
+    console.error(`Failed to sync opening KM for vehicle ${vehicleNumber}:`, err);
+  }
 }
 
 function normalizeVehicleExpenses(expenses) {
@@ -225,6 +255,44 @@ async function buildVehicleLogData(payload) {
   const baseline = await getVehicleBaseline(vehicleNumber);
   const profile = await findMatchedProfile(vehicleNumber);
   const tankCapacity = profile?.tankCapacity || baseline.tankCapacity || 0;
+
+  const startDt = new Date(startDateTime);
+  if (isNaN(startDt.getTime())) {
+    const err = new Error('Invalid start date/time');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (endDateTime) {
+    const endDt = new Date(endDateTime);
+    if (isNaN(endDt.getTime())) {
+      const err = new Error('Invalid end date/time');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (endDt < startDt) {
+      const err = new Error('End Date & Time cannot be before Start Date & Time');
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
+  if (baseline.lastApprovedEndDateTime) {
+    const lastEndDt = new Date(baseline.lastApprovedEndDateTime);
+    if (startDt < lastEndDt) {
+      const formattedLastEnd = lastEndDt.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      const err = new Error(`Start Date & Time cannot be before the last approved trip's end Date & Time (${formattedLastEnd})`);
+      err.statusCode = 400;
+      throw err;
+    }
+  }
 
   if (isFuelLog || String(driverName) === 'Fuel Log') {
     const parsedFuelAdded = Number(fuelAdded);
@@ -897,6 +965,7 @@ app.post('/api/vehicle-logs', requireSecurity, async (req, res) => {
     }
 
     await copyEmergencyExpenses(log);
+    await syncVehicleProfileOpeningKm(log.vehicleNumber);
 
     res.json({ success: true, log });
   } catch (err) {
@@ -987,6 +1056,7 @@ app.post('/api/vehicle-logs/waiting/:id/submit', requireSecurity, async (req, re
     await VehicleLogDraft.deleteOne({ _id: draft._id });
 
     await copyEmergencyExpenses(log);
+    await syncVehicleProfileOpeningKm(log.vehicleNumber);
 
     res.json({ success: true, log });
   } catch (err) {
@@ -1084,6 +1154,8 @@ app.post('/api/vehicle-logs/:id/review', requireManagerOrAdmin, async (req, res)
         console.error('Failed to perform cascading approval:', cascadeErr);
       }
     }
+
+    await syncVehicleProfileOpeningKm(log.vehicleNumber);
 
     res.json({ success: true, log });
   } catch (err) {

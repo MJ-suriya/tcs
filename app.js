@@ -391,7 +391,7 @@ function loadSectionData(name) {
   else if (name === 'scrapEntry') {
     initScrapEntryForm();
   }
-  else if (name === 'scrapHistory') loadScrapMyHistory();
+  else if (name === 'scrapHistory') initScrapMyHistory();
   else if (name === 'scrapApprovals') initScrapApprovals();
   else if (name === 'scrapReports') initScrapReports();
 }
@@ -408,6 +408,16 @@ async function initAdmin() {
     const a = document.getElementById('sidebarAvatar');
     if (u) u.textContent = me.username;
     if (a) a.textContent = me.username[0].toUpperCase();
+    const r = document.querySelector('.cds-sidebar .user-role');
+    if (r) {
+      const roleNames = {
+        admin: 'Admin',
+        manager: 'Manager',
+        security: 'Security',
+        pettycashier: 'Petty Cashier'
+      };
+      r.textContent = roleNames[me.role] || me.role;
+    }
     if (me.role !== 'admin') {
       document.querySelectorAll('.admin-only').forEach((el) => el.classList.add('d-none'));
       setupManagerMenu();
@@ -642,7 +652,8 @@ function removeVehicleExpenseRow(idx) {
 let currentUser = null;
 let allBranches = [];
 let allVehicles = [];
-let activeVehicleBaseline = { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0 };
+let activeVehicleBaseline = { startKm: 0, availableFuel: 0, expectedMileage: null, tankCapacity: 0, lastApprovedEndDateTime: null };
+let activeFuelVehicleBaseline = null;
 let currentFuelAdditions = [];
 let endDateTimePicker = null;
 let startDateTimePicker = null;
@@ -1089,6 +1100,27 @@ async function submitVehicleLog() {
   if (!payload.driverName || !payload.vehicleNumber || !payload.fromLocation || !payload.toLocation || !payload.startDateTime || !payload.endDateTime) {
     showCenteredError('Please fill all required fields.');
     return;
+  }
+
+  const startDt = new Date(payload.startDateTime);
+  const endDt = new Date(payload.endDateTime);
+
+  if (isNaN(startDt.getTime()) || isNaN(endDt.getTime())) {
+    showCenteredError('Invalid Date & Time selection.');
+    return;
+  }
+
+  if (endDt < startDt) {
+    showCenteredError('End Date & Time cannot be before Start Date & Time.');
+    return;
+  }
+
+  if (activeVehicleBaseline && activeVehicleBaseline.lastApprovedEndDateTime) {
+    const lastEndDt = new Date(activeVehicleBaseline.lastApprovedEndDateTime);
+    if (startDt < lastEndDt) {
+      showCenteredError(`Start Date & Time cannot be before the last approved trip's end Date & Time (${formatDateTime12h(lastEndDt)}).`);
+      return;
+    }
   }
 
   const btn = document.getElementById('btnSubmitVehicleLog');
@@ -2941,6 +2973,14 @@ async function loadScrapProductDropdown() {
         allScrapProducts.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
       if (currentVal) approvalSel.value = currentVal;
     }
+
+    const historySel = document.getElementById('scrapHistoryProductSelect');
+    if (historySel) {
+      const currentVal = historySel.value;
+      historySel.innerHTML = `<option value="">All Products</option>` +
+        allScrapProducts.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
+      if (currentVal) historySel.value = currentVal;
+    }
   } catch (err) {
     console.error(err);
   }
@@ -3169,7 +3209,8 @@ async function loadScrapMyEntries() {
   if (!el) return;
   try {
     const entries = await api('/api/scrap/entries?status=pending');
-    el.innerHTML = _renderScrapTable(entries, false);
+    const limitedEntries = entries.slice(0, 3);
+    el.innerHTML = _renderScrapTable(limitedEntries, false);
   } catch (err) {
     el.innerHTML = err.message;
   }
@@ -3179,10 +3220,65 @@ async function loadScrapMyHistory() {
   const el = document.getElementById('scrapHistoryList');
   if (!el) return;
   try {
+    el.innerHTML = loadingMarkup('Loading entries...');
     const entries = await api('/api/scrap/entries');
-    el.innerHTML = _renderScrapTable(entries, false);
+
+    let filtered = entries;
+    const branchVal = document.getElementById('scrapHistoryBranchSelect')?.value || '';
+    if (branchVal) {
+      filtered = entries.filter(e => e.branchName && e.branchName.toLowerCase() === branchVal.toLowerCase());
+    } else if (currentUser && currentUser.branchName && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+      filtered = entries.filter(e => e.branchName && e.branchName.toLowerCase() === currentUser.branchName.toLowerCase());
+    }
+
+    const prodVal = document.getElementById('scrapHistoryProductSelect')?.value || '';
+    if (prodVal) {
+      filtered = filtered.filter(e =>
+        (e.productName && e.productName === prodVal) ||
+        (e.items && e.items.some(item => item.productName === prodVal))
+      );
+    }
+
+    const statusVal = document.getElementById('scrapHistoryStatusSelect')?.value || '';
+    if (statusVal) {
+      filtered = filtered.filter(e => {
+        if (statusVal === 'pending') {
+          return ['pending_pettycashier', 'pending_manager', 'queried', 'answered'].includes(e.status);
+        }
+        return e.status === statusVal;
+      });
+    }
+
+    const fromDateVal = document.getElementById('scrapHistoryFromDate')?.value || '';
+    const toDateVal = document.getElementById('scrapHistoryToDate')?.value || '';
+
+    if (fromDateVal) {
+      const fromDate = new Date(fromDateVal);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(e => new Date(e.createdAt) >= fromDate);
+    }
+    if (toDateVal) {
+      const toDate = new Date(toDateVal);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(e => new Date(e.createdAt) <= toDate);
+    }
+
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    el.innerHTML = _renderScrapTable(filtered, false);
   } catch (err) {
     el.innerHTML = err.message;
+  }
+}
+
+async function initScrapMyHistory() {
+  const el = document.getElementById('scrapHistoryList');
+  if (el) el.innerHTML = '<div class="text-muted small p-2">Use filters above and click Show to load entries.</div>';
+  try {
+    await loadBranchesDropdowns();
+    await loadScrapProductDropdown();
+  } catch (e) {
+    console.error(e);
   }
 }
 
@@ -3573,25 +3669,41 @@ function showChangePasswordModal() {
     div.innerHTML = `
       <div id="cdsChangePasswordOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center;">
         <div class="cds-card form-structured" style="width: 100%; max-width: 400px; margin: 20px; position: relative;">
-          <button onclick="hideChangePasswordModal()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;">&times;</button>
+          <button onclick="hideChangePasswordModal()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; color: var(--text-muted, #888); font-size: 20px; cursor: pointer;">&times;</button>
           <div class="card-header-cds mb-3">
             <h5 style="margin:0;">Change Password</h5>
           </div>
           <div id="changePasswordAlert"></div>
           <div class="mb-3">
             <label class="form-label">Current Password</label>
-            <input type="password" id="changePasswordCurrent" class="form-control cds-input" />
+            <div class="input-group">
+              <input type="password" id="changePasswordCurrent" class="form-control cds-input" placeholder="Current password" style="border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('changePasswordCurrent', this)"
+                style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; border: 1.5px solid var(--border); border-left: none; background: #fafbfc; color: var(--text-muted); padding: 0 14px;">👁️</button>
+            </div>
           </div>
           <div class="mb-4">
             <label class="form-label">New Password</label>
-            <input type="password" id="changePasswordNew" class="form-control cds-input" />
+            <div class="input-group">
+              <input type="password" id="changePasswordNew" class="form-control cds-input" placeholder="New password" style="border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('changePasswordNew', this)"
+                style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; border: 1.5px solid var(--border); border-left: none; background: #fafbfc; color: var(--text-muted); padding: 0 14px;">👁️</button>
+            </div>
           </div>
-          <button class="btn cds-btn-primary w-100" id="btnSubmitChangePassword" onclick="submitChangePassword()">Update Password</button>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary w-50" onclick="hideChangePasswordModal()">Cancel</button>
+            <button class="btn cds-btn-primary w-50" id="btnSubmitChangePassword" onclick="submitChangePassword()">Update Password</button>
+          </div>
         </div>
       </div>
     `;
     document.body.appendChild(div.firstElementChild);
     modalEl = document.getElementById('cdsChangePasswordOverlay');
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) {
+        hideChangePasswordModal();
+      }
+    });
   }
   document.getElementById('changePasswordCurrent').value = '';
   document.getElementById('changePasswordNew').value = '';
@@ -3637,6 +3749,7 @@ async function applyFuelVehicleBaseline() {
   if (!vehicleNumber) return;
   try {
     const baseline = await api(`/api/vehicle-logs/baseline?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
+    activeFuelVehicleBaseline = baseline;
     const tankCapacityEl = document.getElementById('fuelTankCapacity');
     if (tankCapacityEl) tankCapacityEl.value = baseline.tankCapacity || 0;
 
@@ -3701,6 +3814,20 @@ async function submitFuelForm() {
   if (!driverName || !vehicleNumber || fuelAdded <= 0 || pricePerLitre <= 0 || !bunk || !location || price <= 0 || !startDateTime) {
     showCenteredError('Please fill all required fields with positive values.');
     return;
+  }
+
+  const startDt = new Date(startDateTime);
+  if (isNaN(startDt.getTime())) {
+    showCenteredError('Invalid Date & Time selection.');
+    return;
+  }
+
+  if (activeFuelVehicleBaseline && activeFuelVehicleBaseline.lastApprovedEndDateTime) {
+    const lastEndDt = new Date(activeFuelVehicleBaseline.lastApprovedEndDateTime);
+    if (startDt < lastEndDt) {
+      showCenteredError(`Start Date & Time cannot be before the last approved trip's end Date & Time (${formatDateTime12h(lastEndDt)}).`);
+      return;
+    }
   }
 
   const matchedVehicle = allVehicles.find(v => matchVehicleNumbers(v.vehicleNumber, vehicleNumber));
@@ -4202,6 +4329,15 @@ async function loadBranchesDropdowns() {
         `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
       ).join('');
       if (currentVal) scrapApprovalBranchSelect.value = currentVal;
+    }
+
+    const scrapHistoryBranchSelect = document.getElementById('scrapHistoryBranchSelect');
+    if (scrapHistoryBranchSelect) {
+      const currentVal = scrapHistoryBranchSelect.value;
+      scrapHistoryBranchSelect.innerHTML = '<option value="">All Branches</option>' + allBranches.map(b =>
+        `<option value="${escHtml(b.name)}">${escHtml(b.name)}</option>`
+      ).join('');
+      if (currentVal) scrapHistoryBranchSelect.value = currentVal;
     }
   } catch (err) {
     console.error('Error loading branches:', err);
