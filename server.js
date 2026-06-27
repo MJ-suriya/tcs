@@ -25,6 +25,27 @@ const app = express();
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
+
+// --- Configure Multer for Scrap proof uploads ---
+const multer = require('multer');
+const fs = require('fs');
+
+const scrapUploadDir = path.join(__dirname, 'uploads', 'scrap');
+if (!fs.existsSync(scrapUploadDir)) {
+  fs.mkdirSync(scrapUploadDir, { recursive: true });
+}
+
+const scrapStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, scrapUploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadScrap = multer({ storage: scrapStorage }).single('proofDocument');
 app.use(session({
   secret: process.env.SESSION_SECRET || 'cds_secret_key_2024',
   resave: false,
@@ -1414,11 +1435,20 @@ app.get('/api/scrap/entries', requireAuth, async (req, res) => {
 });
 
 // POST /api/scrap/entries (Security / Petty Cashier)
-app.post('/api/scrap/entries', requireAuth, async (req, res) => {
+app.post('/api/scrap/entries', requireAuth, uploadScrap, async (req, res) => {
   try {
-    const { companyName, vehicleNumber, productId, weight, description, proofDocument } = req.body;
+    const { companyName, vehicleNumber, productId, weight, description } = req.body;
     const ownerName = req.body.ownerName || '—';
     let items = req.body.items;
+
+    // Parse the serialized items string sent via FormData
+    if (typeof items === 'string') {
+      try {
+        items = JSON.parse(items);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid items format' });
+      }
+    }
 
     // Check if security is allowed to create scrap entries
     if (req.session.user.role === 'security') {
@@ -1483,7 +1513,7 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
       totalAmount: Number(grandTotal.toFixed(2)),
       status: isPetty ? 'pending_manager' : 'pending_pettycashier',
       pettyCashierVerifiedAmount: isPetty ? Number(grandTotal.toFixed(2)) : undefined,
-      proofDocument: isPetty ? proofDocument : undefined,
+      proofDocument: isPetty && req.file ? `uploads/scrap/${req.file.filename}` : undefined,
       description: String(description || '').trim(),
       createdBy: req.session.user.username,
       branch: req.body.branch || undefined,
@@ -1497,9 +1527,9 @@ app.post('/api/scrap/entries', requireAuth, async (req, res) => {
 });
 
 // POST /api/scrap/entries/:id/verify (Petty Cashier)
-app.post('/api/scrap/entries/:id/verify', requirePettyCashierOrAdmin, async (req, res) => {
+app.post('/api/scrap/entries/:id/verify', requirePettyCashierOrAdmin, uploadScrap, async (req, res) => {
   try {
-    const { verifiedAmount, proofDocument } = req.body;
+    const { verifiedAmount } = req.body;
     if (verifiedAmount == null) {
       return res.status(400).json({ error: 'Verified amount is required' });
     }
@@ -1515,8 +1545,8 @@ app.post('/api/scrap/entries/:id/verify', requirePettyCashierOrAdmin, async (req
     }
 
     entry.pettyCashierVerifiedAmount = Number(verifiedAmount);
-    if (proofDocument) {
-      entry.proofDocument = proofDocument;
+    if (req.file) {
+      entry.proofDocument = `uploads/scrap/${req.file.filename}`;
     }
     entry.status = 'pending_manager';
     await entry.save();

@@ -231,8 +231,15 @@ function typeBadge(type) {
 }
 
 async function api(url, method = 'GET', body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
+  const opts = { method, headers: {} };
+  if (body) {
+    if (body instanceof FormData) {
+      opts.body = body;
+    } else {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+  }
   const res = await fetch(url, opts);
   const contentType = res.headers.get('content-type') || '';
   let data;
@@ -3138,40 +3145,31 @@ async function submitScrapEntry() {
   }
 
   try {
-    let proofDocument = '';
+    const formData = new FormData();
+    formData.append('companyName', companyName);
+    formData.append('vehicleNumber', vehicleNumber);
+    formData.append('ownerName', '—');
+    if (branchId) formData.append('branch', branchId);
+    if (branchName) formData.append('branchName', branchName);
+    if (dateTimeStr) formData.append('dateTime', dateTimeStr);
+    formData.append('description', description);
+
+    // Map and serialize items list
+    const items = currentScrapItems.map(item => ({
+      productId: item.productId,
+      weight: item.weight
+    }));
+    formData.append('items', JSON.stringify(items));
+
+    // Append file upload if Petty Cashier
     if (currentUserRole === 'pettycashier') {
       const fileInput = document.getElementById('scrapProofFile');
       if (fileInput && fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        try {
-          proofDocument = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-          });
-        } catch (err) {
-          throw new Error('Failed to read the upload file.');
-        }
+        formData.append('proofDocument', fileInput.files[0]);
       }
     }
 
-    const payload = {
-      companyName,
-      vehicleNumber,
-      ownerName: "—",
-      branch: branchId,
-      branchName,
-      dateTime: dateTimeStr || undefined,
-      description,
-      proofDocument: proofDocument || undefined,
-      items: currentScrapItems.map(item => ({
-        productId: item.productId,
-        weight: item.weight
-      }))
-    };
-
-    await api('/api/scrap/entries', 'POST', payload);
+    await api('/api/scrap/entries', 'POST', formData);
     showCenteredSuccess('Scrap entry submitted successfully.');
 
     document.getElementById('scrapCompany').value = '';
@@ -3568,20 +3566,10 @@ async function verifyScrapEntry(id, btn) {
     return;
   }
 
-  let proofDocument = '';
+  const formData = new FormData();
+  formData.append('verifiedAmount', Number(verifiedAmount));
   if (proofInput && proofInput.files && proofInput.files[0]) {
-    const file = proofInput.files[0];
-    try {
-      proofDocument = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
-    } catch (err) {
-      alert('Failed to read the upload file.');
-      return;
-    }
+    formData.append('proofDocument', proofInput.files[0]);
   }
 
   let originalHtml = '';
@@ -3591,10 +3579,7 @@ async function verifyScrapEntry(id, btn) {
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
   }
   try {
-    await api(`/api/scrap/entries/${id}/verify`, 'POST', {
-      verifiedAmount: Number(verifiedAmount),
-      proofDocument
-    });
+    await api(`/api/scrap/entries/${id}/verify`, 'POST', formData);
     alert('Entry verified and sent to manager.');
     loadScrapApprovals();
   } catch (err) {
